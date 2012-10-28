@@ -28,9 +28,6 @@ override_dh_install:
 	 debian/ettercap-text-only/usr/sbin/ettercap
 	-rm --verbose debian/ettercap-common/usr/share/ettercap/ettercap.png
 
-override_dh_link:
-	@rm --verbose debian/ettercap-graphical/usr/share/doc/ettercap-graphical/*
-	@rmdir --verbose debian/ettercap-graphical/usr/share/doc/ettercap-graphical
-	@rm --verbose debian/ettercap-text-only/usr/share/doc/ettercap-text-only/*
-	@rmdir --verbose debian/ettercap-text-only/usr/share/doc/ettercap-text-only
-	dh_link
+override_dh_installdocs:
+	dh_installdocs -pettercap-common
+	dh_installdocs -Nettercap-common --link-doc=ettercap-common
