@@ -1,3 +1,10 @@
+ettercap (1:0.7.5-4) unstable; urgency=low
+
+  * use proper debhelper documentation directory link option
+  * add debugging symbols package ettercap-dbg
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Sun, 28 Oct 2012 22:04:20 +0000
+
 ettercap (1:0.7.5-3) unstable; urgency=low
 
   * put back version in conflicts with ettercap (closes: #691478)
