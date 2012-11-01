@@ -14,7 +14,7 @@ Build-Depends: debhelper (>= 9),
 	libpcap-dev | libpcap0.8-dev,
 	libpcre3-dev,
 	libssl-dev,
-	libcurl4-openssl-dev | libcurl-ssl-dev | libcurl-dev,
+	libcurl4-openssl-dev (>= 7.26) | libcurl-ssl-dev | libcurl-dev,
 	ghostscript,
 Standards-Version: 3.9.4
 Homepage: http://ettercap.sourceforge.net
