@@ -1,0 +1,10 @@
+#! /bin/sh
+
+# Script to build non-scalable icons, to see how things look at various resolutions.
+
+for f in *.svg; do
+    ff=$(basename $f .svg)
+    for i in 32 48 64 96 128; do
+	rsvg-convert --output=$ff-$i.png --width=$i --height=$i --keep-aspect-ratio $f
+    done
+done
