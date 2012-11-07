@@ -17,7 +17,6 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-    $Id: ec_main.c,v 1.68 2005/06/24 13:52:12 alor Exp $
 */
 
 #include <ec.h>
@@ -268,8 +267,7 @@ static void time_check(void)
    /* 
     * a nice easter egg... 
     * just to waste some time of code reviewers... ;) 
-    *
-    * and no, you can't simply remove this code, you'll break the license...
+    * ALoR, keeping this for you buddy! :)
     *
     * trust me, it's not evil ;) only a boring afternoon, and nothing to do...
     */

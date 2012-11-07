@@ -29,6 +29,20 @@ code, btw fixes and patches are welcome.
 
 
 ==============================================================================
+                     R E Q U I R E D   P R O G R A M S
+==============================================================================
+
+C compiler
+
+flex (or other lex-compatible parser generator) for *.l files
+
+bison (or other yacc-compatible parser generator) for *.y files
+
+cmake (build tool)
+
+ps2pdf13 (script accompanying ghostscript)
+
+==============================================================================
                      R E Q U I R E D   L I B R A R I E S
 ==============================================================================
 
@@ -38,6 +52,10 @@ MANDATORY:
    - libnet  >= 1.1.2.1 
    - libpthread
    - zlib
+   - CMake 2.8
+   - ghostscript
+   - Curl    >= 7.26.0 to build SSLStrip plugin
+   If you don't want to enable SSLStrip plugin you have to disable it. (more information about disabling a plugin in the README.GIT file)
 
 OPTIONAL:
 
@@ -51,15 +69,16 @@ OPTIONAL:
       - openssl 0.9.7
 
    For the cursed GUI:
-      - ncurses >= 5.3
+      - ncurses   >= 5.3
 
    For the GTK+ GUI:
-      - pkgconfig >= 0.15.0
       - Glib      >= 2.2.2
       - Gtk+      >= 2.2.2
       - Atk       >= 1.2.4
       - Pango     >= 1.2.3
 
+   For the SSLStrip plugin
+      - Curl      >= 7.26.0
 
 ============================================================================
                                    LICENSE
@@ -78,7 +97,9 @@ OPTIONAL:
 
    Marco Valleri (NaGA) <naga@antifork.org>
 
-
+   Emilio Escobar (exfil) <eescobar@gmail.com>
+  
+   Eric Milam (J0hnnyBrav0) <brax.hax@gmail.com>
 
 ============================================================================
                                 INSTALLATION
@@ -92,7 +113,7 @@ OPTIONAL:
     plugins support, etc).
     make install
 
- read INSTALL for further details... and REAME.PLATFORMS for any issue
+ read INSTALL for further details... and README.PLATFORMS for any issue
  regarding your operating system.
  
 ============================================================================
@@ -220,7 +241,7 @@ ARP POISONING ATTACK
 
  these kernels use a special neighbor system to prevent unsolicited arp
  replies (what ettercap sends to the victim).
- Oh shit is ettercap not useable with that kernel ? the answer is NO !
+ Good gracious, is ettercap unusable with that kernel ? the answer is NO !
  let's view why... in the same source code we find:
 
  /*
