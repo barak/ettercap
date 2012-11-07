@@ -2,6 +2,7 @@
 /*.log
 /*.substvars
 /ettercap-common/
+/ettercap-dbg/
 /ettercap-graphical/
 /ettercap-text-only/
 /files
