@@ -5,6 +5,13 @@ ettercap (1:0.7.5+git.1.49a4fbf4-1) UNRELEASED; urgency=low
 
  -- Barak A. Pearlmutter <bap@debian.org>  Wed, 07 Nov 2012 10:13:17 +0000
 
+ettercap (1:0.7.5-5) unstable; urgency=low
+
+  * add version dependency for curl library, per upstream reqs
+  * postinst code swizzles doc dirs to symlinks (closes: #693487)
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Sat, 17 Nov 2012 01:07:34 +0000
+
 ettercap (1:0.7.5-4) unstable; urgency=low
 
   * use proper debhelper documentation directory link option
