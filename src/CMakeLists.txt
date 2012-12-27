@@ -58,6 +58,7 @@ set(EC_SRC
         dissectors/ec_irc.c
         dissectors/ec_iscsi.c
         dissectors/ec_ldap.c
+        dissectors/ec_mongodb.c
         dissectors/ec_mountd.c
         dissectors/ec_msn.c
         dissectors/ec_mysql.c
@@ -78,6 +79,7 @@ set(EC_SRC
         dissectors/ec_snmp.c
         dissectors/ec_socks.c
         dissectors/ec_telnet.c
+        dissectors/ec_TN3270.c
         dissectors/ec_vnc.c
         dissectors/ec_vrrp.c
         dissectors/ec_x11.c
@@ -97,7 +99,7 @@ set(EC_SRC
         protocols/ec_ip.c
         protocols/ec_ppp.c
         protocols/ec_prism.c
-	protocols/ec_radiotap.c
+        protocols/ec_radiotap.c
         protocols/ec_rawip.c
         protocols/ec_tcp.c
         protocols/ec_tr.c
