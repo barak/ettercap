@@ -156,6 +156,7 @@ static int sslw_remove_redirect(u_int16 sport, u_int16 dport);
 static void ssl_wrap_fini(void);
 static int sslw_ssl_connect(SSL *ssl_sk);
 static int sslw_ssl_accept(SSL *ssl_sk);
+static int sslw_remove_sts(struct packet_object *po);
 
 #endif /* HAVE_OPENSSL */
 
@@ -283,7 +284,7 @@ EC_THREAD_FUNC(sslw_start)
    return NULL;
 #else
    
-   /* disabled if not accressive */
+   /* disabled if not aggressive */
    if (!GBL_CONF->aggressive_dissectors)
       return NULL;
    
@@ -355,7 +356,7 @@ static void sslw_hook_handled(struct packet_object *po)
    /* We have nothing to do with this packet */
    if (!sslw_is_ssl(po))
       return;
-      
+     
    /* If it's an ssl packet don't forward */
    po->flags |= PO_DROPPED;
    
@@ -366,9 +367,13 @@ static void sslw_hook_handled(struct packet_object *po)
 	
       sslw_create_session(&s, PACKET);
 
+#ifndef OS_LINUX
       /* Remember the real destination IP */
       memcpy(s->data, &po->L3.dst, sizeof(struct ip_addr));
       session_put(s);
+#else
+	SAFE_FREE(s); /* Just get rid of it */
+#endif
    } else /* Pass only the SYN for conntrack */
       po->flags |= PO_IGNORE;
 }
@@ -722,7 +727,7 @@ static int sslw_get_peer(struct accepted_entry *ae)
       usleep(SSLW_WAIT);
 #else
       nanosleep(&tm, NULL); 
-#endif
+#endif /* OS_WINDOWS */
 
    if (i==SSLW_RETRY) {
       SAFE_FREE(ident);
@@ -823,7 +828,11 @@ static int sslw_read_data(struct accepted_entry *ae, u_int32 direction, struct p
 
    /* NULL terminate the data buffer */
    po->DATA.data[po->DATA.len] = 0;
- 
+
+   /* remove STS header */ 
+   if (direction == SSL_SERVER)
+       sslw_remove_sts(po);
+
    /* create the buffer to be displayed */
    packet_destroy_object(po);
    packet_disp_data(po, po->DATA.data, po->DATA.len);
@@ -987,8 +996,10 @@ static void sslw_initialize_po(struct packet_object *po, u_char *p_data)
    if (p_data == NULL) {
       SAFE_CALLOC(po->DATA.data, 1, UINT16_MAX);
    } else {
-      SAFE_FREE(po->DATA.data);
-      po->DATA.data = p_data;
+      if (po->DATA.data != p_data) {
+      	  SAFE_FREE(po->DATA.data);
+          po->DATA.data = p_data;
+      }
    }
       
    po->L2.header  = po->DATA.data; 
@@ -1011,14 +1022,14 @@ static void sslw_initialize_po(struct packet_object *po, u_char *p_data)
 static X509 *sslw_create_selfsigned(X509 *server_cert)
 {   
    X509 *out_cert;
-//   X509_EXTENSION *ext;
-//   int index = 0;
+   X509_EXTENSION *ext;
+   int index = 0;
    
    if ((out_cert = X509_new()) == NULL)
       return NULL;
       
    /* Set out public key, real server name... */
-   X509_set_version(out_cert, 0x2);
+   X509_set_version(out_cert, X509_get_version(server_cert));
    X509_set_serialNumber(out_cert, X509_get_serialNumber(server_cert));   
    X509_set_notBefore(out_cert, X509_get_notBefore(server_cert));
    X509_set_notAfter(out_cert, X509_get_notAfter(server_cert));
@@ -1027,9 +1038,8 @@ static X509 *sslw_create_selfsigned(X509 *server_cert)
    X509_set_issuer_name(out_cert, X509_get_issuer_name(server_cert));  
    
    /* Modify the issuer a little bit */ 
-   X509_NAME_add_entry_by_txt(X509_get_issuer_name(out_cert), "L", MBSTRING_ASC, " ", -1, -1, 0);
+   //X509_NAME_add_entry_by_txt(X509_get_issuer_name(out_cert), "L", MBSTRING_ASC, " ", -1, -1, 0);
 
-/*
    index = X509_get_ext_by_NID(server_cert, NID_authority_key_identifier, -1);
    if (index >=0) {
       ext = X509_get_ext(server_cert, index);
@@ -1039,7 +1049,6 @@ static X509 *sslw_create_selfsigned(X509 *server_cert)
          X509_add_ext(out_cert, ext, -1);
       }
    }
-*/
 
    /* Self-sign our certificate */
    if (!X509_sign(out_cert, global_pk, EVP_sha1())) {
@@ -1112,6 +1121,7 @@ EC_THREAD_FUNC(sslw_child)
    if (sslw_sync_conn(ae) == -EINVALID) {
       if (ae->fd[SSL_CLIENT] != -1)
          close_socket(ae->fd[SSL_CLIENT]);
+      DEBUG_MSG("FAILED TO FIND PEER");
       SAFE_FREE(ae);
       ec_thread_exit();
    }	    
@@ -1142,10 +1152,13 @@ EC_THREAD_FUNC(sslw_child)
          /* if we have data to read */
          if (ret_val == ESUCCESS) {
             data_read = 1;
+
+
             sslw_parse_packet(ae, direction, &po);
+
             if (po.flags & PO_DROPPED)
                continue;
-
+	
             ret_val = sslw_write_data(ae, !direction, &po);
             BREAK_ON_ERROR(ret_val,ae,po);
 	    
@@ -1172,6 +1185,57 @@ EC_THREAD_FUNC(sslw_child)
    return NULL;
 }
 
+
+static int sslw_remove_sts(struct packet_object *po)
+{
+	u_char *ptr;
+	u_char *end;
+	u_char *h_end;
+	size_t len = po->DATA.len;
+	size_t slen = strlen("\r\nStrict-Transport-Security:");
+
+	if (!memmem(po->DATA.data, po->DATA.len, "\r\nStrict-Transport-Security:", slen)) {
+		return -ENOTFOUND;
+	}
+
+	ptr = po->DATA.data;
+	end = ptr + po->DATA.len;
+
+	len = end - ptr;
+
+	ptr = (u_char*)memmem(ptr, len, "\r\nStrict-Transport-Security:", slen);
+	ptr += 2;
+
+	h_end = (u_char*)memmem(ptr, len, "\r\n", 2);
+	h_end += 2;
+
+	size_t before_header = ptr - po->DATA.data;
+	size_t header_length = h_end - ptr;
+	size_t new_len = 0;
+
+	u_char *new_html;
+	SAFE_CALLOC(new_html, len, sizeof(u_char));
+
+	BUG_IF(new_html == NULL);
+
+	memcpy(new_html, po->DATA.data, before_header);
+	new_len += before_header;
+
+	memcpy(new_html+new_len, h_end, (len - header_length) - before_header);
+	new_len += (len - header_length) - before_header;
+
+
+	memset(po->DATA.data, '\0', po->DATA.len);
+
+	memcpy(po->DATA.data, new_html, new_len);
+	po->DATA.len = new_len;
+
+	po->flags |= PO_MODIFIED;
+
+
+	return ESUCCESS;
+
+}
 
 /*******************************************/
 /* Sessions' stuff for ssl packets */
