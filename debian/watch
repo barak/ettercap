@@ -1,5 +1,10 @@
 version=3
-http://githubredir.debian.net/github/drizzt/ettercap \
- /github/drizzt/ettercap/NG-(.*)[.]tar[.]gz
-http://githubredir.debian.net/github/Ettercap/ettercap \
- /github/Ettercap/ettercap/v(.*)[.]tar[.]gz
+
+# These stopped working
+# http://githubredir.debian.net/github/drizzt/ettercap \
+#  /github/drizzt/ettercap/NG-(.*)[.]tar[.]gz
+# http://githubredir.debian.net/github/Ettercap/ettercap \
+#  /github/Ettercap/ettercap/v(.*)[.]tar[.]gz
+
+# Bart Martens <bartm@debian.org>  Thu, 15 Nov 2012 10:39:31 +0000
+http://qa.debian.org/watch/sf.php/ettercap/ettercap-(\d.*)\.(?:tgz|zip|tar\.(?:gz|bz2|xz))
