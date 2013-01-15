@@ -544,7 +544,7 @@ int scan_load_hosts(char *filename)
    /* read the file */
    for (nhosts = 0; !feof(hf); nhosts++) {
 
-      if (fscanf(hf,"%15s %17s %127s\n", ip, mac, name) != 3 ||
+      if (fscanf(hf, "%"EC_TOSTRING(MAX_ASCII_ADDR_LEN)"s %"EC_TOSTRING(ETH_ASCII_ADDR_LEN)"s %"EC_TOSTRING(MAX_HOSTNAME_LEN)"s\n", ip, mac, name) != 3 ||
          *ip == '#' || *mac == '#' || *name == '#')
          continue;
 

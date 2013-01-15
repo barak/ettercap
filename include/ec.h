@@ -78,6 +78,11 @@
 
 #define SAFE_FREE(x) do{ if(x) { free(x); x = NULL; } }while(0)
 
+
+/* convert to string */
+#define EC_STRINGIFY(in) #in
+#define EC_TOSTRING(in) EC_STRINGIFY(in)
+
 #define __init __attribute__ ((constructor))
 
 #ifndef __set_errno
