@@ -3,7 +3,7 @@
 set -e
 
 # Replace documentation directory with symlink
-docdir="/usr/share/doc/ettercap-text-only"
+docdir="/usr/share/doc/${DPKG_MAINTSCRIPT_PACKAGE}"
 if [ -d ${docdir} -a ! -L $docdir ]; then
     if rmdir ${docdir} 2>/dev/null; then
         ln -sf /usr/share/doc/ettercap-common ${docdir}
