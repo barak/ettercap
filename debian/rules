@@ -3,16 +3,25 @@
 %:
 	dh $@ --parallel
 
+LIBNET_VER := $(shell dpkg --status libnet1-dev | awk '/^Version:/ {print $$2}')
+
+ENABLE_IPV6 := $(shell \
+ if dpkg --compare-versions $(LIBNET_VER) ge 1.1.6; \
+ then echo ON; \
+ else echo OFF; \
+ fi)
+
 override_dh_auto_configure:
+	@echo LIBNET_VER = $(LIBNET_VER)
+	@echo ENABLE_IPV6 = $(ENABLE_IPV6)
 	@echo main configuration deferred until build, as it must be done twice
 
-# add this when suitable libnet hits Debian: -DENABLE_IPV6=ON
 override_dh_auto_build:
-	dh_auto_configure -- -DENABLE_GTK=OFF
+	dh_auto_configure -- -DENABLE_IPV6=$(ENABLE_IPV6) -DENABLE_GTK=OFF
 	dh_auto_build
 	mkdir tmp
 	mv obj*/src/ettercap ettercap-text-only
-	dh_auto_configure -- -DENABLE_GTK=ON
+	dh_auto_configure -- -DENABLE_IPV6=$(ENABLE_IPV6) -DENABLE_GTK=ON
 	dh_auto_build
 
 override_dh_auto_install:
