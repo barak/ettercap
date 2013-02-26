@@ -1,4 +1,4 @@
-ettercap (1:0.7.5.3-2) unstable; urgency=low
+ettercap (1:0.7.5.3-2) experimental; urgency=low
 
   * tweak debian/rules to enable IPv6 with libnet 1.1.6 or greater
 
