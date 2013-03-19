@@ -1,4 +1,4 @@
-ettercap (1:0.7.5.4-1) unstable; urgency=low
+ettercap (1:0.7.6-1) unstable; urgency=low
 
   * New upstream version
   * Dropped version dependency for curl (fixed in cmake)
