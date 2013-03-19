@@ -41,9 +41,5 @@ override_dh_installdocs:
 	dh_installdocs -pettercap-common
 	dh_installdocs -Nettercap-common --link-doc=ettercap-common
 
-override_dh_installchangelogs:
-	dh_installchangelogs -k CHANGELOG
-
-
 override_dh_strip:
 	dh_strip --dbg-package=ettercap-dbg
