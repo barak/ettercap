@@ -1,17 +1,4 @@
 version=3
 
-# Of historic interest:
-# http://githubredir.debian.net/github/drizzt/ettercap \
-#  /github/drizzt/ettercap/NG-(.*)[.]tar[.]gz
-
 http://ettercap.github.com/ettercap/downloads.html \
 (?:.*[/=]|)ettercap[_\-](\d.*)\.(?:tgz|tbz2|txz|tar\.(?:gz|bz2|xz)).*
-# Bart Martens <bartm@debian.org>  Wed, 27 Feb 2013 06:47:58 +0000
-
-# Primary repo:
-#http://githubredir.debian.net/github/Ettercap/ettercap \
-# /github/Ettercap/ettercap/v(\d.*)\.(?:tgz|zip|tar\.(?:gz|bz2|xz))
-
-# Old unused repo
-# Bart Martens <bartm@debian.org>  Thu, 15 Nov 2012 10:39:31 +0000
-http://qa.debian.org/watch/sf.php/ettercap/ettercap-(\d.*)\.(?:tgz|zip|tar\.(?:gz|bz2|xz))
