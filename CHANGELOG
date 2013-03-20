@@ -5,8 +5,15 @@ Legenda:
          !! bug fixed
 
 =========================================
-0.7.5.4-Assimilation 20130319
-   !! Fixed u and p fields handling in Parse_Method_Get
+0.7.6-Locard 20130320
+    + New logo
+   !! Fixes to TN3270 dissector, Sslstrip and logo
+   !! PostgreSQL dissector: Update output format to reflect release syntax for John the Ripper 1.7.9-Jumbo-8.
+      The old format is still supported, but deprecated. Also, change the output for more effective cracking in 'Single' mode.
+    + Ensure that we find required packages with cmake
+    + New clean-all cmake target
+   !! Fixed memory leak in SSL Strip plugin
+    - Removed 'u' and 'p' fields  from etter.fields
     + Added UA parsing to http packets
    !! Fixed check in invalid ip header
    !! Fixed QoS packets handling (they aren't dropped anymore)
