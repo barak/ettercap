@@ -1,3 +1,9 @@
+ettercap (1:0.7.6-2~exp1) experimental; urgency=low
+
+  * Experimental release with IPv6 support
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Wed, 27 Mar 2013 11:55:24 +0000
+
 ettercap (1:0.7.6-1) unstable; urgency=low
 
   [ Gianfranco Costamagna ]
