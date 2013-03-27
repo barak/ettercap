@@ -1,9 +1,13 @@
 ettercap (1:0.7.6-1) unstable; urgency=low
 
+  [ Gianfranco Costamagna ]
   * New upstream version
   * Dropped version dependency for curl (fixed in cmake)
 
- -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Fri, 08 Mar 2013 17:45:55 +0100
+  [ Barak A. Pearlmutter ]
+  * Tweak debian/watch to point to official upstream only
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Wed, 27 Mar 2013 11:44:17 +0000
 
 ettercap (1:0.7.5.3-2) unstable; urgency=low
 
