@@ -144,7 +144,7 @@ static EC_THREAD_FUNC(scan_thread)
    ts.tv_nsec = 0;
 
    /* in text mode and demonized this function should NOT be a thread */
-   if (GBL_UI->type == UI_TEXT || GBL_UI->type == UI_DAEMONIZE || GBL_UI->type == UI_CURSES )
+   if (GBL_UI->type == UI_TEXT || GBL_UI->type == UI_DAEMONIZE || GBL_UI->type == UI_CURSES)
       threadize = 0;
 
 #ifdef OS_MINGW
@@ -395,7 +395,7 @@ static void scan_netmask(pthread_t pid)
    for (i = 1; i <= nhosts; i++) {
       /* calculate the ip */
       current = (myip & netmask) | htonl(i);
-      ip_addr_init(&scanip, AF_INET, (char *)&current);
+      ip_addr_init(&scanip, AF_INET, (u_char *)&current);
 
       SAFE_CALLOC(e, 1, sizeof(struct ip_list));
 
@@ -461,8 +461,11 @@ static void scan_targets(pthread_t pid)
    int nhosts = 0, found, n = 1, ret;
    struct ip_list *e, *i, *m, *tmp;
    char title[100];
+
+#ifdef WITH_IPV6
    struct ip_addr ip;
    struct ip_addr bc;
+#endif
 
 #if !defined(OS_WINDOWS)
    struct timespec tm;
@@ -560,7 +563,7 @@ static void scan_targets(pthread_t pid)
 #ifdef WITH_IPV6
          case AF_INET6:
             ip_addr_is_local(&e->ip, &ip);
-            ip_addr_init(&bc, AF_INET6, IP6_ALL_NODES);
+            ip_addr_init(&bc, AF_INET6, (u_char*)IP6_ALL_NODES);
             send_icmp6_nsol(&ip, &bc, &e->ip, GBL_IFACE->mac);
             break;
 #endif
@@ -643,7 +646,7 @@ int scan_load_hosts(char *filename)
          SEMIFATAL_ERROR("Bad parsing on line %d", nhosts + 1);
       }
 
-      ip_addr_init(&hip, proto, (char *)tip);
+      ip_addr_init(&hip, proto, (u_char *)tip);
 
       /* wipe the null hostname */
       if (!strcmp(name, "-"))

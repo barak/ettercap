@@ -64,6 +64,9 @@ FUNC_DECODER(dissector_o5logon)
    char tmp[MAX_ASCII_ADDR_LEN];
    struct o5logon_status *conn_status;
 
+   //suppress unused warning
+   (void)end;
+
    if (FROM_CLIENT("o5logon", PACKET)) {
 
       /* Interesting packets have len >= 4 */
@@ -94,8 +97,11 @@ FUNC_DECODER(dissector_o5logon)
               last--;
             }
             int length = *(last+1);
-            strncpy((char*)conn_status->user, (char*)last + 2, length);
-            conn_status->user[length] = 0;
+            if (length < sizeof(conn_status->user))
+            {
+               strncpy((char*)conn_status->user, (char*)last + 2, length);
+               conn_status->user[length] = 0;
+            }
 
             /* save the session */
             session_put(s);

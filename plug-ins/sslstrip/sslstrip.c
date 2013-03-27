@@ -32,7 +32,6 @@
 
 #include <sys/wait.h>
 
-#ifdef HAVE_PCRE_H
 #include <pcre.h>
 
 #ifdef OS_LINUX
@@ -44,7 +43,6 @@
 #include <sys/poll.h>
 #endif
 
-#ifdef HAVE_LIBCURL
 #include <curl/curl.h>
 
 #if (LIBCURL_VERSION_MAJOR < 7) || (LIBCURL_VERSION_MINOR < 26)
@@ -269,8 +267,8 @@ static int sslstrip_is_http(struct packet_object *po)
 	    ntohs(po->L4.src) == 80)
 		return 1;
 
-	if (strstr(po->DATA.data, "HTTP/1.1") ||
-	    strstr(po->DATA.data, "HTTP/1.0"))
+	if (strstr((const char*)po->DATA.data, "HTTP/1.1") ||
+	    strstr((const char*)po->DATA.data, "HTTP/1.0"))
 		return 1;
 	return 0;
 }
@@ -543,7 +541,7 @@ static EC_THREAD_FUNC(http_accept_thread)
 				continue;
 			}
 
-			ip_addr_init(&(connection->ip[HTTP_CLIENT]), AF_INET, (char *)&(client_sin.sin_addr.s_addr));
+			ip_addr_init(&(connection->ip[HTTP_CLIENT]), AF_INET, (u_char *)&(client_sin.sin_addr.s_addr));
 			connection->port[HTTP_CLIENT] = client_sin.sin_port;
 			connection->port[HTTP_SERVER] = htons(80);
 			//connection->request->len = 0;
@@ -604,7 +602,7 @@ static int http_get_peer(struct http_connection *connection)
 	 socklen_t sa_in_sz = sizeof(struct sockaddr_in);
 	 getsockopt (connection->fd, SOL_IP, SO_ORIGINAL_DST, (struct sockaddr*)&sa_in, &sa_in_sz);
 
-	 ip_addr_init(&(connection->ip[HTTP_SERVER]), AF_INET, (char *)&(sa_in.sin_addr.s_addr));
+	 ip_addr_init(&(connection->ip[HTTP_SERVER]), AF_INET, (u_char *)&(sa_in.sin_addr.s_addr));
 #endif
 
 	
@@ -679,10 +677,10 @@ static void http_handle_request(struct http_connection *connection, struct packe
 		connection->request->method = HTTP_POST;
 	}
 
-	char *r = po->DATA.data;
+	char *r = (char*)po->DATA.data;
 
 	//Skip the first line of request
-	r = strstr(po->DATA.data, "\r\n");
+	r = strstr((const char*)po->DATA.data, "\r\n");
 	r += 2; //Skip \r\n
 
 	char *h = strdup(r);
@@ -692,7 +690,12 @@ static void http_handle_request(struct http_connection *connection, struct packe
 
 	char *end_header = strstr(h, "\r\n\r\n");
 
-	if (!end_header) return; //Something went really wrong here
+	if (!end_header)
+	{
+		SAFE_FREE(h);
+		SAFE_FREE(body);
+		return; //Something went really wrong here
+	}
 	*end_header = '\0';
 
 	char *header;
@@ -785,6 +788,12 @@ static void http_send(struct http_connection *connection, struct packet_object *
 	curl_easy_setopt(connection->handle, CURLOPT_ACCEPT_ENCODING, "deflate");
 	curl_easy_setopt(connection->handle, CURLOPT_COOKIEFILE, ""); //Initialize cookie engine
 
+	/* Only allow HTTP and HTTPS */
+	curl_easy_setopt(connection->handle, CURLOPT_PROTOCOLS, (long) CURLPROTO_HTTP | 
+						(long)CURLPROTO_HTTPS);
+	curl_easy_setopt(connection->handle, CURLOPT_REDIR_PROTOCOLS, (long) CURLPROTO_HTTP | 
+						(long) CURLPROTO_HTTPS);
+
 
 	if(connection->request->method == HTTP_POST) {
 		curl_easy_setopt(connection->handle, CURLOPT_POST, 1L);
@@ -828,7 +837,7 @@ static void http_send(struct http_connection *connection, struct packet_object *
 
 
 	//Allow decoders to run on HTTP response
-	http_initialize_po(po, connection->response->html, connection->response->len);
+	http_initialize_po(po, (u_char*)connection->response->html, connection->response->len);
 	packet_destroy_object(po);
    	po->len = po->DATA.len;
    	po->L4.flags |= TH_PSH;
@@ -864,8 +873,11 @@ static void http_send(struct http_connection *connection, struct packet_object *
 static int http_write(int fd, char *ptr, size_t total_len)
 {
 	int len, err;
-	int bytes_sent= 0;
+	unsigned int bytes_sent = 0;
 	int bytes_remaining = total_len;
+	struct timespec tm;
+	tm.tv_sec = 0;
+	tm.tv_nsec = 100 * 1000 * 1000; //100ms
 
 	DEBUG_MSG("SSLStrip: Total length %ld", total_len);
 
@@ -888,6 +900,8 @@ static int http_write(int fd, char *ptr, size_t total_len)
 		bytes_remaining -= len;
 
 		DEBUG_MSG("SSLStrip: Bytes sent %d", bytes_sent);
+		nanosleep(&tm, NULL);
+
 	
 	}
 
@@ -1015,7 +1029,7 @@ static void http_remove_https(struct http_connection *connection)
 	size_t https_len = strlen("https://");
 	size_t http_len = strlen("http://");
 	struct https_link *l, *link;
-	int offset = 0;
+	size_t offset = 0;
 	int rc;
 	int ovector[30];
 	char changed = 0;
@@ -1320,14 +1334,11 @@ void http_update_content_length(struct http_connection *connection) {
                 content_length += strlen("Content-Length: ");
 
                 char c_length[20];
-                memset(&c_length, 20, '\0');
-                snprintf(c_length, 20, "%ld", connection->response->len);
+                memset(&c_length, '\0', 20);
+                snprintf(c_length, 20, "%u", connection->response->len);
 
                 memcpy(buf+(content_length-buf)-1, c_length, strlen(c_length));
         }
 }
-
-#endif /* HAVE_LIBCURL */
-#endif /* HAVE_PCRE_H */
 
 // vim:ts=3:expandtab

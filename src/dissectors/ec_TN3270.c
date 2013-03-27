@@ -1,5 +1,5 @@
 /*
-    ettercap -- dissector for Mainframe TN3270 protocol
+    ettercap -- dissector for Mainframe TN3270 z/OS TSO logon protocol
 
     Copyright (C) Dhiru Kholia (dhiru at openwall.com)
 
@@ -7,7 +7,7 @@
 
     Created by: Soldier of Fortran (@mainframed767)
 
-    (tested against x3270 and TN3270X)
+    (tested against x3270 and TN3270 X and TN3270 Plus)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,6 +47,7 @@ void __init TN3270_init(void)
    dissect_add("TN3270", APP_LAYER_TCP, 623, dissector_TN3270);
 }
 
+/* Function to convert EBCDIC to ASCII */
 static unsigned char e2a[256] = {
         0,  1,  2,  3,156,  9,134,127,151,141,142, 11, 12, 13, 14, 15,
         16, 17, 18, 19,157,133,  8,135, 24, 25,146,143, 28, 29, 30, 31,
@@ -77,43 +78,57 @@ static void ebcdic2ascii(unsigned char *str, int n, unsigned char *out)
 FUNC_DECODER(dissector_TN3270)
 {
    DECLARE_DISP_PTR_END(ptr, end);
-   int i;
+   unsigned int i;
    char tmp[MAX_ASCII_ADDR_LEN];
+
+   //suppress unused warning
+   (void)end;
+
    if (FROM_CLIENT("TN3270", PACKET)) {
 
-      if (PACKET->DATA.len > 200) /* is this always valid? */
+      if (PACKET->DATA.len > 200 || PACKET->DATA.len < 5) /* is this always valid? */
          return NULL;
 
-      unsigned char output[512] = { 0 };
-      unsigned char username[512] = { 0 };
-      unsigned char password[512] = { 0 };
+      char output[512] = { 0 };
+      char username[512] = { 0 };
+      char password[512] = { 0 };
 
-      ebcdic2ascii(ptr, PACKET->DATA.len, output);
+      ebcdic2ascii(ptr, PACKET->DATA.len, (unsigned char*)output);
 
       /* scan packets to find username and password */
-      for (i = 0; i < PACKET->DATA.len; i++) {
+      for (i = 0; i < PACKET->DATA.len - 5; i++) {
          /* find username, logons start with 125 193 (215 or 213) 17 64 90 ordinals
           * We relax the check for third byte because it is less error-prone that way */
          if (ptr[i] == 125 && ptr[i+1] == 193 && /* (ptr[i+2] == 215 || ptr[i+2] == 213) && */
                  ptr[i+3] == 17 && ptr[i+4] == 64 && ptr[i+5] == 90) {
                  /* scan for spaces */
                  int j = i + 6;
-                 while (output[j] == 32)
+                 while (j < 512 && output[j] == 32)
                     j++;
+
+		 if (j==511) /* Don't even bother */
+			continue;
+
                  strncpy(username, &output[j], 512);
+
+		 username[511] = 0; /* Boundary */
+
                  int l = strlen(username);
                  username[l-2] = 0;
-                 DISSECT_MSG("%s:%d <= Username : %s\n", ip_addr_ntoa(&PACKET->L3.dst, tmp), ntohs(PACKET->L4.dst), username);
+                 DISSECT_MSG("%s:%d <= z/OS TSO Username : %s\n", ip_addr_ntoa(&PACKET->L3.dst, tmp), ntohs(PACKET->L4.dst), username);
          }
          /* find password */
          if (ptr[i] == 125 && ptr[i+1] == 201 && ptr[i+3] == 17 && ptr[i+4] == 201 && ptr[i+5] == 195) {
                  strncpy(password, &output[i + 6], 512);
+		 password[511] = 0; /* Boundary */
                  int l = strlen(password);
                  password[l-2] = 0;
-                 DISSECT_MSG("%s:%d <= Password : %s\n", ip_addr_ntoa(&PACKET->L3.dst, tmp), ntohs(PACKET->L4.dst), password);
+                 DISSECT_MSG("%s:%d <= z/OS TSO Password : %s\n", ip_addr_ntoa(&PACKET->L3.dst, tmp), ntohs(PACKET->L4.dst), password);
          }
       }
    }
+
+   return NULL;
 }
 
 // vim:ts=3:expandtab

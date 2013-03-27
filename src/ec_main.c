@@ -114,7 +114,8 @@ int main(int argc, char *argv[])
       disable_ip_forward();
 	
 #ifdef OS_LINUX
-      disable_interface_offload();
+      if (!GBL_OPTIONS->read)
+      	disable_interface_offload();
 #endif
       /* binds ports and set redirect for ssl wrapper */
       if(GBL_SNIFF->type == SM_UNIFIED && GBL_OPTIONS->ssl_mitm)
@@ -149,7 +150,7 @@ int main(int argc, char *argv[])
    http_fields_init();
 
    /* set the encoding for the UTF-8 visualization */
-   set_utf8_encoding(GBL_CONF->utf8_encoding);
+   set_utf8_encoding((u_char*)GBL_CONF->utf8_encoding);
   
    /* print all the buffered messages */
    if (GBL_UI->type == UI_TEXT)

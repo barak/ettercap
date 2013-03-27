@@ -58,6 +58,7 @@ set(EC_SRC
         dissectors/ec_irc.c
         dissectors/ec_iscsi.c
         dissectors/ec_ldap.c
+        dissectors/ec_mdns.c
         dissectors/ec_mongodb.c
         dissectors/ec_mountd.c
         dissectors/ec_msn.c
@@ -97,6 +98,7 @@ set(EC_SRC
         protocols/ec_gre.c
         protocols/ec_icmp.c
         protocols/ec_ip.c
+        protocols/ec_ppi.c
         protocols/ec_ppp.c
         protocols/ec_prism.c
         protocols/ec_radiotap.c
