@@ -1,3 +1,13 @@
+ettercap (1:0.8.0-1) unstable; urgency=low
+
+  * New upstream version
+  * Added policykit-1 to ettercap-graphical
+  * Added luajit to build-dep
+  * Updated debian/rules clean target
+  * Removed patches, addressed upstream
+
+ -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Fri, 12 Jul 2013 17:22:09 +0200
+
 ettercap (1:0.7.6-1) unstable; urgency=low
 
   [ Gianfranco Costamagna ]
