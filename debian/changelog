@@ -5,6 +5,8 @@ ettercap (1:0.8.0-1) unstable; urgency=low
   * Added luajit to build-dep
   * Updated debian/rules clean target
   * Removed patches, addressed upstream
+  * Added ethtool dependency, needed for disabling
+    segmentation offload
 
  -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Fri, 12 Jul 2013 17:22:09 +0200
 

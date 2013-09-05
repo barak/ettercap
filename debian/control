@@ -52,7 +52,7 @@ Description: Multipurpose sniffer/interceptor/logger for switched LAN
 
 Package: ettercap-text-only
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version}), ethtool
 Replaces: ettercap-gtk, ettercap-graphical, ettercap
 Conflicts: ettercap-gtk, ettercap-graphical, ettercap (<= 1:0.7.3)
 Provides: ettercap
