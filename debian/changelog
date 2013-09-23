@@ -1,5 +1,6 @@
 ettercap (1:0.8.0-1) unstable; urgency=low
 
+  [ Gianfranco Costamagna ]
   * New upstream version
   * Added policykit-1 to ettercap-graphical
   * Added luajit to build-dep
@@ -9,7 +10,10 @@ ettercap (1:0.8.0-1) unstable; urgency=low
     segmentation offload
   * Tweaked debian/watch file
 
- -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Fri, 12 Jul 2013 17:22:09 +0200
+  [ Barak A. Pearlmutter ]
+  * Migrated debian/rules clean target to debian/clean
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 23 Sep 2013 14:05:44 +0100
 
 ettercap (1:0.7.6-1) unstable; urgency=low
 
