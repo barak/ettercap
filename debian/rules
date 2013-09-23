@@ -15,10 +15,6 @@ ENABLE_IPV6 := $(shell \
 #/usr/bin/ld.bfd.real: CMakeFiles/lib_ettercap.dir/dissectors/ec_ssh.c.o: relocation R_X86_64_PC32 against symbol `ssh_conn_key' can not be used when making a shared object; recompile with -fPIC
 #export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
-override_dh_clean:
-	rm -rf ettercap-text-only
-	dh_clean
-
 override_dh_auto_configure:
 	@echo LIBNET_VER = $(LIBNET_VER)
 	@echo ENABLE_IPV6 = $(ENABLE_IPV6)
