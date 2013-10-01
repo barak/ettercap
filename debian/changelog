@@ -12,8 +12,10 @@ ettercap (1:0.8.0-1) unstable; urgency=low
 
   [ Barak A. Pearlmutter ]
   * Migrated debian/rules clean target to debian/clean
+  * Add some lintian overrides to deal with the internal but public
+    libettercap.so.
 
- -- Barak A. Pearlmutter <bap@debian.org>  Mon, 23 Sep 2013 14:05:44 +0100
+ -- Barak A. Pearlmutter <bap@debian.org>  Thu, 03 Oct 2013 00:47:58 +0100
 
 ettercap (1:0.7.6-1) unstable; urgency=low
 
