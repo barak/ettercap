@@ -51,7 +51,8 @@ Description: Multipurpose sniffer/interceptor/logger for switched LAN
 
 Package: ettercap-text-only
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version}), ethtool
+Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version}),
+	ethtool
 Replaces: ettercap-gtk, ettercap-graphical, ettercap
 Conflicts: ettercap-gtk, ettercap-graphical, ettercap (<= 1:0.7.3)
 Provides: ettercap
@@ -75,7 +76,8 @@ Description: Ettercap console-mode executable
 
 Package: ettercap-graphical
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version}), policykit-1
+Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version}),
+	ethtool, policykit-1
 Replaces: ettercap-gtk, ettercap-text-only, ettercap, ettercap-common
 Conflicts: ettercap-gtk, ettercap-text-only, ettercap (<= 1:0.7.3)
 Provides: ettercap
