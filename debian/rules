@@ -40,6 +40,8 @@ override_dh_install:
 	 debian/tmp/usr/sbin/ettercap-text-only \
 	 debian/ettercap-text-only/usr/sbin/ettercap
 	-rm --verbose debian/ettercap-common/usr/share/ettercap/ettercap.png
+	chrpath --delete debian/ettercap-text-only/usr/sbin/ettercap
+	chrpath --delete debian/ettercap-graphical/usr/sbin/ettercap
 
 override_dh_installdocs:
 	dh_installdocs -pettercap-common
