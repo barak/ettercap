@@ -34,7 +34,7 @@ override_dh_auto_install:
 	install --mode=0755 ettercap-text-only debian/tmp/usr/sbin/
 
 override_dh_install:
-	dh_install
+	dh_install --list-missing
 	mkdir -p debian/ettercap-text-only/usr/sbin
 	install --mode=0755 \
 	 debian/tmp/usr/sbin/ettercap-text-only \
