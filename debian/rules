@@ -20,11 +20,14 @@ override_dh_auto_configure:
 	@echo ENABLE_IPV6 = $(ENABLE_IPV6)
 	@echo main configuration deferred until build, as it must be done twice
 
+ETTERCAP_OPTIONS=-DENABLE_IPV6=$(ENABLE_IPV6) -DBUNDLED_LIBS=OFF
+
 override_dh_auto_build:
-	dh_auto_configure -- -DENABLE_IPV6=$(ENABLE_IPV6) -DENABLE_GTK=OFF
+	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=OFF
 	dh_auto_build
 	mv obj*/src/ettercap ettercap-text-only
-	dh_auto_configure -- -DENABLE_IPV6=$(ENABLE_IPV6) -DENABLE_GTK=ON
+	$(MAKE) -C obj*/src clean
+	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=ON
 	dh_auto_build
 
 override_dh_auto_install:
