@@ -10,6 +10,7 @@ ettercap (1:0.8.0-1) unstable; urgency=low
     segmentation offload
   * Tweaked debian/watch file
   * Install libettercap.so in ettercap-common.
+  * Added libettercap.so to clean target
 
   [ Raphaël Hertzog ]
   * Drop Debian specific patches:
