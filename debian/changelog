@@ -11,6 +11,7 @@ ettercap (1:0.8.0-1) unstable; urgency=low
   * Tweaked debian/watch file
   * Install libettercap.so in ettercap-common.
   * Added libettercap.so to clean target
+  * Bumped standard version to 3.9.5, no changes required.
 
   [ Raphaël Hertzog ]
   * Drop Debian specific patches:
