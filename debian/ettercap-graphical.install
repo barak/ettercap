@@ -1,5 +1,6 @@
-/usr/bin/ettercap		/usr/sbin/
-/usr/bin/ettercap-pkexec	/usr/bin/
+ettercap /usr/sbin
+#/usr/sbin/ettercap
+/usr/bin/ettercap-pkexec
 /usr/share/ettercap/ettercap.png
 /usr/share/polkit-1
 /usr/share/pixmaps
