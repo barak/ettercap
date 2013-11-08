@@ -23,38 +23,15 @@ override_dh_auto_configure:
 ETTERCAP_OPTIONS=-DENABLE_IPV6=$(ENABLE_IPV6) -DBUNDLED_LIBS=OFF
 
 override_dh_auto_build:
-	@echo Build just the library:
-	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=OFF -DLIBRARY_BUILD=ON
-	dh_auto_build
-	mv obj*/src/libettercap.so ./
-	$(MAKE) -C obj*/src clean
 	@echo Build the text-only executable, generates unused library:
-	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=OFF -DLIBRARY_BUILD=OFF
+	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=OFF
 	dh_auto_build
 	mv obj*/src/ettercap ettercap-text-only
-	$(MAKE) -C obj*/src clean
 	@echo Build the graphics-enabled executable, generates unused library:
-	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=ON -DLIBRARY_BUILD=OFF
+	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=ON
 	dh_auto_build
-
-override_dh_auto_install:
-	dh_auto_install
-	mkdir -p debian/tmp/usr/sbin
-	sed 's/bin/sbin/g' -i debian/tmp/usr/share/polkit-1/actions/org.pkexec.ettercap.policy
-	@echo We love installing libraries so much that we install a library over the installed library:
-	install --mode=0644 libettercap.so debian/tmp/usr/lib/
-	@echo The text-only binary needs its own name:
-	install --mode=0755 ettercap-text-only debian/tmp/usr/sbin/
-
-override_dh_install:
-	dh_install --list-missing
-	mkdir -p debian/ettercap-text-only/usr/sbin
-	install --mode=0755 \
-	 debian/tmp/usr/sbin/ettercap-text-only \
-	 debian/ettercap-text-only/usr/sbin/ettercap
-	-rm --verbose debian/ettercap-common/usr/share/ettercap/ettercap.png
-	chrpath --delete debian/ettercap-text-only/usr/sbin/ettercap
-	chrpath --delete debian/ettercap-graphical/usr/sbin/ettercap
+	mv obj*/src/ettercap ettercap
+	mv obj*/plug-ins/*.so .
 
 override_dh_installdocs:
 	dh_installdocs -pettercap-common
@@ -62,3 +39,9 @@ override_dh_installdocs:
 
 override_dh_strip:
 	dh_strip --dbg-package=ettercap-dbg
+
+#to be dropped in the next ettercap release in favour of INSTALL_EXEDIR cmake option
+override_dh_auto_install:
+	dh_auto_install
+	mkdir -p debian/tmp/usr/sbin
+	sed 's/bin/sbin/g' -i debian/tmp/usr/share/polkit-1/actions/org.pkexec.ettercap.policy
