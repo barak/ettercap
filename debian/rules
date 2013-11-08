@@ -39,3 +39,9 @@ override_dh_installdocs:
 
 override_dh_strip:
 	dh_strip --dbg-package=ettercap-dbg
+
+#to be dropped in the next ettercap release in favour of INSTALL_EXEDIR cmake option
+override_dh_auto_install:
+	dh_auto_install
+	mkdir -p debian/tmp/usr/sbin
+	sed 's/bin/sbin/g' -i debian/tmp/usr/share/polkit-1/actions/org.pkexec.ettercap.policy
