@@ -1,7 +1,7 @@
 /etc
 
 /usr/lib/libettercap.so
-*.so /usr/lib/ettercap/
+/usr/lib/ettercap/*.so
 
 /usr/bin/etterfilter
 /usr/bin/etterlog
