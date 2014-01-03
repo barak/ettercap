@@ -4,6 +4,7 @@
 /usr/lib/libettercap.so.*
 /usr/lib/ettercap/*.so /usr/lib/ettercap
 
+/usr/bin/ettercap-pkexec
 /usr/bin/etterfilter
 /usr/bin/etterlog
 

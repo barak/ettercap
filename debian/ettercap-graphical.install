@@ -1,4 +1,3 @@
-/usr/bin/ettercap-pkexec
 /usr/bin/ettercap /usr/sbin
 /usr/share/ettercap/ettercap.png
 /usr/share/polkit-1
