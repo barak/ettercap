@@ -1,3 +1,12 @@
+ettercap (1:0.8.0-2) unstable; urgency=medium
+
+  * Fiddle faddle with the packaging scripts
+  * Enable lua support with appropriate build dependencies
+  * Name the shared library libettercap.so.0
+  * Update the lintian overrides
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 24 Feb 2014 22:43:15 +0000
+
 ettercap (1:0.8.0-1) unstable; urgency=low
 
   [ Gianfranco Costamagna ]
