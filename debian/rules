@@ -11,20 +11,17 @@ ENABLE_IPV6 := $(shell \
  else echo OFF; \
  fi)
 
-#For some reasons ettercap FTBFS with -PIC enabled
-#/usr/bin/ld.bfd.real: CMakeFiles/lib_ettercap.dir/dissectors/ec_ssh.c.o: relocation R_X86_64_PC32 against symbol `ssh_conn_key' can not be used when making a shared object; recompile with -fPIC
-#export DEB_BUILD_MAINT_OPTIONS = hardening=+all
-
 override_dh_auto_configure:
 	@echo LIBNET_VER = $(LIBNET_VER)
 	@echo ENABLE_IPV6 = $(ENABLE_IPV6)
 	@echo main configuration deferred until build, as it must be done twice
 
 override_dh_auto_build:
-	dh_auto_configure -- -DENABLE_IPV6=$(ENABLE_IPV6) -DENABLE_GTK=OFF -DCMAKE_BUILD_TYPE=Debug
+	dh_auto_configure -- -DENABLE_IPV6=$(ENABLE_IPV6) -DENABLE_GTK=OFF -DBUNDLED_LIBS=OFF
 	dh_auto_build
-	mv obj*/src/ettercap ettercap-text-only
-	dh_auto_configure -- -DENABLE_IPV6=$(ENABLE_IPV6) -DENABLE_GTK=ON -DCMAKE_BUILD_TYPE=Debug
+	cd obj-* && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+	mv debian/tmp/usr/bin/ettercap ettercap-text-only
+	dh_auto_configure -- -DENABLE_IPV6=$(ENABLE_IPV6) -DENABLE_GTK=ON -DBUNDLED_LIBS=OFF
 	dh_auto_build
 
 override_dh_auto_install:
@@ -34,7 +31,7 @@ override_dh_auto_install:
 	install --mode=0755 ettercap-text-only debian/tmp/usr/sbin/
 
 override_dh_install:
-	dh_install
+	dh_install --list-missing
 	mkdir -p debian/ettercap-text-only/usr/sbin
 	install --mode=0755 \
 	 debian/tmp/usr/sbin/ettercap-text-only \

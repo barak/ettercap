@@ -16,7 +16,7 @@ Build-Depends: debhelper (>= 9),
  libssl-dev,
  libcurl4-openssl-dev | libcurl-ssl-dev | libcurl-dev,
  ghostscript,
- luajit
+ luajit,
 Standards-Version: 3.9.4
 Homepage: http://ettercap.sourceforge.net
 Vcs-Git: git://github.com/barak/ettercap.git
@@ -51,8 +51,7 @@ Description: Multipurpose sniffer/interceptor/logger for switched LAN
 
 Package: ettercap-text-only
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version}),
-	ethtool
+Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version}), ethtool
 Replaces: ettercap-gtk, ettercap-graphical, ettercap
 Conflicts: ettercap-gtk, ettercap-graphical, ettercap (<= 1:0.7.3)
 Provides: ettercap
@@ -76,8 +75,7 @@ Description: Ettercap console-mode executable
 
 Package: ettercap-graphical
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version}),
-	ethtool, policykit-1
+Depends: ${shlibs:Depends}, ${misc:Depends}, ettercap-common (= ${binary:Version}), policykit-1
 Replaces: ettercap-gtk, ettercap-text-only, ettercap, ettercap-common
 Conflicts: ettercap-gtk, ettercap-text-only, ettercap (<= 1:0.7.3)
 Provides: ettercap
