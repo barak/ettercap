@@ -28,8 +28,9 @@ ettercap (1:0.8.0-1) unstable; urgency=low
   [ Barak A. Pearlmutter ]
   * Migrated debian/rules clean target to debian/clean
   * Add "chrpath --delete xxx" to debian/rules as necessary.
+  * Apparently Debian passes CMAKE_BUILD_TYPE=RelWithDebInfo; make it so!
 
- -- Barak A. Pearlmutter <bap@debian.org>  Fri, 04 Oct 2013 15:14:08 +0100
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 24 Feb 2014 21:07:04 +0000
 
 ettercap (1:0.7.6-1) unstable; urgency=low
 
