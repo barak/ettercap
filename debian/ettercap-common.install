@@ -1,10 +1,10 @@
-debian/tmp/etc
+/etc
 
-debian/tmp/usr/lib/libettercap.so
-debian/tmp/usr/lib/ettercap/*.so
+/usr/lib/libettercap.so
+*.so /usr/lib/ettercap/
 
-debian/tmp/usr/bin/etterfilter
-debian/tmp/usr/bin/etterlog
+/usr/bin/etterfilter
+/usr/bin/etterlog
 
-debian/tmp/usr/share/ettercap
-debian/tmp/usr/share/man
+/usr/share/ettercap
+/usr/share/man

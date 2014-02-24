@@ -1,6 +1,19 @@
-ettercap (1:0.8.0-0kali1) kali; urgency=low
+ettercap (1:0.8.0-1) unstable; urgency=low
 
-  * New upstream release.
+  [ Gianfranco Costamagna ]
+  * New upstream version
+  * Added policykit-1 to ettercap-graphical
+  * Added luajit to build-dep
+  * Updated debian/rules clean target
+  * Removed patches, addressed upstream
+  * Added ethtool dependency, needed for disabling
+    segmentation offload
+  * Tweaked debian/watch file
+  * Install libettercap.so in ettercap-common.
+  * Added libettercap.so to clean target
+  * Bumped standard version to 3.9.5, no changes required.
+
+  [ Raphaël Hertzog ]
   * Drop Debian specific patches:
     - 0001-desktop.patch: upstream uses pkexec by default now, no need to use
       su-to-root, thus drop dep on menu and add dep on policykit-1
@@ -9,18 +22,14 @@ ettercap (1:0.8.0-0kali1) kali; urgency=low
     CMAKE_BUILD_TYPE=RelWithDebInfo.
   * Tweak install files to let upstream install the desktop file, the
     policy kit rules, and the pkexec wrapper.
-  * Install libettercap.so in ettercap-common.
-  * Add disable-rpath.patch to disable RPATH generation.
   * Add some lintian overrides to deal with the internal but public
     libettercap.so.
 
- -- Raphaël Hertzog <hertzog@debian.org>  Mon, 30 Sep 2013 21:17:08 +0200
+  [ Barak A. Pearlmutter ]
+  * Migrated debian/rules clean target to debian/clean
+  * Add "chrpath --delete xxx" to debian/rules as necessary.
 
-ettercap (1:0.7.6-1kali0) kali; urgency=low
-
-  * Import ettercap from testing
-
- -- Mati Aharoni <muts@kali.org>  Mon, 09 Sep 2013 07:01:22 -0400
+ -- Barak A. Pearlmutter <bap@debian.org>  Fri, 04 Oct 2013 15:14:08 +0100
 
 ettercap (1:0.7.6-1) unstable; urgency=low
 

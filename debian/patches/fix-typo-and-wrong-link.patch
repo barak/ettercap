@@ -1,0 +1,235 @@
+--- ettercap-0.8.0.orig/CMakeLists.txt
++++ ettercap-0.8.0/CMakeLists.txt
+@@ -32,6 +32,10 @@ if(contains_valid EQUAL -1)
+ endif()
+ UNSET(contains_valid)
+ 
++# Ensure that, when we link to stuff outside of our build path, we include the
++# library dir path in our RPATH.
++set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
++
+ include(CMakeDependentOption)
+ 
+ # If SYSTEM_LIBS is set to off, then all SYSTEM_* options will be
+--- ettercap-0.8.0.orig/cmake/Modules/EttercapLibCheck.cmake
++++ ettercap-0.8.0/cmake/Modules/EttercapLibCheck.cmake
+@@ -1,6 +1,7 @@
+ ## The easy part
+ 
+ set(EC_LIBS)
++set(EC_LIBETTERCAP_LIBS)
+ set(EC_INCLUDE)
+ 
+ set(EF_LIBS)
+@@ -41,6 +42,7 @@ if(ENABLE_GTK)
+ 	find_library(FOUND_GTHREAD gthread-2.0)
+     	if(FOUND_GTHREAD)
+ 		set(EC_LIBS ${EC_LIBS} ${FOUND_GTHREAD})
++		set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${FOUND_GTHREAD})
+     	endif(FOUND_GTHREAD)
+     else(OS_DARWIN)
+         set(EC_LIBS ${EC_LIBS} gthread-2.0)
+@@ -51,6 +53,7 @@ if(ENABLE_SSL)
+     find_package(OpenSSL REQUIRED)
+     set(HAVE_OPENSSL 1)
+     set(EC_LIBS ${EC_LIBS} ${OPENSSL_LIBRARIES})
++    set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${OPENSSL_LIBRARIES})
+     set(EC_INCLUDE ${EC_INCLUDE} ${OPENSSL_INCLUDE_DIR})
+ else(ENABLE_SSL)
+     set(HAVE_OPENSSL 0)
+@@ -58,6 +61,7 @@ endif(ENABLE_SSL)
+ 
+ find_package(ZLIB REQUIRED)
+ set(EC_LIBS ${EC_LIBS} ${ZLIB_LIBRARIES})
++set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${ZLIB_LIBRARIES})
+ set(EC_INCLUDE ${EC_INCLUDE} ${ZLIB_INCLUDE_DIRS})
+ set(EL_LIBS ${EL_LIBS} ${ZLIB_LIBRARIES})
+ 
+@@ -65,6 +69,7 @@ set(CMAKE_THREAD_PREFER_PTHREAD 1)
+ find_package(Threads REQUIRED)
+ if(CMAKE_USE_PTHREADS_INIT)
+     set(EC_LIBS ${EC_LIBS} ${CMAKE_THREAD_LIBS_INIT})
++    set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+     set(EF_LIBS ${EF_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+     set(EL_LIBS ${EL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+ else(CMAKE_USE_PTHREADS_INIT)
+@@ -84,6 +89,8 @@ if(NOT HAVE_UTF8)
+     if(HAVE_ICONV)
+         set(HAVE_UTF8 1)
+         set(EC_LIBS ${EC_LIBS} ${HAVE_ICONV})
++# Not needed the next one?
++        set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${HAVE_ICONV})
+         set(EL_LIBS ${EL_LIBS} ${HAVE_ICONV})
+     endif(HAVE_ICONV)
+ endif(NOT HAVE_UTF8)
+@@ -104,6 +111,7 @@ if(ENABLE_PLUGINS)
+         if(HAVE_DL)
+             set(HAVE_PLUGINS 1)
+             set(EC_LIBS ${EC_LIBS} ${HAVE_DL})
++            set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${HAVE_DL})
+         endif(HAVE_DL)
+     endif(HAVE_DLOPEN)
+ endif(ENABLE_PLUGINS)
+@@ -151,6 +159,7 @@ CHECK_FUNCTION_EXISTS(strndup HAVE_STRND
+ find_library(HAVE_PCAP pcap)
+ if(HAVE_PCAP)
+     set(EC_LIBS ${EC_LIBS} ${HAVE_PCAP})
++    set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${HAVE_PCAP})
+ else(HAVE_PCAP)
+     message(FATAL_ERROR "libpcap not found!")
+ endif(HAVE_PCAP)
+@@ -190,12 +199,13 @@ endif(NOT LIBNET_FOUND)
+ 
+ include_directories(${LIBNET_INCLUDE_DIR})
+ set(EC_LIBS ${EC_LIBS} ${LIBNET_LIBRARY})
+-
++set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${LIBNET_LIBRARY})
+ # end LIBNET 
+ 
+ find_library(HAVE_RESOLV resolv)
+ if(HAVE_RESOLV)
+ 	set(EC_LIBS ${EC_LIBS} ${HAVE_RESOLV})
++        set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${HAVE_RESOLV})
+ 	set(HAVE_DN_EXPAND 1 CACHE PATH "Found dn_expand")
+ endif(HAVE_RESOLV)
+ 
+@@ -204,5 +214,6 @@ if(PCRE_LIBRARY)
+     set(HAVE_PCRE 1)
+     include_directories(${PCRE_INCLUDE_DIR})
+     set(EC_LIBS ${EC_LIBS} ${PCRE_LIBRARY})
++    set(EC_LIBETTERCAP_LIBS ${EC_LIBETTERCAP_LIBS} ${PCRE_LIBRARY})
+     set(EF_LIBS ${EF_LIBS} ${PCRE_LIBRARY})
+ endif(PCRE_LIBRARY)
+--- ettercap-0.8.0.orig/tests/CMakeLists.txt
++++ ettercap-0.8.0/tests/CMakeLists.txt
+@@ -8,7 +8,7 @@ add_custom_target(test_verbose COMMAND $
+ macro(_t NAME)
+   add_executable(test_${NAME} test_${NAME}.c)
+   add_dependencies(test_${NAME} bundled_check)
+-  target_link_libraries(test_${NAME} lib_ettercap ${CHECK_LIBRARY})
++  target_link_libraries(test_${NAME} lib_ettercap ec_interfaces ${CHECK_LIBRARY})
+   add_test(test_${NAME} ${CMAKE_CURRENT_BINARY_DIR}/test_${NAME})
+ endmacro(_t NAME)
+ 
+--- ettercap-0.8.0.orig/src/CMakeLists.txt
++++ ettercap-0.8.0/src/CMakeLists.txt
+@@ -115,9 +115,6 @@ set(EC_SRC
+         protocols/ec_wifi_radiotap.c
+ )
+ 
+-if (NOT LIBRARY_BUILD)
+-	set(EC_SRC ${EC_SRC} ec_interfaces.c)
+-endif(NOT LIBRARY_BUILD)
+ 
+ if(ENABLE_IPV6)
+     set(EC_SRC ${EC_SRC} protocols/ec_icmp6.c protocols/ec_ip6.c mitm/ec_ip6nd_poison.c)
+@@ -173,10 +170,8 @@ endif(NOT LIBRARY_BUILD)
+ 
+ add_library(lib_ettercap SHARED ${EC_SRC})
+ add_dependencies(lib_ettercap libnet)
++target_link_libraries(lib_ettercap ${EC_LIBETTERCAP_LIBS})
+ 
+-if (NOT LIBRARY_BUILD)
+-	add_executable(ettercap ec_main.c)
+-endif(NOT LIBRARY_BUILD)
+ 
+ # Only compile lua stuff if lua is enabled!
+ IF(ENABLE_LUA)
+@@ -194,11 +189,11 @@ IF(ENABLE_LUA)
+   endif()
+ endif(ENABLE_LUA)
+ 
+-if(NOT LIBRARY_BUILD)
+-	target_link_libraries(lib_ettercap ec_interfaces ${EC_LIBS})
+-else(NOT LIBRARY_BUILD)
+-	target_link_libraries(lib_ettercap ${EC_LIBS})
+-endif(NOT LIBRARY_BUILD)
++#if(NOT LIBRARY_BUILD)
++	#target_link_libraries(lib_ettercap ec_interfaces ${EC_LIBS})
++#else(NOT LIBRARY_BUILD)
++	#target_link_libraries(lib_ettercap ${EC_LIBS})
++#endif(NOT LIBRARY_BUILD)
+ 
+ set_target_properties(lib_ettercap PROPERTIES 
+   ENABLE_EXPORTS On
+@@ -208,7 +203,11 @@ set_target_properties(lib_ettercap PROPE
+   )
+ 
+ if (NOT LIBRARY_BUILD)
+-	target_link_libraries(ettercap lib_ettercap)
++	add_executable(ettercap ec_interfaces.c ec_main.c)
++	target_link_libraries(ettercap ec_interfaces lib_ettercap)
++	set_target_properties(ettercap PROPERTIES 
++  	INSTALL_RPATH ${INSTALL_LIBDIR}
++  	)
+ endif(NOT LIBRARY_BUILD)
+ install(TARGETS lib_ettercap DESTINATION ${INSTALL_LIBDIR})
+ if(NOT LIBRARY_BUILD)
+--- ettercap-0.8.0.orig/src/ec_encryption.c
++++ ettercap-0.8.0/src/ec_encryption.c
+@@ -205,14 +205,14 @@ int set_wep_key(char *string)
+ 
+    /* sanity check */
+    if (bit <= 0)
+-      SEMIFATAL_ERROR("Unsupported WEP key lenght");
++      SEMIFATAL_ERROR("Unsupported WEP key length");
+ 
+    /* the len of the secret part of the RC4 seed */
+    tmp_wkey_len = bit / 8 - WEP_IV_LEN;
+ 
+    /* sanity check */
+    if (bit != 64 && bit != 128)
+-	  SEMIFATAL_ERROR("Unsupported WEP key lenght");
++	  SEMIFATAL_ERROR("Unsupported WEP key length");
+ 
+    /* get the type of the key */
+    p = ec_strtok(NULL, ":", &tok);
+@@ -227,7 +227,7 @@ int set_wep_key(char *string)
+ 	  SEMIFATAL_ERROR("Invalid parsing of the WEP key");
+ 
+    if (type == 's') {
+-      /* escape the string and check its lenght */
++      /* escape the string and check its length */
+       if (strescape((char *)tmp_wkey, p) != (int)tmp_wkey_len)
+     	  SEMIFATAL_ERROR("Specified WEP key length does not match the given string");
+    } else if (type == 'p') {
+--- ettercap-0.8.0.orig/src/lua/share/core/ettercap_ffi.lua
++++ ettercap-0.8.0/src/lua/share/core/ettercap_ffi.lua
+@@ -135,17 +135,17 @@ struct packet_object {
+        */
+       size_t disp_len;
+       u_char * disp_data;
+-      /* for modified packet this is the delta for the lenght */
++      /* for modified packet this is the delta for the length */
+       int delta;  
+       size_t inject_len;      /* len of the injection */
+       u_char *inject;         /* the fuffer used for injection */
+ 
+    } DATA;
+ 
+-   size_t fwd_len;         /* lenght of the packet to be forwarded */
++   size_t fwd_len;         /* length of the packet to be forwarded */
+    u_char * fwd_packet;    /* the pointer to the buffer to be forwarded */
+    
+-   size_t len;             /* total lenght of the packet */
++   size_t len;             /* total length of the packet */
+    u_char * packet;        /* the buffer containing the real packet */
+ 
+    /* Trace current session for injector chain */
+--- ettercap-0.8.0.orig/src/interfaces/CMakeLists.txt
++++ ettercap-0.8.0/src/interfaces/CMakeLists.txt
+@@ -71,6 +71,13 @@ if(ENABLE_GTK)
+ endif(ENABLE_GTK)
+ 
+ 
+-add_library(ec_interfaces STATIC ${EC_TEXT_SRC} ${EC_DAEMON_SRC} ${EC_WDG_SRC} ${EC_CURSES_SRC} ${EC_GTK_SRC})
++add_library(ec_interfaces STATIC ../ec_interfaces.c ${EC_TEXT_SRC} ${EC_DAEMON_SRC} ${EC_WDG_SRC} ${EC_CURSES_SRC} ${EC_GTK_SRC})
+ SET_TARGET_PROPERTIES(ec_interfaces PROPERTIES COMPILE_FLAGS -fPIC)
+ target_link_libraries(ec_interfaces ${EC_LIBS})
++set_target_properties(ec_interfaces PROPERTIES 
++  ENABLE_EXPORTS On
++  LINK_INTERFACE_LIBRARIES ""
++  #  INSTALL_RPATH ${INSTALL_LIBDIR}
++  OUTPUT_NAME ec_interfaces 
++  )
++
