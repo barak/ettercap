@@ -16,7 +16,6 @@ Build-Depends: debhelper (>= 9),
  libpcre3-dev,
  libssl-dev,
  ghostscript,
- libluajit-5.1-dev | luajit-5.1-dev,
  libcurl4-openssl-dev | libcurl-ssl-dev | libcurl-dev,
  libbsd-dev
 Standards-Version: 3.9.5

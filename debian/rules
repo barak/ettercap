@@ -23,6 +23,7 @@ override_dh_auto_configure:
 ETTERCAP_OPTIONS= \
  -DENABLE_IPV6=$(ENABLE_IPV6) \
  -DBUNDLED_LIBS=OFF \
+ -DENABLE_LUA=OFF \
  -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 override_dh_auto_build:
