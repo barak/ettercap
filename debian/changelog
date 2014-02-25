@@ -1,10 +1,14 @@
-ettercap (1:0.8.0-5) unstable; urgency=low
+ettercap (1:0.8.0-5) unstable; urgency=medium
 
+  [ Gianfranco Costamagna ]
   * Fixed ettercap-pkexec path failure with previous upload
   * sed s/libtldl-dev/libltdl-dev/g -i debian/control
     to prevent build failures (Closes: #739975)
 
- -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Tue, 25 Feb 2014 16:42:28 +0100
+  [ Barak A. Pearlmutter ]
+  * Add Gianfranco Costamagna as co-maintainer
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Tue, 25 Feb 2014 19:45:26 +0000
 
 ettercap (1:0.8.0-4) unstable; urgency=medium
 
