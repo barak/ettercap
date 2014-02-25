@@ -1,3 +1,9 @@
+ettercap (1:0.8.0-4) unstable; urgency=medium
+
+  * Move ettercap-pkexec w/ man page from ettercap-common to ettercap-graphical
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Tue, 25 Feb 2014 14:20:42 +0000
+
 ettercap (1:0.8.0-3) unstable; urgency=medium
 
   * Install /usr/bin/ettercap not /usr/sbin/ for non-root log analysis
