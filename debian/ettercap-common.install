@@ -4,9 +4,12 @@
 /usr/lib/libettercap.so.*
 /usr/lib/ettercap/*.so /usr/lib/ettercap
 
-/usr/bin/ettercap-pkexec
 /usr/bin/etterfilter
 /usr/bin/etterlog
 
 /usr/share/ettercap
+# The next line accidentally gets
+#  /usr/share/man/ettercap-pkexec*
+# which belongs in ettercap-graphical.
+# This is worked around in debian/rules.
 /usr/share/man
