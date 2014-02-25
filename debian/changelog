@@ -1,6 +1,7 @@
 ettercap (1:0.8.0-4) unstable; urgency=medium
 
   * Move ettercap-pkexec w/ man page from ettercap-common to ettercap-graphical
+  * sed s/B0/BZERO/g -i src/ec_encryption_ccmp.c to avoid powerpc build failure
 
  -- Barak A. Pearlmutter <bap@debian.org>  Tue, 25 Feb 2014 14:20:42 +0000
 
