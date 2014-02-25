@@ -2,7 +2,8 @@ Source: ettercap
 Section: net
 Priority: optional
 Maintainer: Barak A. Pearlmutter <bap@debian.org>
-Uploaders: Murat Demirten <murat@debian.org>
+Uploaders: Murat Demirten <murat@debian.org>,
+	   Gianfranco Costamagna <costamagnagianfranco@yahoo.it>
 Build-Depends: debhelper (>= 9),
  cmake,
  chrpath,
