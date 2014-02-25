@@ -2,7 +2,7 @@ ettercap (1:0.8.0-5) unstable; urgency=low
 
   * Fixed ettercap-pkexec path failure with previous upload
   * sed s/libtldl-dev/libltdl-dev/g -i debian/control
-    to prevent build failures.
+    to prevent build failures (Closes #739975)
 
  -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Tue, 25 Feb 2014 16:42:28 +0100
 
