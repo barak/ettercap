@@ -4,4 +4,4 @@
 /usr/share/polkit-1
 /usr/share/pixmaps
 /usr/share/applications
-/usr/share/man/ettercap-pkexec*
+/usr/share/man/*/ettercap-pkexec*

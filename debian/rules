@@ -40,7 +40,7 @@ override_dh_install:
 	mkdir --parents debian/ettercap-text-only/usr/bin/
 	cp --preserve=mode ettercap-text-only debian/ettercap-text-only/usr/bin/ettercap
 	@echo The ettercap-pkexec man page belongs in ettercap-graphical
-	-rm --verbose debian/ettercap-common/usr/share/man/ettercap-pkexec*
+	-rm --verbose debian/ettercap-common/usr/share/man/*/ettercap-pkexec*
 	@echo Upstream sets RPATH, which is against Debian policy:
 	chrpath --list debian/ettercap-text-only/usr/bin/ettercap
 	chrpath --delete debian/ettercap-text-only/usr/bin/ettercap
