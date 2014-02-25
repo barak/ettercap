@@ -1,4 +1,4 @@
-/usr/bin/ettercap /usr/sbin
+/usr/bin/ettercap
 /usr/share/ettercap/ettercap.png
 /usr/share/polkit-1
 /usr/share/pixmaps

@@ -20,15 +20,9 @@ override_dh_auto_configure:
 	@echo ENABLE_IPV6 = $(ENABLE_IPV6)
 	@echo main configuration deferred until build, as it must be done twice
 
-# The INSTALL_EXEDIR cmake entry for ETTERCAP_OPTIONS is not available
-# in 0.8.0 so the -DINSTALL_EXEDIR=/usr/sbin below is ineffective,
-# which must be compensated for by looking in .../bin/ at dh_install
-# time.
-
 ETTERCAP_OPTIONS= \
  -DENABLE_IPV6=$(ENABLE_IPV6) \
  -DBUNDLED_LIBS=OFF \
- -DINSTALL_EXEDIR=/usr/sbin \
  -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 override_dh_auto_build:
@@ -40,22 +34,15 @@ override_dh_auto_build:
 	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=ON
 	dh_auto_build
 
-override_dh_auto_install:
-	dh_auto_install
-	@echo to be dropped in the next ettercap release in favour of INSTALL_EXEDIR cmake option
-	dh_auto_install
-	mkdir -p debian/tmp/usr/sbin
-	sed 's/bin/sbin/g' -i debian/tmp/usr/share/polkit-1/actions/org.pkexec.ettercap.policy
-
 override_dh_install:
 	dh_install --list-missing
-	mkdir --parents debian/ettercap-text-only/usr/sbin/
-	cp --preserve=mode ettercap-text-only debian/ettercap-text-only/usr/sbin/ettercap
+	mkdir --parents debian/ettercap-text-only/usr/bin/
+	cp --preserve=mode ettercap-text-only debian/ettercap-text-only/usr/bin/ettercap
 	@echo Upstream sets RPATH, which is against Debian policy:
-	chrpath --list debian/ettercap-text-only/usr/sbin/ettercap
-	chrpath --delete debian/ettercap-text-only/usr/sbin/ettercap
-	chrpath --list debian/ettercap-graphical/usr/sbin/ettercap
-	chrpath --delete debian/ettercap-graphical/usr/sbin/ettercap
+	chrpath --list debian/ettercap-text-only/usr/bin/ettercap
+	chrpath --delete debian/ettercap-text-only/usr/bin/ettercap
+	chrpath --list debian/ettercap-graphical/usr/bin/ettercap
+	chrpath --delete debian/ettercap-graphical/usr/bin/ettercap
 
 override_dh_installdocs:
 	dh_installdocs -pettercap-common
