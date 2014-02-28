@@ -16,6 +16,10 @@
    #include <windows.h>
 #endif
 
+#ifdef OS_BSD
+   #define PCAP_DONT_INCLUDE_PCAP_BPF_H 1
+#endif
+
 #if !defined (__USE_GNU)   /* for memmem(), strsignal(), etc etc... */
    #define __USE_GNU
 #endif
