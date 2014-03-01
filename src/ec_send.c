@@ -22,6 +22,7 @@
 #include <ec.h>
 
 #if defined(OS_DARWIN) || defined(OS_BSD)
+   #include <net/bpf.h>
    #include <sys/ioctl.h>
 #endif
 
