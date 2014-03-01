@@ -22,6 +22,7 @@
 #include <ec.h>
 
 #if defined(OS_DARWIN) || defined(OS_BSD)
+   #define PCAP_DONT_INCLUDE_PCAP_BPF_H 1
    #include <net/bpf.h>
    #include <sys/ioctl.h>
 #endif
