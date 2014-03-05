@@ -1,3 +1,15 @@
+ettercap (1:0.8.0-9) unstable; urgency=medium
+
+  * Order matters, for kfreebsd stuff
+
+ -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Sun, 02 Mar 2014 08:10:37 +0100
+
+ettercap (1:0.8.0-8) unstable; urgency=medium
+
+  * Another mod for hurd and kfreebsd
+
+ -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Sat, 01 Mar 2014 13:46:57 +0100
+
 ettercap (1:0.8.0-7) unstable; urgency=medium
 
   * Hopefully we can get rid of the BPF problem this time.

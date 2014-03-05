@@ -16,8 +16,8 @@
    #include <windows.h>
 #endif
 
-#ifdef OS_BSD
-   #define PCAP_DONT_INCLUDE_PCAP_BPF_H 1
+#ifndef PATH_MAX
+   #define PATH_MAX  1024
 #endif
 
 #if !defined (__USE_GNU)   /* for memmem(), strsignal(), etc etc... */
