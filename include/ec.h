@@ -16,6 +16,10 @@
    #include <windows.h>
 #endif
 
+#ifndef PATH_MAX
+   #define PATH_MAX  1024
+#endif
+
 #if !defined (__USE_GNU)   /* for memmem(), strsignal(), etc etc... */
    #define __USE_GNU
 #endif
