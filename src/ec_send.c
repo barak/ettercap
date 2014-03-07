@@ -18,9 +18,10 @@
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-
+#include <config.h>
 #if defined(OS_DARWIN) || defined(OS_BSD)
    #define PCAP_DONT_INCLUDE_PCAP_BPF_H 1
+   #include <sys/types.h>
    #include <net/bpf.h>
    #include <sys/ioctl.h>
 #endif
