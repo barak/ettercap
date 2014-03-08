@@ -1,4 +1,5 @@
 set(EC_SRC
+	ec_mem.c
         ec_capture.c
         ec_checksum.c
         ec_conf.c
@@ -139,6 +140,8 @@ elseif(OS_MINGW)
     set(EC_SRC ${EC_SRC} os/ec_mingw.c)
 elseif(OS_SOLARIS)
     set(EC_SRC ${EC_SRC} os/ec_solaris.c)
+elseif(OS_GNU)
+    set(EC_SRC ${EC_SRC} os/ec_gnu.c)
 endif()
 
 if(NOT HAVE_STRLCAT)
