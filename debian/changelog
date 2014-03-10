@@ -1,9 +1,13 @@
-ettercap (1:0.8.0-10) UNRELEASED; urgency=medium
+ettercap (1:0.8.0-10) unstable; urgency=medium
 
+  [ Gianfranco Costamagna ]
   * Fixed other failures on kfreebsd and HURD, due to
     missing function on not linux platforms
 
- -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Fri, 07 Mar 2014 17:48:54 +0100
+  [ Barak A. Pearlmutter ]
+  * Prep for release
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 10 Mar 2014 08:25:34 +0000
 
 ettercap (1:0.8.0-9) unstable; urgency=medium
 
