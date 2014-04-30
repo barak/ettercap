@@ -18,7 +18,8 @@ Build-Depends: debhelper (>= 9),
  libssl-dev,
  ghostscript,
  libcurl4-openssl-dev | libcurl-ssl-dev | libcurl-dev,
- libbsd-dev
+ libbsd-dev,
+ luajit-5.1-dev [!hurd-i386 !kfreebsd-amd64 !s390x !arm64 !ppc64el]
 Standards-Version: 3.9.5
 Homepage: http://ettercap.sourceforge.net
 Vcs-Git: git://github.com/barak/ettercap.git
