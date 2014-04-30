@@ -11,6 +11,12 @@ ENABLE_IPV6 := $(shell \
  else echo OFF; \
  fi)
 
+ENABLE_LUA := $(shell \
+ if pkg-config luajit; \
+ then echo ON; \
+ else echo OFF; \
+ fi)
+
 #For some reasons ettercap FTBFS with -PIC enabled
 #/usr/bin/ld.bfd.real: CMakeFiles/lib_ettercap.dir/dissectors/ec_ssh.c.o: relocation R_X86_64_PC32 against symbol `ssh_conn_key' can not be used when making a shared object; recompile with -fPIC
 #export DEB_BUILD_MAINT_OPTIONS = hardening=+all
@@ -18,12 +24,13 @@ ENABLE_IPV6 := $(shell \
 override_dh_auto_configure:
 	@echo LIBNET_VER = $(LIBNET_VER)
 	@echo ENABLE_IPV6 = $(ENABLE_IPV6)
+	@echo ENABLE_LUA = $(ENABLE_LUA)
 	@echo main configuration deferred until build, as it must be done twice
 
 ETTERCAP_OPTIONS= \
  -DENABLE_IPV6=$(ENABLE_IPV6) \
  -DBUNDLED_LIBS=OFF \
- -DENABLE_LUA=OFF \
+ -DENABLE_LUA=$(ENABLE_LUA) \
  -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 override_dh_auto_build:
