@@ -5,21 +5,22 @@ Maintainer: Barak A. Pearlmutter <bap@debian.org>
 Uploaders: Murat Demirten <murat@debian.org>,
  Gianfranco Costamagna <costamagnagianfranco@yahoo.it>
 Build-Depends: debhelper (>= 9),
- cmake,
+ bison,
+ check,
  chrpath,
- bison | bison++ | byacc | byacc-j | yacc | btyacc,
- flex | lex,
- libgtk2.0-dev,
- libltdl-dev | libltdl3-dev,
- libncurses-dev | libncurses5-dev,
- libnet1-dev,
- libpcap-dev | libpcap0.8-dev,
- libpcre3-dev,
- libssl-dev,
+ cmake,
+ flex,
  ghostscript,
- libcurl4-openssl-dev | libcurl-ssl-dev | libcurl-dev,
  libbsd-dev,
- libluajit-5.1-dev [!hurd-i386 !kfreebsd-amd64 !s390x !arm64 !ppc64el]
+ libcurl4-openssl-dev,
+ libgtk2.0-dev,
+ libltdl-dev,
+ libluajit-5.1-dev [!hurd-i386 !kfreebsd-amd64 !s390x !arm64 !ppc64el !sparc],
+ libncurses5-dev,
+ libnet1-dev,
+ libpcap-dev,
+ libpcre3-dev,
+ libssl-dev
 Standards-Version: 3.9.5
 Homepage: http://ettercap.sourceforge.net
 Vcs-Git: git://github.com/barak/ettercap.git
