@@ -31,7 +31,8 @@ ETTERCAP_OPTIONS= \
  -DENABLE_IPV6=$(ENABLE_IPV6) \
  -DBUNDLED_LIBS=OFF \
  -DENABLE_LUA=$(ENABLE_LUA) \
- -DCMAKE_BUILD_TYPE=RelWithDebInfo
+ -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+ -DENABLE_TESTS=ON
 
 override_dh_auto_build:
 	@echo Build the text-only executable:
