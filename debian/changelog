@@ -1,4 +1,4 @@
-ettercap (1:0.8.0-13) UNRELEASED; urgency=medium
+ettercap (1:0.8.0-13) unstable; urgency=medium
 
   * Removed unused old b-d
   * Add check as b-d
