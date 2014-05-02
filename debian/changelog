@@ -3,6 +3,8 @@ ettercap (1:0.8.0-13) UNRELEASED; urgency=medium
   * Removed unused old b-d
   * Add check as b-d
   * Add sparc to unsupported lua archs
+  * Add tests
+  * mv lua to share/ettercap
 
  -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Fri, 02 May 2014 00:31:55 +0200
 
