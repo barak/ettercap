@@ -1,3 +1,10 @@
+ettercap (1:0.8.0-14) unstable; urgency=medium
+
+  * Cherry-pick cf90ed9 to fix test suite failures with ubuntu
+    -Bsymbolic-functions flag. A big thanks to RAOF for the help.
+
+ -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Mon, 05 May 2014 11:54:19 +0200
+
 ettercap (1:0.8.0-13) unstable; urgency=medium
 
   * Removed unused old b-d
