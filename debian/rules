@@ -21,11 +21,8 @@ ENABLE_LUA := $(shell \
 #/usr/bin/ld.bfd.real: CMakeFiles/lib_ettercap.dir/dissectors/ec_ssh.c.o: relocation R_X86_64_PC32 against symbol `ssh_conn_key' can not be used when making a shared object; recompile with -fPIC
 #export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
-override_dh_auto_configure:
-	@echo LIBNET_VER = $(LIBNET_VER)
-	@echo ENABLE_IPV6 = $(ENABLE_IPV6)
-	@echo ENABLE_LUA = $(ENABLE_LUA)
-	@echo main configuration deferred until build, as it must be done twice
+override_dh_auto_clean:
+	-rm -rf obj-graphical obj-text-only
 
 ETTERCAP_OPTIONS= \
  -DENABLE_IPV6=$(ENABLE_IPV6) \
@@ -34,25 +31,33 @@ ETTERCAP_OPTIONS= \
  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
  -DENABLE_TESTS=ON
 
+override_dh_auto_configure:
+	@echo LIBNET_VER = $(LIBNET_VER)
+	@echo ENABLE_IPV6 = $(ENABLE_IPV6)
+	@echo ENABLE_LUA = $(ENABLE_LUA)
+	dh_auto_configure --builddirectory=obj-text-only -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=OFF
+	dh_auto_configure --builddirectory=obj-graphical -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=ON
+
 override_dh_auto_build:
-	@echo Build the text-only executable:
-	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=OFF
-	dh_auto_build
-	mv obj*/src/ettercap ettercap-text-only
-	@echo Build the graphics-enabled executable:
-	dh_auto_configure -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=ON
-	dh_auto_build
+	dh_auto_build --builddirectory=obj-text-only
+	dh_auto_build --builddirectory=obj-graphical
+
+override_dh_auto_test:
+	dh_auto_test --builddirectory=obj-text-only
+	dh_auto_test --builddirectory=obj-graphical
+
+override_dh_auto_install:
+#	dh_auto_install --builddirectory=obj-text-only
+	dh_auto_install --builddirectory=obj-graphical
 
 override_dh_install:
 	dh_install --list-missing
-	mkdir --parents debian/ettercap-text-only/usr/bin/
-	cp --preserve=mode ettercap-text-only debian/ettercap-text-only/usr/bin/ettercap
 	@echo The ettercap-pkexec man page belongs in ettercap-graphical
 	-rm --verbose debian/ettercap-common/usr/share/man/man*/ettercap-pkexec*
 	@echo Upstream sets RPATH, which is against Debian policy:
-	chrpath --list debian/ettercap-text-only/usr/bin/ettercap
+	chrpath --list   debian/ettercap-text-only/usr/bin/ettercap
 	chrpath --delete debian/ettercap-text-only/usr/bin/ettercap
-	chrpath --list debian/ettercap-graphical/usr/bin/ettercap
+	chrpath --list   debian/ettercap-graphical/usr/bin/ettercap
 	chrpath --delete debian/ettercap-graphical/usr/bin/ettercap
 
 override_dh_installdocs:
