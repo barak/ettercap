@@ -38,12 +38,20 @@ override_dh_auto_configure:
 	dh_auto_configure --builddirectory=obj-text-only -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=OFF
 	dh_auto_configure --builddirectory=obj-graphical -- $(ETTERCAP_OPTIONS) -DENABLE_GTK=ON
 
-override_dh_auto_build:
+override_dh_auto_build: override_dh_auto_build-text-only
+override_dh_auto_build: override_dh_auto_build-graphical
+
+override_dh_auto_build-text-only:
 	dh_auto_build --builddirectory=obj-text-only
+override_dh_auto_build-graphical:
 	dh_auto_build --builddirectory=obj-graphical
 
-override_dh_auto_test:
+override_dh_auto_test: override_dh_auto_test-text-only
+override_dh_auto_test: override_dh_auto_test-graphical
+
+override_dh_auto_test-text-only:
 	dh_auto_test --builddirectory=obj-text-only
+override_dh_auto_test-graphical:
 	dh_auto_test --builddirectory=obj-graphical
 
 override_dh_auto_install:
