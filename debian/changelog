@@ -1,3 +1,9 @@
+ettercap (1:0.8.0-15) UNRELEASED; urgency=medium
+
+  * Add appdata file
+
+ -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Sat, 24 May 2014 11:07:22 +0200
+
 ettercap (1:0.8.0-14) unstable; urgency=medium
 
   * Cherry-pick cf90ed9 to fix test suite failures with ubuntu
