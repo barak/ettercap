@@ -558,8 +558,10 @@ void gtkui_input(const char *title, char *input, size_t n, void (*callback)(void
    GtkWidget *dialog, *entry, *label, *hbox, *image, *content_area;
 
    dialog = gtk_dialog_new_with_buttons(EC_PROGRAM" Input", GTK_WINDOW (window),
-                                        GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_OK,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
+                                        GTK_DIALOG_MODAL, 
+                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, 
+                                        GTK_STOCK_OK, GTK_RESPONSE_OK,
+                                        NULL);
 #if !GTK_CHECK_VERSION(2, 22, 0) // depricated since Gtk 2.22
    gtk_dialog_set_has_separator(GTK_DIALOG (dialog), FALSE);
 #endif
@@ -1052,8 +1054,8 @@ static void gtkui_file_open(void)
 
    dialog = gtk_file_chooser_dialog_new("Select a pcap file...", 
             GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN, 
-            GTK_STOCK_OPEN, GTK_RESPONSE_OK,
             GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+            GTK_STOCK_OPEN, GTK_RESPONSE_OK,
             NULL);
 
    /* This way the file chooser dialog doesn't start in the recent section */
@@ -1117,8 +1119,8 @@ static void gtkui_file_write(void)
    
    dialog = gtk_file_chooser_dialog_new("Save traffic in a pcap file...", 
             GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_SAVE, 
-            GTK_STOCK_OPEN, GTK_RESPONSE_OK,
             GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+            GTK_STOCK_OPEN, GTK_RESPONSE_OK,
             NULL);
 
    /* This way the file chooser dialog doesn't start in the recent section */
@@ -1182,8 +1184,10 @@ static void gtkui_unified_sniff(void)
    DEBUG_MSG("gtk_unified_sniff");
 
    dialog = gtk_dialog_new_with_buttons(EC_PROGRAM" Input", GTK_WINDOW (window),
-                                        GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_OK,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
+                                        GTK_DIALOG_MODAL, 
+                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, 
+                                        GTK_STOCK_OK, GTK_RESPONSE_OK,
+                                        NULL);
 #if !GTK_CHECK_VERSION(2, 22, 0) // depricated since Gtk 2.22
    gtk_dialog_set_has_separator(GTK_DIALOG (dialog), FALSE);
 #endif
@@ -1316,8 +1320,10 @@ static void gtkui_bridged_sniff(void)
    DEBUG_MSG("gtk_bridged_sniff");
 
    dialog = gtk_dialog_new_with_buttons("Bridged Sniffing", GTK_WINDOW (window),
-                                        GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_OK,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
+                                        GTK_DIALOG_MODAL, 
+                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, 
+                                        GTK_STOCK_OK, GTK_RESPONSE_OK,
+                                        NULL);
    gtk_container_set_border_width(GTK_CONTAINER (dialog), 5);
 #if !GTK_CHECK_VERSION(2, 22, 0) // depricated since Gtk 2.22
    gtk_dialog_set_has_separator(GTK_DIALOG (dialog), FALSE);
