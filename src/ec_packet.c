@@ -25,17 +25,9 @@
 #include <ec_ui.h>
 #include <ec_format.h>
 
-/* protos... */
-
-struct packet_object* packet_allocate_object(u_char *data, bpf_u_int32 len);
-inline int packet_create_object(struct packet_object *po, u_char *buf, bpf_u_int32 len);
-inline int packet_destroy_object(struct packet_object *po);
-int packet_disp_data(struct packet_object *po, u_char *buf, bpf_u_int32 len);
-struct packet_object * packet_dup(struct packet_object *po, u_char flag);
-
 /* --------------------------- */
 
-struct packet_object* packet_allocate_object(u_char *data, bpf_u_int32 len)
+struct packet_object* packet_allocate_object(u_char *data, u_int len)
 {
    struct packet_object *po;
 
@@ -50,7 +42,7 @@ struct packet_object* packet_allocate_object(u_char *data, bpf_u_int32 len)
  * associate the buffer to the packet object
  */
 
-inline int packet_create_object(struct packet_object *po, u_char *buf, bpf_u_int32 len)
+inline int packet_create_object(struct packet_object *po, u_char *buf, u_int len)
 {
    /* clear the memory */
    memset(po, 0, sizeof(struct packet_object));
@@ -71,7 +63,7 @@ inline int packet_create_object(struct packet_object *po, u_char *buf, bpf_u_int
  * decoders should decrypt data from po->DATA.data to po->DATA.disp_data
  */
 
-int packet_disp_data(struct packet_object *po, u_char *buf, bpf_u_int32 len)
+int packet_disp_data(struct packet_object *po, u_char *buf, u_int len)
 {
    /* disp_data is always null terminated */
    if (len + 1) {
@@ -92,7 +84,7 @@ int packet_disp_data(struct packet_object *po, u_char *buf, bpf_u_int32 len)
  * free the packet object memory
  */
 
-int packet_destroy_object(struct packet_object *po)
+inline int packet_destroy_object(struct packet_object *po)
 {
    
    /* 

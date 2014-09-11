@@ -26,6 +26,7 @@
 #include <ec_hook.h>
 #include <ec_send.h>
 #include <ec_threads.h>
+#include <ec_sleep.h>
 
 /* globals */
 struct eth_header
@@ -101,6 +102,9 @@ int plugin_load(void *handle)
 
 static int stp_mangler_init(void *dummy) 
 {     
+   /* variable not used */
+   (void) dummy;
+
    /* It doesn't work if unoffensive */
    if (GBL_OPTIONS->unoffensive) {
       INSTANT_USER_MSG("stp_mangler: plugin doesn't work in UNOFFENSIVE mode\n");
@@ -120,6 +124,9 @@ static int stp_mangler_fini(void *dummy)
 {
    pthread_t pid;
 
+   /* variable not used */
+   (void) dummy;
+
    pid = ec_thread_getpid("mangler");
 
    /* the thread is active or not ? */
@@ -138,6 +145,9 @@ EC_THREAD_FUNC(mangler)
    struct llc_header *hllc;
    struct stp_header *hstp;
    u_char MultiMAC[6]={0x01,0x80,0xc2,0x00,0x00,0x00};
+
+   /* variable not used */
+   (void) EC_THREAD_PARAM;
 
    /* Avoid crappy compiler alignment :( */    
    heth  = (struct eth_header *)fake_pck;
@@ -172,7 +182,7 @@ EC_THREAD_FUNC(mangler)
 
       /* Send on the wire and wait */
       send_to_L2(&fake_po); 
-      sleep(1);
+      ec_usleep(SEC2MICRO(1));
    }
    
    return NULL; 

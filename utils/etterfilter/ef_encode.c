@@ -32,9 +32,6 @@
 
 /* protos */
 
-int encode_offset(char *string, struct filter_op *fop);
-int encode_function(char *string, struct filter_op *fop);
-int encode_const(char *string, struct filter_op *fop);
 static char ** decode_args(char *args, int *nargs);
 static char * strsep_quotes(char **stringp, const char delim);
 
@@ -62,6 +59,14 @@ int encode_offset(char *string, struct filter_op *fop)
     */
    p = ec_strtok(str, ".", &tok);
    q = ec_strtok(NULL, ".", &tok);
+
+   /*
+    * the assumption above is not always true, e.g.:
+    * log(DATA,d "x.log"); 
+    * results in q == NULL.
+    */
+   if (q == NULL)
+      return -ENOTFOUND;
 
    /* the the virtual pointer from the table */
    ret = get_virtualpointer(p, q, &fop->op.test.level, &fop->op.test.offset, &fop->op.test.size);
@@ -95,15 +100,24 @@ int encode_const(char *string, struct filter_op *fop)
    /* it is an ip address */
    } else if (string[0] == '\'' && string[strlen(string) - 1] == '\'') {
       struct in_addr ipaddr;
+      struct in6_addr ip6addr;
       
       /* remove the single quote */
       p = strchr(string + 1, '\'');
       *p = '\0';
 
-      if (inet_aton(string + 1, &ipaddr) == 0)
+      if (inet_pton(AF_INET, string + 1, &ipaddr) == 1) { /* try IPv4 */
+         /* 4-bytes - handle as a integer */
+         fop->op.test.value = ntohl(ipaddr.s_addr);
+      }
+      else if (inet_pton(AF_INET6, string + 1, &ip6addr) == 1) { /* try IPv6 */
+         /* 16-bytes - handle as a byte pointer */
+         memcpy(&fop->op.test.ipaddr, &ip6addr.s6_addr, 16);
+      }
+      else {
          return -EFATAL;
+      }
       
-      fop->op.test.value = ntohl(ipaddr.s_addr);
       return ESUCCESS;
       
    /* it is a string */
@@ -167,7 +181,8 @@ int encode_function(char *string, struct filter_op *fop)
             fop->op.func.string = (u_char*)strdup(dec_args[1]);
             fop->op.func.slen = strescape((char*)fop->op.func.string, (char*)fop->op.func.string);
             ret = ESUCCESS;
-         }
+         } else
+            SCRIPT_ERROR("Unknown offset %s ", dec_args[0]);
       } else
          SCRIPT_ERROR("Wrong number of arguments for function \"%s\" ", name);
    } else if (!strcmp(name, "regex")) {
@@ -184,7 +199,8 @@ int encode_function(char *string, struct filter_op *fop)
             fop->op.func.string = (u_char*)strdup(dec_args[1]);
             fop->op.func.slen = strescape((char*)fop->op.func.string, (char*)fop->op.func.string);
             ret = ESUCCESS;
-         }
+         } else
+            SCRIPT_ERROR("Unknown offset %s ", dec_args[0]);
 
          /* check if the regex is valid */
          err = regcomp(&regex, (const char*)fop->op.func.string, REG_EXTENDED | REG_NOSUB | REG_ICASE );
@@ -215,7 +231,8 @@ int encode_function(char *string, struct filter_op *fop)
             fop->op.func.string = strdup(dec_args[1]);
             fop->op.func.slen = strlen(fop->op.func.string);
             ret = ESUCCESS;
-         }
+         } else
+            SCRIPT_ERROR("Unknown offset %s ", dec_args[0]);
 
          /* check if the pcre is valid */
          pregex = pcre_compile(fop->op.func.string, 0, &errbuf, &erroff, NULL );
@@ -266,6 +283,16 @@ int encode_function(char *string, struct filter_op *fop)
          ret = ESUCCESS;
       } else
          SCRIPT_ERROR("Wrong number of arguments for function \"%s\" ", name);
+   } else if (!strcmp(name, "execinject")) {
+      if (nargs == 1) {
+         fop->op.func.op = FFUNC_EXECINJECT;
+         /* execinject always operate at DATA level */
+         fop->op.func.level = 5;
+         fop->op.func.string = (u_char*)strdup(dec_args[0]);
+         fop->op.func.slen = strlen((const char*)fop->op.func.string);
+         ret = ESUCCESS;
+      } else
+         SCRIPT_ERROR("Wrong number of arguments for function \"%s\" ", name);
    } else if (!strcmp(name, "log")) {
       if (nargs == 2) {
          /* get the level (DATA or DECODED) */
@@ -276,7 +303,8 @@ int encode_function(char *string, struct filter_op *fop)
             fop->op.func.string = (u_char*)strdup(dec_args[1]);
             fop->op.func.slen = strlen((const char*)fop->op.func.string);
             ret = ESUCCESS;
-         }
+         } else
+            SCRIPT_ERROR("Unknown offset %s ", dec_args[0]);
       } else
          SCRIPT_ERROR("Wrong number of arguments for function \"%s\" ", name);
    } else if (!strcmp(name, "drop")) {

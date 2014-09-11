@@ -1,5 +1,7 @@
 /*
-    ettercap -- dissector RLOGIN -- TCP 512 513
+    ettercap -- dissector RLOGIN -- TCP 512 513 514, UDP 513
+
+    These ports are the well known Unix R-Services (rexec, rlogin, rshell, rwho)
 
     Copyright (C) ALoR & NaGA
 
@@ -41,6 +43,8 @@ void __init rlogin_init(void)
 {
    dissect_add("rlogin", APP_LAYER_TCP, 512, dissector_rlogin);
    dissect_add("rlogin", APP_LAYER_TCP, 513, dissector_rlogin);
+   dissect_add("rlogin", APP_LAYER_UDP, 513, dissector_rlogin);
+   dissect_add("rlogin", APP_LAYER_TCP, 514, dissector_rlogin);
 }
 
 /*
@@ -56,6 +60,11 @@ FUNC_DECODER(dissector_rlogin)
    void *ident = NULL;
    char tmp[MAX_ASCII_ADDR_LEN];
 
+   /* don't complain about unused var */
+   (void) DECODE_DATA; 
+   (void) DECODE_DATALEN;
+   (void) DECODED_LEN;
+   
    /* skip messages from the server */
    if (FROM_SERVER("rlogin", PACKET))
       return NULL;
@@ -117,7 +126,7 @@ FUNC_DECODER(dissector_rlogin)
    
    /* concat the pass to the collected user */
    if (session_get(&s, ident, DISSECT_IDENT_LEN) == ESUCCESS && s->data) {
-      size_t i;
+      size_t i, stringlen;
       char *p;
       char str[strlen(s->data) + PACKET->DATA.disp_len + 2];
 
@@ -127,7 +136,8 @@ FUNC_DECODER(dissector_rlogin)
       snprintf(str, strlen(s->data) + PACKET->DATA.disp_len + 2, "%s%s", (char *)s->data, ptr);
       
       /* parse the string for backspaces and erase as wanted */
-      for (p = str, i = 0; i < strlen(str); i++) {
+      stringlen = strlen(str);
+      for (p = str, i = 0; i < stringlen; i++) {
          if (str[i] == '\b' || str[i] == 0x7f) {
             /* don't go behind str */
             if (p > str)

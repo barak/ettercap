@@ -26,7 +26,7 @@ CONTRIBUTORS:
    Dhiru Kholia (kholia)			<dhiru@openwall.com>		O5Logon, MySQL 5.x dissector, PostgreSQL dissector, TN3270 dissector
    Mainframed									TN3270 dissector
    Eric Milam (Brav0Hax)			<jbrav.hax@gmail.com>		User Testing
-   Alexander Koeppe (koeppea)			<format_c@online.de>		IPv6 support for DNS-spoof plugin
+   Alexander Koeppe (koeppea)			<format_c@online.de>		IPv6 for dns_spoof plugin, IPv6 host scan, IPv6 NDP poisoning
 
 CONTRIBUTORS (Lazarus):
    Martin Bos (PureHate)			<purehate@backtrack.com>	Testing
@@ -34,7 +34,7 @@ CONTRIBUTORS (Lazarus):
 
 CONTRIBUTORS (for the Next Generation series):
 
-   Gisle Vanem					<giva@bgnett.no>		for the mingw porting
+   Gisle Vanem					<gvanem@yahoo.no>		for the mingw porting
    Johannes Bauer				<JohannesBauer@gmx.de>		for the prism2 decoder
    Daten (Bryan Schneiders)			<daten@dnetc.org>		the GTK interface
 

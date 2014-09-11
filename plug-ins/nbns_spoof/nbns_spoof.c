@@ -203,6 +203,9 @@ int plugin_load(void *handle)
 
 static int nbns_spoof_init(void *dummy)
 {
+   /* variable not used */
+   (void) dummy;
+
 	/*
 	 * add the hook in the dissector
 	 * this will pass only valid NBNS packets
@@ -215,6 +218,9 @@ static int nbns_spoof_init(void *dummy)
 
 static int nbns_spoof_fini(void *dummy)
 {
+   /* variable not used */
+   (void) dummy;
+
 	hook_del(HOOK_PROTO_NBNS, &nbns_spoof);
 	return PLUGIN_FINISHED;
 }
@@ -414,7 +420,7 @@ static void nbns_spoof(struct packet_object *po)
 
 	rdata->len = ntohs(2+sizeof(u_int32));
 	rdata->nbflags = ntohs(0x0000);
-	rdata->addr = ip_addr_to_int32(reply->addr);
+	rdata->addr = *reply->addr32;
 	
 	/* send fake reply */
 	send_udp(&GBL_IFACE->ip, &po->L3.src, po->L2.src, po->L4.dst, po->L4.src, response, NBNS_MSGLEN_QUERY_RESPONSE);
@@ -452,7 +458,7 @@ static void nbns_spoof_dump(void)
 	SLIST_FOREACH(n, &nbns_spoof_head, next) {
 		if(ntohs(n->ip.addr_type) == AF_INET)
       {
-			DEBUG_MSG(" %s -> [%s]", n->name, int_ntoa(n->ip.addr));
+			DEBUG_MSG(" %s -> [%s]", n->name, int_ntoa(n->ip.addr32));
       }
 	}
 }

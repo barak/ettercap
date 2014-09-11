@@ -27,13 +27,15 @@
 
 /* proto */
 
+#ifdef WITH_IPV6
+static void toggle_ip6scan(void);
+#endif
 static void curses_scan(void);
 static void curses_load_hosts(void);
-static void load_hosts(char *path, char *file);
+static void load_hosts(const char *path, char *file);
 static void curses_save_hosts(void);
 static void save_hosts(void);
 static void curses_host_list(void);
-void curses_hosts_update(void);
 static void curses_hosts_destroy(void);
 static void curses_create_hosts_array(void);
 static void curses_delete_host(void *host);
@@ -43,12 +45,18 @@ static void curses_hosts_help(void *dummy);
 
 /* globals */
 
+#ifdef WITH_IPV6
+static char tag_ip6scan[] = " ";
+#endif
 static wdg_t *wdg_hosts;
 static struct wdg_list *wdg_hosts_elements;
 
 struct wdg_menu menu_hosts[] = { {"Hosts",             'H',       "",    NULL},
                                  {"Hosts list",        'h',       "h",   curses_host_list},
                                  {"-",                 0,         "",    NULL},
+#ifdef WITH_IPV6
+                                 {"Enable IPv6 scan",  0,   tag_ip6scan, toggle_ip6scan},
+#endif
                                  {"Scan for hosts",    CTRL('S'), "C-s", curses_scan},
                                  {"Load from file...", 0,         "",    curses_load_hosts},
                                  {"Save to file...",   0,         "",    curses_save_hosts},
@@ -57,14 +65,25 @@ struct wdg_menu menu_hosts[] = { {"Hosts",             'H',       "",    NULL},
 
 /*******************************************/
 
+#ifdef WITH_IPV6
+static void toggle_ip6scan(void)
+{
+   if (GBL_OPTIONS->ip6scan) {
+      tag_ip6scan[0] = ' ';
+      GBL_OPTIONS->ip6scan = 0;
+   } else {
+      tag_ip6scan[0] = '*';
+      GBL_OPTIONS->ip6scan = 1;
+   }
+}
+#endif
+
+
 /*
  * scan the lan for hosts 
  */
 static void curses_scan(void)
 {
-   /* wipe the current list */
-   del_hosts_list();
-
    /* no target defined...  force a full scan */
    if (GBL_TARGET1->all_ip && GBL_TARGET2->all_ip &&
        GBL_TARGET1->all_ip6 && GBL_TARGET2->all_ip6 &&
@@ -101,7 +120,7 @@ static void curses_load_hosts(void)
    wdg_set_focus(fop);
 }
 
-static void load_hosts(char *path, char *file)
+static void load_hosts(const char *path, char *file)
 {
    char *tmp;
    char current[PATH_MAX];
@@ -223,6 +242,9 @@ void curses_hosts_update()
 
 static void curses_hosts_help(void *dummy)
 {
+   /* variable not used */
+   (void) dummy;
+
    char help[] = "HELP: shortcut list:\n\n"
                  "  d - to delete an host from the list\n"
                  "  1 - to add the host to TARGET1\n"

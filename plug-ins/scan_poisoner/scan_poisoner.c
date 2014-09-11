@@ -29,14 +29,18 @@
 #include <ec_packet.h>
 #include <ec_hook.h>
 #include <ec_send.h>
-#include <time.h>
+#include <ec_sleep.h>
 
 /* globals */
 char flag_strange;
 
+/* mutexes */
+static pthread_mutex_t scan_poisoner_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /* protos */
 int plugin_load(void *);
 static int scan_poisoner_init(void *);
+static EC_THREAD_FUNC(scan_poisoner_thread);
 static int scan_poisoner_fini(void *);
 static void parse_icmp(struct packet_object *po);
 
@@ -69,22 +73,35 @@ int plugin_load(void *handle)
 
 static int scan_poisoner_init(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
+   ec_thread_new("scan_poisoner", "plugin scan_poisoner", 
+         &scan_poisoner_thread, NULL);
+
+   return PLUGIN_RUNNING;
+}
+
+static EC_THREAD_FUNC(scan_poisoner_thread)
+{
+   /* variable not used */
+   (void) EC_THREAD_PARAM;
+
    
    char tmp1[MAX_ASCII_ADDR_LEN];
    char tmp2[MAX_ASCII_ADDR_LEN];
    struct hosts_list *h1, *h2;
    
-#if !defined(OS_WINDOWS)  
-   struct timespec tm;
-   tm.tv_sec = GBL_CONF->arp_storm_delay;
-   tm.tv_nsec = 0; 
-#endif
+   ec_thread_init();
+   PLUGIN_LOCK(scan_poisoner_mutex);
 
    /* don't show packets while operating */
    GBL_OPTIONS->quiet = 1;
       
    if (LIST_EMPTY(&GBL_HOSTLIST)) {
       INSTANT_USER_MSG("scan_poisoner: You have to build host-list to run this plugin.\n\n"); 
+      PLUGIN_UNLOCK(scan_poisoner_mutex);
+      plugin_kill_thread("scan_poisoner", "scan_poisoner");
       return PLUGIN_FINISHED;
    }
 
@@ -106,6 +123,8 @@ static int scan_poisoner_init(void *dummy)
    /* Can't continue in unoffensive */
    if (GBL_OPTIONS->unoffensive || GBL_OPTIONS->read) {
       INSTANT_USER_MSG("\nscan_poisoner: Can't make active test in UNOFFENSIVE mode.\n\n");
+      PLUGIN_UNLOCK(scan_poisoner_mutex);
+      plugin_kill_thread("scan_poisoner", "scan_poisoner");
       return PLUGIN_FINISHED;
    }
 
@@ -117,20 +136,11 @@ static int scan_poisoner_init(void *dummy)
    /* Send ICMP echo request to each target */
    LIST_FOREACH(h1, &GBL_HOSTLIST, next) {
       send_L3_icmp_echo(&GBL_IFACE->ip, &h1->ip);   
-#if !defined(OS_WINDOWS)
-      nanosleep(&tm, NULL);
-#else
-      usleep(GBL_CONF->arp_storm_delay);
-#endif
+      ec_usleep(MILLI2MICRO(GBL_CONF->arp_storm_delay));
    }
          
    /* wait for the response */
-
-#if !defined(OS_WINDOWS)
-   sleep(1);
-#else
-   usleep(1000000);
-#endif
+   ec_usleep(SEC2MICRO(1));
 
    /* remove the hook */
    hook_del(HOOK_PACKET_ICMP, &parse_icmp);
@@ -139,12 +149,26 @@ static int scan_poisoner_init(void *dummy)
    if (!flag_strange)
       INSTANT_USER_MSG("scan_poisoner: - Nothing strange\n");
      
+   PLUGIN_UNLOCK(scan_poisoner_mutex);
+   plugin_kill_thread("scan_poisoner", "scan_poisoner");
    return PLUGIN_FINISHED;
 }
 
 
 static int scan_poisoner_fini(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
+   pthread_t pid;
+
+   pid = ec_thread_getpid("scan_poisoner");
+
+   if (!pthread_equal(pid, EC_PTHREAD_NULL))
+         ec_thread_destroy(pid);
+
+   INSTANT_USER_MSG("scan_poisoner: plugin terminated...\n");
+
    return PLUGIN_FINISHED;
 }
 

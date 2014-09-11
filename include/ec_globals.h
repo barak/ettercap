@@ -1,18 +1,18 @@
-
-
-#ifndef EC_GLOBALS_H
-#define EC_GLOBALS_H
+#ifndef ETTERCAP_GLOBALS_H
+#define ETTERCAP_GLOBALS_H
 
 #include <ec_sniff.h>
 #include <ec_inet.h>
 #include <ec_network.h>
 #include <ec_ui.h>
+#include <ec_set.h>
 #include <ec_stats.h>
 #include <ec_profiles.h>
 #include <ec_filter.h>
 #include <ec_interfaces.h>
 #include <config.h>
 #include <ec_encryption.h>
+#include <ec_utils.h>
 #include <pcap.h>
 #include <libnet.h>
 #include <regex.h>
@@ -23,6 +23,7 @@ struct ec_conf {
    int ec_uid;
    int ec_gid;
    int arp_storm_delay;
+   int arp_poison_smart;
    int arp_poison_warm_up;
    int arp_poison_delay;
    int arp_poison_icmp;
@@ -32,7 +33,14 @@ struct ec_conf {
    int dhcp_lease_time;
    int port_steal_delay;
    int port_steal_send_delay;
-   int nadv_poison_send_delay;
+#ifdef WITH_IPV6
+   int ndp_poison_warm_up;
+   int ndp_poison_delay;
+   int ndp_poison_send_delay;
+   int ndp_poison_icmp;
+   int ndp_poison_equal_mac;
+   int icmp6_probe_delay;
+#endif
    int connection_timeout;
    int connection_idle;
    int connection_buffer;
@@ -44,6 +52,7 @@ struct ec_conf {
    int checksum_check;
    int submit_fingerprint;
    int checksum_warning;
+   int sniffing_at_startup;
    int store_profiles;
    struct curses_color colors;
    char *redir_command_on;
@@ -60,6 +69,7 @@ struct ec_options {
    char quiet:1;
    char superquiet:1;
    char silent:1;
+   char ip6scan:1;
    char unoffensive:1;
    char ssl_mitm:1;
    char load_hosts:1;
@@ -74,7 +84,7 @@ struct ec_options {
    char broadcast:1;
    char reversed;
    char *hostsfile;
-   char *plugin;
+   LIST_HEAD(plugin_list_t, plugin_list) plugins;
    char *proto;
    char *netmask;
    char *address;
@@ -109,6 +119,7 @@ struct pcap_env {
    char          *filter;        /* pcap filter */
    u_int16        snaplen;
    int            dlt;
+   pcap_dumper_t *dump;
    u_int32        dump_size;     /* total dump size */
    u_int32        dump_off;      /* current offset */
 };
@@ -128,7 +139,7 @@ struct ip_list {
 /* scanned hosts list */
 struct hosts_list {
    struct ip_addr ip;
-   u_char mac[MEDIA_ADDR_LEN];
+   u_int8 mac[MEDIA_ADDR_LEN];
    char *hostname;
    LIST_ENTRY(hosts_list) next;
 };

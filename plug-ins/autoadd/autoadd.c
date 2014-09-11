@@ -63,6 +63,9 @@ int plugin_load(void *handle)
 
 static int autoadd_init(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* 
     * we'll use arp request to detect active hosts.
     * if an host sends arp rq, it want to communicate,
@@ -75,6 +78,9 @@ static int autoadd_init(void *dummy)
 
 static int autoadd_fini(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    hook_del(HOOK_PACKET_ARP_RQ, &parse_arp);
    return PLUGIN_FINISHED;
 }
@@ -96,6 +102,10 @@ static void parse_arp(struct packet_object *po)
    if (!ip_addr_cmp(&GBL_IFACE->ip, &po->L3.src))
       return;
    if (!memcmp(&GBL_IFACE->mac, &po->L2.src, MEDIA_ADDR_LEN))
+      return;
+
+   /* don't add undefined address */
+   if (ip_addr_is_zero(&po->L3.src))
       return;
    
    /* search in target 1 */

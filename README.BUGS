@@ -18,7 +18,8 @@ Therefore, if you write the code as cleverly as possible, you are,
 by definition, not smart enough to debug it." - Brian W. Kernighan
 
 
-If you found a new bug please report it by sending an email to
+If you found a new bug please report it to
+https://github.com/Ettercap/ettercap/issues or by sending an email to
 <ettercap-betatesting@lists.sourceforge.net>
 
 
@@ -82,7 +83,7 @@ to make a detailed bug report in order to help us to find the bug and fix it.
 5) dump to a file the traffic that causes the crash (we need it to reproduce
     the situation)
 
-   # ./ettercap -w offending_packets.pcap ... --your-options-here ...
+   # ./src/ettercap -w offending_packets.pcap ... --your-options-here ...
 
 
 6) analyze the core with gdb and send us the backtrace:

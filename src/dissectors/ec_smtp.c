@@ -50,6 +50,11 @@ FUNC_DECODER(dissector_smtp)
    void *ident = NULL;
    char tmp[MAX_ASCII_ADDR_LEN];
    
+   /* don't complain about unused var */
+   (void) DECODE_DATA; 
+   (void) DECODE_DATALEN;
+   (void) DECODED_LEN;
+   
    /* the connection is starting... create the session */
    CREATE_SESSION_ON_SYN_ACK("smtp", s, dissector_smtp);
    CREATE_SESSION_ON_SYN_ACK("ssmtp", s, dissector_smtp);
@@ -143,7 +148,7 @@ FUNC_DECODER(dissector_smtp)
       SAFE_CALLOC(user, strlen((const char*)ptr), sizeof(char));
      
       /* username is encoded in base64 */
-      i = base64_decode(user, (const char*)ptr);
+      i = base64decode((const char*)ptr, &user);
      
       SAFE_FREE(s->data);
 
@@ -166,7 +171,7 @@ FUNC_DECODER(dissector_smtp)
       SAFE_CALLOC(pass, strlen((const char*)ptr), sizeof(char));
       
       /* password is encoded in base64 */
-      base64_decode(pass, (const char*)ptr);
+      base64decode((const char*)ptr, &pass);
      
       /* fill the structure */
       PACKET->DISSECTOR.user = strdup(s->data + strlen("AUTH USER "));

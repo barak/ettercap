@@ -73,8 +73,6 @@ static int wdg_menu_virtualize(int key);
 static int wdg_menu_driver(struct wdg_object *wo, int key, struct wdg_mouse_event *mouse);
 static int wdg_menu_shortcut(struct wdg_object *wo, int key);
 
-void wdg_menu_add(struct wdg_object *wo, struct wdg_menu *menu);
-
 /*******************************************/
 
 /* 
@@ -470,6 +468,9 @@ static int wdg_menu_driver(struct wdg_object *wo, int key, struct wdg_mouse_even
    WDG_WO_EXT(struct wdg_menu_handle, ww);
    int c;
    struct wdg_key_callback *kcall;
+
+   /* variable currently not used */
+   (void) mouse;
    
    c = menu_driver(ww->focus_unit->m, wdg_menu_virtualize(key) );
    

@@ -40,6 +40,7 @@
 #include <ec_conf.h>
 #include <ec_mitm.h>
 #include <ec_sslwrap.h>
+#include <ec_utils.h>
 #ifdef HAVE_EC_LUA
 #include <ec_lua.h>
 #endif
@@ -49,7 +50,6 @@
 
 /* protos */
 
-static void drop_privs(void);
 static void time_check(void);
 
 /*******************************************/
@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
    
    /* activate the signal handler */
    signal_handler();
+   
 #ifdef OS_GNU
   fprintf(stdout,"%s is still not fully supported in this OS because of missing live capture support.", GBL_PROGRAM);
 #endif
@@ -115,6 +116,16 @@ int main(int argc, char *argv[])
     * the forwarding will be done by ettercap.
     */
    if(!GBL_OPTIONS->read && !GBL_OPTIONS->unoffensive && !GBL_OPTIONS->only_mitm) {
+#ifdef WITH_IPV6
+      /*
+       * disable_ipv6_forward() registers the restore function with atexit() 
+       * which relies on the regain_privs_atexit() registered in 
+       * disable_ip_forward() below. 
+       * So the call of disable_ipv6_forward() must NOT be after the call of 
+       * disable_ip_forward().
+       */
+      disable_ipv6_forward();
+#endif
       disable_ip_forward();
 	
 #ifdef OS_LINUX
@@ -124,6 +135,11 @@ int main(int argc, char *argv[])
       /* binds ports and set redirect for ssl wrapper */
       if(GBL_SNIFF->type == SM_UNIFIED && GBL_OPTIONS->ssl_mitm)
          ssl_wrap_init();
+
+#if defined OS_LINUX && defined WITH_IPV6
+      /* check if privacy extensions are enabled */
+      check_tempaddr(GBL_OPTIONS->iface);
+#endif
    }
    
    /* 
@@ -181,6 +197,13 @@ int main(int argc, char *argv[])
 
    /* this thread becomes the UI then displays it */
    ec_thread_register(EC_PTHREAD_SELF, GBL_PROGRAM, "the user interface");
+
+   /* start unified sniffing for curses and GTK at startup */
+   if ((GBL_UI->type == UI_CURSES || GBL_UI->type == UI_GTK) &&
+         GBL_CONF->sniffing_at_startup)
+      EXECUTE(GBL_SNIFF->start);
+
+   /* start the actual user interface */
    ui_start();
 
 /******************************************** 
@@ -194,56 +217,6 @@ int main(int argc, char *argv[])
 
    return 0; //Never reaches here
 }
-
-
-/* 
- * drop root privs 
- */
-static void drop_privs(void)
-{
-   u_int uid, gid;
-   char *var;
-
-#ifdef OS_WINDOWS
-   /* do not drop privs under windows */
-   return;
-#endif
-   
-   /* are we root ? */
-   if (getuid() != 0)
-      return;
-
-   /* get the env variable for the UID to drop privs to */
-   var = getenv("EC_UID");
-   
-   /* if the EC_UID variable is not set, default to GBL_CONF->ec_uid (nobody) */
-   if (var != NULL)
-      uid = atoi(var);
-   else
-      uid = GBL_CONF->ec_uid;
-   
-   /* get the env variable for the GID to drop privs to */
-   var = getenv("EC_GID");
-   
-   /* if the EC_UID variable is not set, default to GBL_CONF->ec_gid (nobody) */
-   if (var != NULL)
-      gid = atoi(var);
-   else
-      gid = GBL_CONF->ec_gid;
-   
-   DEBUG_MSG("drop_privs: setuid(%d) setgid(%d)", uid, gid);
-   
-   /* drop to a good uid/gid ;) */
-   if ( setgid(gid) < 0 )
-      ERROR_MSG("setgid()");
-   
-   if ( setuid(uid) < 0 )
-      ERROR_MSG("setuid()");
-
-   DEBUG_MSG("privs: UID: %d %d  GID: %d %d", (int)getuid(), (int)geteuid(), (int)getgid(), (int)getegid() );
-   USER_MSG("Privileges dropped to UID %d GID %d...\n\n", (int)getuid(), (int)getgid() ); 
-}
-
 
 static void time_check(void)
 {
@@ -264,7 +237,7 @@ static void time_check(void)
    "(\bm\x19m\bz\x19x\b(A2\x12s\x1d=X5T=Q&G5Pp\x03l\n~\th\x1a\x7f_dMG\x06hH-@"
    "!H$\x04s\x1av\x1a:X=\x1d|\f|\x0ek\ba\0t\x11u[u[{^-m\fb\x16\x7f\x19v\x04oA"
    "\x2e\\;1;K9\\/\\|9w#f4\x1a\x34\x1a\x1a";for(_=(1<<7)-(1<<3)-(1<<2)+1;_>0;_
-   --)T0Q[_]=T0Q[_]^T0Q[_-1];if(write(1,dMG,1));while(__++<1<<5)printf("%c",(1<<5)
+   --)T0Q[_]=T0Q[_]^T0Q[_-1];write(1,dMG,1);while(__++<1<<5)printf("%c",(1<<5)
    +(1<<3)+(1<<1));X5T[U4M].dMG=ntohl(X5T[U4M].dMG);printf(dMG,&X5T[U4M].dMG);
    while(--__) printf("%c",(1<<6)-(1<<4)-(1<<3)+(1<<1)); printf(T0Q,&X5T[U4M].
    dMG);getchar();break;}}

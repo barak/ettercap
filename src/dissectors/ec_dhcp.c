@@ -106,6 +106,11 @@ FUNC_DECODER(dissector_dhcp)
    struct dhcp_hdr *dhcp;
    u_int8 *options, *opt;
 
+   /* don't complain about unused var */
+   (void) DECODE_DATA; 
+   (void) DECODE_DATALEN;
+   (void) DECODED_LEN;
+   
    /* sanity check */
    if (PACKET->DATA.len < sizeof(struct dhcp_hdr))
       return NULL;
@@ -271,7 +276,7 @@ FUNC_DECODER(dissector_dhcp)
                 memcpy(name, opt + 4, size - 2);
                 name[size - 3] = 0;
 
-                resolv_cache_insert(&client, name);
+                resolv_cache_insert_passive(&client, name);
 
                 SAFE_FREE(name);
             }

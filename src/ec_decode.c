@@ -52,13 +52,9 @@ struct dec_entry {
 void __init data_init(void);
 FUNC_DECODER(decode_data);
 
-void ec_decode(u_char *param, const struct pcap_pkthdr *pkthdr, const u_char *pkt);
-void add_decoder(u_int8 level, u_int32 type, FUNC_DECODER_PTR(decoder));
 static void sort_decoders(void);
 static int cmp_decoders(const void *va, const void *vb);
 static struct dec_entry* find_entry(u_int8 level, u_int32 type);
-void del_decoder(u_int8 level, u_int32 type);
-void *get_decoder(u_int8 level, u_int32 type);
 void **get_decoders(u_int8 level, u_int32 type);
 
 /* mutexes */
@@ -78,9 +74,12 @@ void ec_decode(u_char *param, const struct pcap_pkthdr *pkthdr, const u_char *pk
 {
    FUNC_DECODER_PTR(packet_decoder);
    struct packet_object po;
-   bpf_u_int32 len;
+   u_int len;
    u_char *data;
-   bpf_u_int32 datalen;
+   u_int datalen;
+   struct iface_env *iface;
+
+   iface = (struct iface_env *)param;
 
    CANCELLATION_POINT();
 
@@ -115,7 +114,7 @@ void ec_decode(u_char *param, const struct pcap_pkthdr *pkthdr, const u_char *pk
        * packets are dumped in the log file by two threads
        */
       DUMP_LOCK;
-      pcap_dump((u_char *)param, pkthdr, pkt);
+      pcap_dump((u_char *)GBL_PCAP->dump, pkthdr, pkt);
       DUMP_UNLOCK;
    }
  
@@ -157,9 +156,9 @@ void ec_decode(u_char *param, const struct pcap_pkthdr *pkthdr, const u_char *pk
    /* set the po timestamp */
    memcpy(&po.ts, &pkthdr->ts, sizeof(struct timeval));
    /* set the interface where the packet was captured */
-   if (GBL_OPTIONS->iface && !strcmp(GBL_IFACE->name, GBL_OPTIONS->iface))
+   if (GBL_OPTIONS->iface && !strcmp(iface->name, GBL_OPTIONS->iface))
       po.flags |= PO_FROMIFACE;
-   else if (GBL_OPTIONS->iface_bridge && !strcmp(GBL_IFACE->name, GBL_OPTIONS->iface_bridge))
+   else if (GBL_OPTIONS->iface_bridge && !strcmp(iface->name, GBL_OPTIONS->iface_bridge))
       po.flags |= PO_FROMBRIDGE;
 
    /* HOOK POINT: RECEIVED */ 
@@ -214,7 +213,7 @@ void ec_decode(u_char *param, const struct pcap_pkthdr *pkthdr, const u_char *pk
    if (GBL_OPTIONS->write && GBL_OPTIONS->read) {
       DUMP_LOCK;
       /* reuse the original pcap header, but with the modified packet */
-      pcap_dump((u_char *)param, pkthdr, po.packet);
+      pcap_dump((u_char *)GBL_PCAP->dump, pkthdr, po.packet);
       DUMP_UNLOCK;
    }
    

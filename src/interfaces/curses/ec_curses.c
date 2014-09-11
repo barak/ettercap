@@ -33,20 +33,18 @@ static wdg_t *sysmsg_win;
 static char tag_unoff[] = " ";
 static char tag_promisc[] = " ";
 
+/* version */
+extern char *curses_version(void);
+
 /* proto */
 
-void set_curses_interface(void);
 static void curses_interface(void);
-void curses_flush_msg(void);
-
-void curses_message(const char *msg);
    
 static void curses_init(void);
 static void curses_cleanup(void);
 static void curses_msg(const char *msg);
 static void curses_error(const char *msg);
 static void curses_fatal_error(const char *msg);
-void curses_input(const char *title, char *input, size_t n, void (*callback)(void));
 static int curses_progress(char *title, int value, int max);
 static void curses_update(int target);
 
@@ -57,7 +55,7 @@ static void toggle_unoffensive(void);
 static void toggle_nopromisc(void);
 
 static void curses_file_open(void);
-static void read_pcapfile(char *path, char *file);
+static void read_pcapfile(const char *path, char *file);
 static void curses_file_write(void);
 static void write_pcapfile(void);
 static void curses_unified_sniff(void);
@@ -90,6 +88,8 @@ void set_curses_interface(void)
    ops.type = UI_CURSES;
    
    ui_register(&ops);
+
+   DEBUG_MSG("Curses -> %s\n", curses_version());
    
 }
 
@@ -308,7 +308,8 @@ static void curses_update(int target)
    switch(target) {
       case UI_UPDATE_HOSTLIST:   curses_hosts_update();
                                  break;
-
+      case UI_UPDATE_PLUGINLIST:
+                                 curses_plugins_update();
       default:                   break;
    }
 }
@@ -488,7 +489,7 @@ static void curses_file_open(void)
    wdg_set_focus(fop);
 }
 
-static void read_pcapfile(char *path, char *file)
+static void read_pcapfile(const char *path, char *file)
 {
    char pcap_errbuf[PCAP_ERRBUF_SIZE];
    

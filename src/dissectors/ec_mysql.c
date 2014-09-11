@@ -42,6 +42,7 @@ void __init mysql_init(void)
 }
 
 #ifdef DEBUG
+/* XXX - not used???
 static void print_hex(unsigned char *str, int len)
 {
    int i;
@@ -49,6 +50,7 @@ static void print_hex(unsigned char *str, int len)
       printf("%02x", str[i]);
       printf("\n");
 }
+*/
 #endif
 
 static char itoa16[16] =  "0123456789abcdef";
@@ -74,6 +76,11 @@ FUNC_DECODER(dissector_mysql)
    unsigned char output[41];
    int has_password = 0;
 
+   /* don't complain about unused var */
+   (void) DECODE_DATA; 
+   (void) DECODE_DATALEN;
+   (void) DECODED_LEN;
+   
    /* Skip ACK packets */
    if (PACKET->DATA.len == 0)
       return NULL;
@@ -128,6 +135,10 @@ FUNC_DECODER(dissector_mysql)
             length = strlen((const char*)ptr);
             ptr += (length +  1 + 4); /* skip over Version + Thread ID */
             s->data = malloc(41);
+           if (s->data == NULL) { /* oops, couldn't get memory */
+               DEBUG_MSG("\tUnable to allocate memory in Dissector...");
+               return NULL;
+           }
             memcpy(seed, ptr, 8);
             ptr += (8 + 1 + 2 + 1 + 2 + 13);
             memcpy(seed + 8, ptr, 12);

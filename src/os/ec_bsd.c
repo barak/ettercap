@@ -28,10 +28,9 @@
 #include <net/if.h>
 
 static int saved_status;
-
-void disable_ip_forward(void);
-static void restore_ip_forward(void);
-u_int16 get_iface_mtu(const char *iface);
+#ifdef WITH_IPV6
+static int saved_status_v6;
+#endif
 
 /*******************************************/
 
@@ -54,10 +53,11 @@ void disable_ip_forward(void)
    DEBUG_MSG("disable_ip_forward | net.inet.ip.forwarding = %d  old_value = %d\n", val, saved_status);
   
    atexit(restore_ip_forward);
+   atexit(regain_privs_atexit);
 }
 
 
-static void restore_ip_forward(void)
+void restore_ip_forward(void)
 {
    int mib[4];
 
@@ -78,6 +78,54 @@ static void restore_ip_forward(void)
                         
 }
 
+#ifdef WITH_IPV6
+void disable_ipv6_forward(void)
+{
+   int mib[4]; 
+   int val = 0;
+   size_t len;
+
+   mib[0] = CTL_NET;
+   mib[1] = PF_INET6;
+   mib[2] = IPPROTO_IPV6;
+   mib[3] = IPV6CTL_FORWARDING;
+
+   len = sizeof(saved_status_v6);
+
+   if( (sysctl(mib, 4, &saved_status_v6, &len, &val, sizeof(val))) == -1)
+      ERROR_MSG("sysctl() | net.inet6.ip6.forwarding");
+
+   DEBUG_MSG("disable_ipv6_forward | net.inet6.ip6.forwarding = %d  old_value = %d\n", 
+         val, saved_status_v6);
+  
+   atexit(restore_ipv6_forward);
+}
+
+
+void restore_ipv6_forward(void)
+{
+   int mib[4];
+
+   mib[0] = CTL_NET;
+   mib[1] = PF_INET6;
+   mib[2] = IPPROTO_IPV6;
+   mib[3] = IPV6CTL_FORWARDING;
+
+   /* no need to restore anything */
+   if (saved_status_v6 == 0)
+      return;
+   
+   /* restore the old value */
+   if( (sysctl(mib, 4, NULL, NULL, &saved_status_v6, sizeof(saved_status_v6))) == -1)
+      FATAL_ERROR("Please restore manually the value of net.inet6.ip6.forwarding to %d", 
+            saved_status_v6);
+
+   DEBUG_MSG("ATEXIT: restore_ipv6_forward | net.inet6.ip6.forwarding = %d\n", 
+         saved_status_v6);
+                        
+}
+#endif
+
 /* 
  * get the MTU parameter from the interface 
  */
@@ -88,7 +136,8 @@ u_int16 get_iface_mtu(const char *iface)
 
    /* open the socket to work on */
    sock = socket(PF_INET, SOCK_DGRAM, 0);
-               
+   if (sock = -1)
+      FATAL_ERROR("Unable to open socket on interface for MTU query\n");               
    memset(&ifr, 0, sizeof(ifr));
    strncpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
                         

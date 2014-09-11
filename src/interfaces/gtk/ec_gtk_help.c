@@ -49,15 +49,14 @@ help_pair help_list[] = {
 };
 
 /* proto */
-void gtkui_help(void);
 void gtkui_help_open(char *file);
 void gtkui_help_selected(GtkTreeSelection *treeselection, gpointer data);
 
-/***#****************************************/
+/********************************************/
 
 void gtkui_help(void)
 {
-   GtkWidget *dialog, *scrolled, *treeview, *hbox, *textview;
+   GtkWidget *dialog, *scrolled, *treeview, *hbox, *textview, *content_area;
    GtkCellRenderer   *renderer;
    GtkTreeViewColumn *column;
    GtkTreeIter iter;
@@ -68,11 +67,18 @@ void gtkui_help(void)
    dialog = gtk_dialog_new_with_buttons(EC_PROGRAM" Help", GTK_WINDOW (window),
                                         GTK_DIALOG_MODAL, GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
    gtk_window_set_default_size(GTK_WINDOW (dialog), 780, 580);
+#if !GTK_CHECK_VERSION(2, 22, 0) // depricated since Gtk 2.22
    gtk_dialog_set_has_separator(GTK_DIALOG (dialog), TRUE);
+#endif
    gtk_container_set_border_width(GTK_CONTAINER (dialog), 5);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+#else
    hbox = gtk_hbox_new (FALSE, 6);
-   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), hbox, TRUE, TRUE, 0);
+#endif
+   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+   gtk_box_pack_start(GTK_BOX(content_area), hbox, TRUE, TRUE, 0);
 
    scrolled = gtk_scrolled_window_new(NULL, NULL);
    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scrolled), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -158,6 +164,9 @@ void gtkui_help_selected(GtkTreeSelection *treeselection, gpointer data) {
    GtkTreeIter iter;
    GtkTreeModel *model;
    gchar *file;
+
+   /* variable not used */
+   (void) data;
 
    if (gtk_tree_selection_get_selected (GTK_TREE_SELECTION (treeselection), &model, &iter)) {
       gtk_tree_model_get (model, &iter, 1, &file, -1);

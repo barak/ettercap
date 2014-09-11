@@ -24,13 +24,11 @@
 
 /* the old value */
 static char saved_status;
+#ifdef WITH_IPV6
+static char saved_status_v6_global, saved_status_v6_iface;
+#endif
 
 /* protos */
-
-void disable_ip_forward(void);
-static void restore_ip_forward(void);
-u_int16 get_iface_mtu(const char *iface);
-void disable_interface_offload(void);
 
 /*******************************************/
 
@@ -46,23 +44,17 @@ void disable_ip_forward(void)
 
    DEBUG_MSG("disable_ip_forward: old value = %c", saved_status);
  
-   /* sometimes writing just fails... retry up to 5 times */
-   int i = 0;
-   fd = NULL;
-   do {
-      fd = fopen("/proc/sys/net/ipv4/ip_forward", "w");
-      i++;
-      usleep(20000);
-   } while(fd == NULL && i <=50);
+   fd = fopen("/proc/sys/net/ipv4/ip_forward", "w");
    ON_ERROR(fd, NULL, "failed to open /proc/sys/net/ipv4/ip_forward");
    
    fprintf(fd, "0");
    fclose(fd);
    
    atexit(restore_ip_forward);
+   atexit(regain_privs_atexit);
 }
 
-static void restore_ip_forward(void)
+void restore_ip_forward(void)
 {
    FILE *fd;
    char current_status;
@@ -71,7 +63,13 @@ static void restore_ip_forward(void)
    if (saved_status == '0')
       return;
    
-   /* read the current status to know if we need to modify it */
+   if (getuid()) {
+      DEBUG_MSG("ATEXIT: restore_ip_forward: cannot restore ip_forward "
+                 "since the privileges have been dropped to non root\n");
+      FATAL_ERROR("ip_forwarding was disabled, but we cannot re-enable it now.\n"
+                  "remember to re-enable it manually\n");
+      return;
+   }
    fd = fopen("/proc/sys/net/ipv4/ip_forward", "r");
    ON_ERROR(fd, NULL, "failed to open /proc/sys/net/ipv4/ip_forward");
 
@@ -85,24 +83,133 @@ static void restore_ip_forward(void)
       return;
    }
 
-   /* sometimes writing just fails... retry up to 5 times */
-   int i = 0;
-   fd = NULL;
-   do {
-      fd = fopen("/proc/sys/net/ipv4/ip_forward", "w");
-      i++;
-      usleep(20000);
-   } while(fd == NULL && i <=50);
+   fd = fopen("/proc/sys/net/ipv4/ip_forward", "w");
    if (fd == NULL) {
       FATAL_ERROR("ip_forwarding was disabled, but we cannot re-enable it now.\n"
                   "remember to re-enable it manually\n");
+      return;
    }
 
    fprintf(fd, "%c", saved_status);
    fclose(fd);
 
    DEBUG_MSG("ATEXIT: restore_ip_forward: restore to %c", saved_status);
+
 }
+
+#ifdef WITH_IPV6
+void disable_ipv6_forward(void)
+{
+   FILE *fd;
+   char fpath_global[] = "/proc/sys/net/ipv6/conf/all/forwarding";
+   char fpath_iface[64];
+   
+   /* global configuration */
+   fd = fopen(fpath_global, "r");
+   ON_ERROR(fd, NULL, "failed to open %s", fpath_global);
+   
+   fscanf(fd, "%c", &saved_status_v6_global);
+   fclose(fd);
+
+   /* interface specific configuration */
+   snprintf(fpath_iface, 63, "/proc/sys/net/ipv6/conf/%s/forwarding", GBL_OPTIONS->iface);
+
+   fd = fopen(fpath_iface, "r");
+   ON_ERROR(fd, NULL, "failed to open %s", fpath_iface);
+   
+   fscanf(fd, "%c", &saved_status_v6_iface);
+   fclose(fd);
+
+   fd = fopen(fpath_global, "w");
+   ON_ERROR(fd, NULL, "failed to open %s", fpath_global);
+
+   fprintf(fd, "0");
+   fclose(fd);
+
+   fd = fopen(fpath_iface, "w");
+   ON_ERROR(fd, NULL, "failed to open %s", fpath_iface);
+
+   fprintf(fd, "0");
+   fclose(fd);
+
+   DEBUG_MSG("disable_ipv6_forward: old value = %c/%c (global/interface %s)", 
+         saved_status_v6_global, saved_status_v6_iface, GBL_OPTIONS->iface);
+ 
+   
+   atexit(restore_ipv6_forward);
+}
+
+void restore_ipv6_forward(void)
+{
+   FILE *fd;
+   char current_status_global, current_status_iface;
+   char fpath_global[] = "/proc/sys/net/ipv6/conf/all/forwarding";
+   char fpath_iface[64];
+   
+   /* no modification needed */
+   if (saved_status_v6_global == '0' && saved_status_v6_iface == '0')
+      return;
+   
+   if (getuid()) {
+      DEBUG_MSG("ATEXIT: restore_ipv6_forward: cannot restore ipv6_forward "
+                 "since the privileges have been dropped to non root\n");
+      FATAL_ERROR("ipv6_forwarding was disabled, but we cannot re-enable it now.\n"
+                  "remember to re-enable it manually\n");
+      return;
+   }
+   
+   /* global configuration */
+   fd = fopen(fpath_global, "r");
+   ON_ERROR(fd, NULL, "failed to open %s", fpath_global);
+
+   fscanf(fd, "%c", &current_status_global);
+   fclose(fd);
+   
+   /* interface specific configuration */
+   snprintf(fpath_iface, 63, "/proc/sys/net/ipv6/conf/%s/forwarding", GBL_OPTIONS->iface);
+
+   fd = fopen(fpath_iface, "r");
+   ON_ERROR(fd, NULL, "failed to open %s", fpath_iface);
+
+   fscanf(fd, "%c", &current_status_iface);
+   fclose(fd);
+   
+   DEBUG_MSG("ATEXIT: restore_ipv6_forward: curr: %c/%c saved: %c/%c (global/interface %s)", 
+         current_status_global, current_status_iface, 
+         saved_status_v6_global, saved_status_v6_iface, GBL_OPTIONS->iface);
+
+   if (current_status_global == saved_status_v6_global && 
+         current_status_iface == saved_status_v6_iface) {
+      DEBUG_MSG("ATEXIT: restore_ipv6_forward: does not need restoration");
+      return;
+   }
+
+   /* write back global configuration */
+   if ((fd = fopen(fpath_global, "w")) != NULL) {
+      fprintf(fd, "%c", saved_status_v6_global);
+      fclose(fd);
+
+      DEBUG_MSG("ATEXIT: restore_ipv6_forward: restore global to %c", saved_status_v6_global);
+   } else {
+      FATAL_ERROR("global ipv6_forwarding was disabled, but we cannot re-enable it now.\n"
+                  "remember to re-enable it manually\n");
+   }
+
+
+   /* write back interface specific configuration */
+   if ((fd = fopen(fpath_iface, "w")) != NULL) {
+      fprintf(fd, "%c", saved_status_v6_iface);
+      fclose(fd);
+
+      DEBUG_MSG("ATEXIT: restore_ipv6_forward: restore %s to %c", 
+            GBL_OPTIONS->iface, saved_status_v6_iface);
+   } else {
+      FATAL_ERROR("interface ipv6_forwarding was disabled, but we cannot re-enable it now.\n"
+                  "remember to re-enable it manually\n");
+   }
+
+}
+#endif
 
 /* 
  * get the MTU parameter from the interface 
@@ -114,7 +221,8 @@ u_int16 get_iface_mtu(const char *iface)
 
    /* open the socket to work on */
    sock = socket(PF_INET, SOCK_DGRAM, 0);
-               
+   if (sock == -1) /* unable to bind to socket, kaboom */
+      FATAL_ERROR("Unable to open socket on interface for MTU query\n");
    memset(&ifr, 0, sizeof(ifr));
    strncpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
                         
@@ -172,7 +280,7 @@ void disable_interface_offload(void)
 			execvp(param[0], param);
 			WARN_MSG("cannot disable offload on %s, do you have ethtool installed?", GBL_OPTIONS->iface);
 			safe_free_mem(param, &param_length, command);
-			_exit(EINVALID);
+			_exit(-EINVALID);
 		case -1:
 			safe_free_mem(param, &param_length, command);
 		default:
@@ -180,6 +288,59 @@ void disable_interface_offload(void)
 			wait(&ret_val);
 	} 	
 }
+
+#ifdef WITH_IPV6
+/* 
+ * if privacy extension for IPv6 is enabled, under certain
+ * circumstances, an IPv6 socket can not be written exiting with
+ * code -1 bytes written (Cannot assign requested address).
+ * see pull request #245.(https://github.com/Ettercap/ettercap/pull/245) 
+ * 
+ * this usually happens after returning from hibernation
+ * therefore we should warn users.
+ * 
+ * however investigation of the root cause continues but as long as 
+ * it isn't identified and fixed, this function is being kept.
+ */
+void check_tempaddr(const char *iface)
+{
+   FILE *fd;
+   int mode_global, mode_iface;
+   char fpath_global[] = "/proc/sys/net/ipv6/conf/all/use_tempaddr";
+   char fpath_iface[64];
+
+   snprintf(fpath_iface, 63, "/proc/sys/net/ipv6/conf/%s/use_tempaddr", iface);
+   
+   fd = fopen(fpath_global, "r");
+   ON_ERROR(fd, NULL, "failed to open %s", fpath_global);
+
+   mode_global = fgetc(fd);
+   ON_ERROR(mode_global, EOF, "failed to read value from %s", fpath_global);
+
+   fclose(fd);
+
+   DEBUG_MSG("check_tempaddr: %s = %c", fpath_global, mode_global);
+ 
+   fd = fopen(fpath_iface, "r");
+   ON_ERROR(fd, NULL, "failed to open %s", fpath_iface);
+
+   mode_iface = fgetc(fd);
+   ON_ERROR(mode_iface, EOF, "failed to read value from %s", fpath_iface);
+   
+   fclose(fd);
+   
+   DEBUG_MSG("check_tempaddr: %s = %c", fpath_iface, mode_iface);
+
+   if (mode_global != '0')
+      USER_MSG("Ettercap might not work correctly. %s is not set to 0.\n", 
+            fpath_global);
+ 
+   if (mode_iface != '0')
+      USER_MSG("Ettercap might not work correctly. %s is not set to 0.\n", 
+            fpath_iface);
+
+}
+#endif
 
 /* EOF */
 

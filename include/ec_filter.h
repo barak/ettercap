@@ -1,7 +1,5 @@
-
-
-#ifndef EC_FILTER_H
-#define EC_FILTER_H
+#ifndef ETTERCAP_FILTER_H
+#define ETTERCAP_FILTER_H
 
 #include <ec_packet.h>
 
@@ -53,6 +51,7 @@ struct filter_op {
             #define FFUNC_KILL      7
             #define FFUNC_MSG       8
             #define FFUNC_EXEC      9
+            #define FFUNC_EXECINJECT 10
          u_int8 level; 
          u_int8 *string;
          size_t slen;
@@ -74,6 +73,7 @@ struct filter_op {
          u_int8   size;
          u_int16  offset;
          u_int32  value;
+         u_int8   ipaddr[16];
          u_int8   *string;
          size_t   slen;
       } test, assign;
@@ -114,7 +114,7 @@ struct filter_env {
 
 /* filter list entry */
 struct filter_list {
-	uint8_t enabled;
+	u_int8 enabled;
 	char *name;
 	struct filter_env env;
 	struct filter_list *next;
@@ -136,7 +136,7 @@ void filter_init_mutex(void);
 /* exported functions */
 
 EC_API_EXTERN void filter_packet(struct packet_object *po);
-EC_API_EXTERN int filter_load_file(char *filename, struct filter_list **list, uint8_t enabled);
+EC_API_EXTERN int filter_load_file(const char *filename, struct filter_list **list, uint8_t enabled);
 EC_API_EXTERN void filter_unload(struct filter_list **list);
 EC_API_EXTERN void filter_clear(void);
 EC_API_EXTERN void filter_walk_list( int(*cb)(struct filter_list*, void*), void *arg);

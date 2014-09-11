@@ -1,17 +1,15 @@
-
-
-#ifndef EF_FUNCTIONS_H
-#define EF_FUNCTIONS_H
+#ifndef ETTERFILTER_FUNCTIONS_H
+#define ETTERFILTER_FUNCTIONS_H
 
 #include <ec_filter.h>
 
-#define SCRIPT_ERROR(x, ...) FATAL_ERROR("\n[%s:%d]: "x, GBL_OPTIONS.source_file, GBL.lineno, ## __VA_ARGS__ );
+#define SCRIPT_ERROR(x, ...) FATAL_ERROR("\n[%s:%d]: "x, GBL_OPTIONS->source_file, GBL->lineno, ## __VA_ARGS__ );
 
 #define WARNING(x) do {                   \
-if (!GBL_OPTIONS.suppress_warnings)       \
-   FATAL_ERROR("\n[%s:%ld]: WARNING "x, GBL_OPTIONS.source_file, (unsigned long)GBL.lineno);  \
+if (!GBL_OPTIONS->suppress_warnings)       \
+   FATAL_ERROR("\n[%s:%ld]: WARNING "x, GBL_OPTIONS->source_file, (unsigned long)GBL->lineno);  \
 else                                      \
-   fprintf(stderr, "\n[%s:%ld]: WARNING "x, GBL_OPTIONS.source_file, (unsigned long)GBL.lineno);  \
+   fprintf(stderr, "\n[%s:%ld]: WARNING "x, GBL_OPTIONS->source_file, (unsigned long)GBL->lineno);  \
 } while(0)
 
 /* ef_main */
@@ -25,8 +23,7 @@ EF_API_EXTERN void test_filter(char *filename);
 EF_API_EXTERN void print_fop(struct filter_op *fop, u_int32 eip);
 
 /* ef_syntax && ef_grammar */
-EF_API_EXTERN int yyerror(const char *);                                                                         
-EF_API_EXTERN int yylex(void);
+EF_API_EXTERN int yyerror(const char *);
 
 /* ef_tables */
 EF_API_EXTERN void load_tables(void);

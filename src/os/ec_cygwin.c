@@ -24,10 +24,6 @@
 static int saved_status;
 static HKEY handle;
 
-void disable_ip_forward(void);
-static void restore_ip_forward(void);
-u_int16 get_iface_mtu(const char *iface);
-
 /*******************************************/
 
 void disable_ip_forward(void)
@@ -90,9 +86,10 @@ void disable_ip_forward(void)
    }
 
    atexit(restore_ip_forward);
+   atexit(regain_privs_atexit);
 }
 
-static void restore_ip_forward(void)
+void restore_ip_forward(void)
 {
 #ifdef WIN9X
    DWORD      dim = 2;
@@ -116,6 +113,22 @@ static void restore_ip_forward(void)
    RegCloseKey(handle);
 
 }
+
+#ifdef WITH_IPV6
+/* 
+ * empty wrapper functions until IPv6 support for Windows
+ */
+void disable_ipv6_forward(void)
+{
+   DEBUG_MSG ("disable_ipv6_forward (no-op)\n");
+}
+
+void restore_ipv6_forward(void)
+{
+   DEBUG_MSG ("restore_ipv6_forward (no-op)\n");
+}
+#endif
+
 
 /* 
  * get the MTU parameter from the interface 

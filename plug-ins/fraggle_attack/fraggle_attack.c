@@ -12,6 +12,7 @@
 #include <ec_plugins.h>
 #include <ec_send.h>
 #include <ec_threads.h>
+#include <ec_sleep.h>
 
 #define UDP_PORT_7  7    //udp echo
 #define UDP_PORT_19 19   //udp chargen
@@ -41,6 +42,9 @@ int plugin_load(void *handle)
 static int fraggle_attack_init(void *dummy)
 {
    struct ip_list *i;
+
+   /* variable not used */
+   (void) dummy;
 
    DEBUG_MSG("fraggle_attack_init");
 
@@ -79,6 +83,9 @@ static int fraggle_attack_fini(void *dummy)
 {
    pthread_t pid;
 
+   /* variable not used */
+   (void) dummy;
+
    DEBUG_MSG("fraggle_attack_fini");
 
    while(!pthread_equal(EC_PTHREAD_NULL, pid = ec_thread_getpid("fraggler"))) {
@@ -116,11 +123,11 @@ static EC_THREAD_FUNC(fraggler)
 
       LIST_FOREACH_SAFE(h, &GBL_HOSTLIST, next, htmp)
       	  if(ntohs(h->ip.addr_type) == proto) {
-            	send_udp(ip, &h->ip, &h->mac, port_echo, port_echo, payload, length);
-            	send_udp(ip, &h->ip, &h->mac, port_chargen, port_chargen, payload, length);
+            	send_udp(ip, &h->ip, h->mac, port_echo, port_echo, payload, length);
+            	send_udp(ip, &h->ip, h->mac, port_chargen, port_chargen, payload, length);
             }
 
-      usleep(1000*1000/GBL_CONF->sampling_rate);
+      ec_usleep(1000*1000/GBL_CONF->sampling_rate);
    }
 
    return NULL;

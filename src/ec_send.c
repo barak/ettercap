@@ -18,26 +18,12 @@
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-#include <config.h>
+
+#include <ec.h>
+
 #if defined(OS_DARWIN) || defined(OS_BSD)
-   #define PCAP_DONT_INCLUDE_PCAP_BPF_H 1
-   #include <sys/types.h>
-   #include <net/bpf.h>
    #include <sys/ioctl.h>
 #endif
-// Order MATTERS. ec.h includes pcap.h in ec_packet, hence the double inclusion of bpf.h file
-/*
-/usr/include/net/bpf.h:65:8: error: redefinition of 'struct bpf_program'
- struct bpf_program {
-        ^
-In file included from /usr/include/pcap/pcap.h:51:0,
-                 from /usr/include/pcap.h:45,
-                 from /«PKGBUILDDIR»/include/ec_packet.h:11,
-                 from /«PKGBUILDDIR»/include/ec_sniff.h:6,
-                 from /«PKGBUILDDIR»/include/ec_globals.h:6,
-                 from /«PKGBUILDDIR»/include/ec.h:52,
-*/
-#include <ec.h>
 
 #include <ec_packet.h>
 #include <ec_send.h>
@@ -66,33 +52,7 @@ struct build_entry {
 
 /* protos */
 
-int send_to_L3(struct packet_object *po);
-int send_to_L2(struct packet_object *po);
-int send_to_bridge(struct packet_object *po);
-int send_to_iface(struct packet_object *po, struct iface_env *iface);
-
-void capture_only_incoming(pcap_t *p, libnet_t *l);
-
-void add_builder(u_int8 dlt, FUNC_BUILDER_PTR(builder));
 libnet_ptag_t ec_build_link_layer(u_int8 dlt, u_int8 *dst, u_int16 proto, libnet_t* l);
-
-int send_arp(u_char type, struct ip_addr *sip, u_int8 *smac, struct ip_addr *tip, u_int8 *tmac);
-int send_L2_icmp_echo(u_char type, struct ip_addr *sip, struct ip_addr *tip, u_int8 *tmac);
-int send_L3_icmp(u_char type, struct ip_addr *sip, struct ip_addr *tip);
-int send_L3_icmp_echo(struct ip_addr *src, struct ip_addr *tgt);
-int send_icmp_redir(u_char type, struct ip_addr *sip, struct ip_addr *gw, struct packet_object *po);
-int send_dhcp_reply(struct ip_addr *sip, struct ip_addr *tip, u_int8 *tmac, u_int8 *dhcp_hdr, u_int8 *options, size_t optlen);
-int send_dns_reply(u_int16 dport, struct ip_addr *sip, struct ip_addr *tip, u_int8 *tmac, u_int16 id, u_int8 *data, size_t datalen, u_int16 anws_rr, u_int16 auth_rr, u_int16 addi_rr);
-int send_mdns_reply(u_int16 dport, struct ip_addr *sip, struct ip_addr *tip, u_int8 *tmac, u_int16 id, u_int8 *data, size_t datalen, u_int16 anws_rr, u_int16 auth_rr, u_int16 addi_rr);
-int send_tcp(struct ip_addr *sip, struct ip_addr *tip, u_int16 sport, u_int16 dport, u_int32 seq, u_int32 ack, u_int8 flags, u_int8 *payload, size_t length);
-int send_udp(struct ip_addr *sip, struct ip_addr *tip, u_int8 *tmac, u_int16 sport, u_int16 dport, u_int8 *payload, size_t length);
-int send_tcp_ether(u_int8 *dmac, struct ip_addr *sip, struct ip_addr *tip, u_int16 sport, u_int16 dport, u_int32 seq, u_int32 ack, u_int8 flags);
-int send_L3_icmp_unreach(struct packet_object *po);
-
-#ifdef WITH_IPV6
-int send_icmp6_echo(struct ip_addr *sip, struct ip_addr *tip);
-int send_icmp6_nadv(struct ip_addr *sip, struct ip_addr *tip, struct ip_addr *tgt, u_int8 *macaddr, int router);
-#endif
 
 static pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define SEND_LOCK     do{ pthread_mutex_lock(&send_mutex); } while(0)
@@ -204,6 +164,8 @@ int send_to_iface(struct packet_object *po, struct iface_env *iface)
  */
 void capture_only_incoming(pcap_t *p, libnet_t *l)
 {
+   (void)p;
+   (void)l;
 #ifdef OS_LINUX   
    /*
     * a dirty hack to use the same socket for pcap and libnet.
@@ -402,8 +364,8 @@ int send_L3_icmp_unreach(struct packet_object *po)
            64,                                         /* TTL */                                       
            IPPROTO_ICMP,                               /* protocol */                                  
            0,                                          /* checksum */                                  
-           ip_addr_to_int32(&po->L3.dst.addr),         /* source IP */                                 
-           ip_addr_to_int32(&po->L3.src.addr),         /* destination IP */                            
+           *po->L3.dst.addr32,                         /* source IP */
+           *po->L3.src.addr32,                         /* destination IP */
            NULL,                                       /* payload */                                   
            0,                                          /* payload size */                              
            l,                                          /* libnet handle */                             
@@ -467,8 +429,8 @@ int send_L3_icmp(u_char type, struct ip_addr *sip, struct ip_addr *tip)
            64,                                         /* TTL */                                       
            IPPROTO_ICMP,                               /* protocol */                                  
            0,                                          /* checksum */                                  
-           ip_addr_to_int32(&sip->addr),               /* source IP */                                 
-           ip_addr_to_int32(&tip->addr),               /* destination IP */                            
+           *sip->addr32,                               /* source IP */
+           *tip->addr32,                               /* destination IP */
            NULL,                                       /* payload */                                   
            0,                                          /* payload size */                              
            l,                                          /* libnet handle */                             
@@ -533,8 +495,8 @@ int send_L2_icmp_echo(u_char type, struct ip_addr *sip, struct ip_addr *tip, u_i
            64,                                         /* TTL */                                       
            IPPROTO_ICMP,                               /* protocol */                                  
            0,                                          /* checksum */                                  
-           ip_addr_to_int32(&sip->addr),               /* source IP */                                 
-           ip_addr_to_int32(&tip->addr),               /* destination IP */                            
+           *sip->addr32,                               /* source IP */
+           *tip->addr32,                               /* destination IP */
            NULL,                                       /* payload */                                   
            0,                                          /* payload size */                              
            l,                                          /* libnet handle */                             
@@ -592,8 +554,8 @@ int send_icmp_redir(u_char type, struct ip_addr *sip, struct ip_addr *gw, struct
             ip->ip_ttl,                          /* original ttl */
             ip->ip_p,                            /* original proto */
             ip->ip_sum,                          /* original checksum */
-            ip_addr_to_int32(&ip->ip_src),       /* original source */
-            ip_addr_to_int32(&ip->ip_dst),       /* original dest */
+            ip->ip_src.s_addr,                   /* original source */
+            ip->ip_dst.s_addr,                   /* original dest */
             po->L4.header,                       /* the 64 bit of the original datagram */
             8,                                   /* payload size */
             l,
@@ -604,7 +566,7 @@ int send_icmp_redir(u_char type, struct ip_addr *sip, struct ip_addr *gw, struct
            ICMP_REDIRECT,                       /* type */
            type,                                /* code */
            0,                                   /* checksum */
-           ip_addr_to_int32(&gw->addr),         /* gateway ip */
+           *gw->addr32,                         /* gateway ip */
            NULL,                                /* payload */
            0,                                   /* payload len */
            l,                                   /* libnet handle */
@@ -623,8 +585,8 @@ int send_icmp_redir(u_char type, struct ip_addr *sip, struct ip_addr *gw, struct
            64,                                           /* TTL */
            IPPROTO_ICMP,                                 /* protocol */
            0,                                            /* checksum */
-           ip_addr_to_int32(&sip->addr),                 /* source IP */
-           ip_addr_to_int32(&po->L3.src.addr),           /* destination IP */
+           *sip->addr32,                                 /* source IP */
+           *po->L3.src.addr32,                           /* destination IP */
            NULL,                                         /* payload */
            0,                                            /* payload size */
            l,                                            /* libnet handle */ 
@@ -686,7 +648,7 @@ int send_icmp6_echo(struct ip_addr *sip, struct ip_addr *tip)
                          0,                           /* flow label */
                          LIBNET_ICMPV6_H,             /* next header size */
                          IPPROTO_ICMPV6,              /* next header */
-                         64,                          /* hop limit */
+                         255,                         /* hop limit */
                          src,                         /* source */
                          dst,                         /* destination */
                          NULL,                        /* payload and size */
@@ -702,6 +664,72 @@ int send_icmp6_echo(struct ip_addr *sip, struct ip_addr *tip)
    SEND_UNLOCK;
 
    return c;
+}
+
+/*
+ * send IP packet with an unknown header option
+ * RFC2460 conforming hosts, respond with a ICMPv6 parameter problem 
+ * message even those not intended to respond to ICMP echos
+ */
+int send_icmp6_echo_opt(struct ip_addr *sip, struct ip_addr *tip, u_int8* o_data, u_int32 o_len)
+{
+    libnet_ptag_t t;
+    struct libnet_in6_addr src, dst;
+    int c, h = 0;
+    libnet_t *l;
+
+    BUG_IF(GBL_LNET->lnet_IP6 == NULL);
+
+    l = GBL_LNET->lnet_IP6;
+
+    SEND_LOCK;
+
+    memcpy(&src, sip->addr, sizeof(src));
+    memcpy(&dst, tip->addr, sizeof(dst));
+
+    t = libnet_build_icmpv6_echo(ICMP6_ECHO_REQUEST,   /* type */
+                                 0,                    /* code */
+                                 0,                    /* checksum */
+                                 EC_MAGIC_16,          /* id */
+                                 0,                    /* sequence number */
+                                 NULL,                 /* data */
+                                 0,                    /* its size */
+                                 l,                    /* handle */
+                                 0);
+    ON_ERROR(t, -1, "libnet_build_icmpv6_echo: %s", libnet_geterror(l));
+    libnet_toggle_checksum(l, t, LIBNET_ON);
+
+    t = libnet_build_ipv6_destopts(IPPROTO_ICMPV6,             /* next header */
+                                   LIBNET_IPV6_DESTOPTS_H / 8, /* lenth */
+                                   o_data,                     /* payload */
+                                   o_len,                      /* payload length */
+                                   l,                          /* handle */
+                                   0);
+    ON_ERROR(t, -1, "libnet_build_ipv6_destopts: %s", libnet_geterror(l));
+
+    h = LIBNET_IPV6_DESTOPTS_H + o_len + LIBNET_ICMPV6_H;
+    t = libnet_build_ipv6(0,                /* tc */
+                          0,                /* flow label */
+                          h,                /* next header size */
+                          IPPROTO_DSTOPTS,  /* next header */
+                          255,              /* hop limit */
+                          src,              /* source */
+                          dst,              /* destination */
+                          NULL,             /* payload and size */
+                          0,
+                          l,                /* handle */
+                          0);               /* ptag */
+    ON_ERROR(t, -1, "libnet_build_ipv6: %s", libnet_geterror(l));
+
+    c = libnet_write(l);
+    ON_ERROR(c, -1, "libnet_write: %s", libnet_geterror(l));
+
+    libnet_clear_packet(l);
+
+
+    SEND_UNLOCK;
+
+    return c;
 }
 
 /* 
@@ -733,14 +761,14 @@ int send_icmp6_nsol(struct ip_addr *sip, struct ip_addr *tip, struct ip_addr *re
                                       l,                        /* libnet handle */
                                       0);                       /* ptag */
       ON_ERROR(t, -1, "libnet_build_icmpv6_ndp_opt: %s", libnet_geterror(l));
-      /* base header size + address size rouded to 8 */
-      h += LIBNET_ICMPV6_NDP_OPT_H + 8;
+      /* base header size + MAC address size */
+      h += LIBNET_ICMPV6_NDP_OPT_H + 6;
    }
 
    t = libnet_build_icmpv6_ndp_nsol(ND_NEIGHBOR_SOLICIT,        /* type */
                                     0,                          /* code */
                                     0,                          /* checksum */
-                                    r,
+                                    r,                          /* target address */
                                     NULL,                       /* payload */
                                     0,                          /* its size */
                                     l,                          /* libnet handler */
@@ -753,7 +781,7 @@ int send_icmp6_nsol(struct ip_addr *sip, struct ip_addr *tip, struct ip_addr *re
                          0,                                     /* flow label */
                          h,                                     /* length */
                          IPPROTO_ICMP6,                         /* proto */
-                         64,                                    /* hop limit */
+                         255,                                   /* hop limit */
                          src,                                   /* source address */
                          dst,                                   /* target address */
                          NULL,                                  /* payload */
@@ -771,7 +799,7 @@ int send_icmp6_nsol(struct ip_addr *sip, struct ip_addr *tip, struct ip_addr *re
    return c;
 }
 
-int send_icmp6_nadv(struct ip_addr *sip, struct ip_addr *tip, struct ip_addr *tgt, u_int8 *macaddr, int router)
+int send_icmp6_nadv(struct ip_addr *sip, struct ip_addr *tip, u_int8 *macaddr, int router)
 {
    libnet_ptag_t t;
    int c, h = 0;
@@ -816,7 +844,7 @@ int send_icmp6_nadv(struct ip_addr *sip, struct ip_addr *tip, struct ip_addr *tg
                          0,                  /* flow label */
                          h,                  /* length */
                          IPPROTO_ICMP6,      /* proto */
-                         64,                 /* hop limit */
+                         255,                /* hop limit */
                          src,                /* source address */
                          dst,                /* target address */
                          NULL,               /* payload */
@@ -834,6 +862,7 @@ int send_icmp6_nadv(struct ip_addr *sip, struct ip_addr *tip, struct ip_addr *tg
 
    return c;
 }
+
 #endif /* WITH_IPV6 */
 
 /*
@@ -887,8 +916,8 @@ int send_dhcp_reply(struct ip_addr *sip, struct ip_addr *tip, u_int8 *tmac, u_in
            64,                                                       /* TTL */
            IPPROTO_UDP,                                              /* protocol */
            0,                                                        /* checksum */
-           ip_addr_to_int32(&sip->addr),                             /* source IP */
-           ip_addr_to_int32(&tip->addr),                             /* destination IP */
+           *sip->addr32,                                             /* source IP */
+           *tip->addr32,                                             /* destination IP */
            NULL,                                                     /* payload */
            0,                                                        /* payload size */
            l,                                                        /* libnet handle */ 
@@ -973,8 +1002,8 @@ int send_mdns_reply(u_int16 dport, struct ip_addr *sip, struct ip_addr *tip, u_i
                  255,                                                         /* TTL */
                  IPPROTO_UDP,                                                 /* protocol */
                  0,                                                           /* checksum */
-                 ip_addr_to_int32(&sip->addr),                                /* source IP */
-                 ip_addr_to_int32(&tip->addr),                                /* destination IP */
+                 *sip->addr32,                                                /* source IP */
+                 *tip->addr32,                                                /* destination IP */
                  NULL,                                                        /* payload */
                  0,                                                           /* payload size */
                  l,                                                           /* libnet handle */ 
@@ -1081,8 +1110,8 @@ int send_dns_reply(u_int16 dport, struct ip_addr *sip, struct ip_addr *tip, u_in
                  64,                                                          /* TTL */
                  IPPROTO_UDP,                                                 /* protocol */
                  0,                                                           /* checksum */
-                 ip_addr_to_int32(&sip->addr),                                /* source IP */
-                 ip_addr_to_int32(&tip->addr),                                /* destination IP */
+                 *sip->addr32,                                                /* source IP */
+                 *tip->addr32,                                                /* destination IP */
                  NULL,                                                        /* payload */
                  0,                                                           /* payload size */
                  l,                                                           /* libnet handle */ 
@@ -1181,8 +1210,8 @@ const uint8_t *payload, uint32_t payload_s, libnet_t *l, libnet_ptag_t ptag)
 				64,				/* TTL */
 				IPPROTO_UDP,			/* protocol */
 				0,				/* checksum */
-				ip_addr_to_int32(&sip->addr),	/* source IP */
-				ip_addr_to_int32(&tip->addr),	/* destination IP */
+				*sip->addr32,			/* source IP */
+				*tip->addr32,			/* destination IP */
 				NULL,				
 				0,				/* payload size */
 				l,
@@ -1279,8 +1308,8 @@ int send_tcp(struct ip_addr *sip, struct ip_addr *tip, u_int16 sport, u_int16 dp
                  64,                                 /* TTL */
                  IPPROTO_TCP,                        /* protocol */
                  0,                                  /* checksum */
-                 ip_addr_to_int32(&sip->addr),       /* source IP */
-                 ip_addr_to_int32(&tip->addr),       /* destination IP */
+                 *sip->addr32,                       /* source IP */
+                 *tip->addr32,                       /* destination IP */
                  NULL,                               /* payload */
                  0,                                  /* payload size */
                  l,                                  /* libnet handle */ 
@@ -1363,8 +1392,8 @@ int send_tcp_ether(u_int8 *dmac, struct ip_addr *sip, struct ip_addr *tip, u_int
            64,                                 /* TTL */
            IPPROTO_TCP,                        /* protocol */
            0,                                  /* checksum */
-           ip_addr_to_int32(&sip->addr),       /* source IP */
-           ip_addr_to_int32(&tip->addr),       /* destination IP */
+           *sip->addr32,                       /* source IP */
+           *tip->addr32,                       /* destination IP */
            NULL,                               /* payload */
            0,                                  /* payload size */
            l,                                  /* libnet handle */ 

@@ -130,6 +130,9 @@ int plugin_load(void *handle)
 
 static int dns_spoof_init(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* 
     * add the hook in the dissector.
     * this will pass only valid dns packets
@@ -142,6 +145,9 @@ static int dns_spoof_init(void *dummy)
 
 static int dns_spoof_fini(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* remove the hook */
    hook_del(HOOK_PROTO_DNS, &dns_spoof);
 
@@ -366,7 +372,7 @@ static void dns_spoof(struct packet_object *po)
 
          /* check if the family matches the record type */
          if (ntohs(reply->addr_type) != AF_INET) {
-            USER_MSG("mdns_spoof: can not spoof A record for %s "
+            USER_MSG("dns_spoof: can not spoof A record for %s "
                      "because the value is not a IPv4 address\n", name);
             return;
          }
@@ -421,7 +427,7 @@ static void dns_spoof(struct packet_object *po)
 
           /* check if the family matches the record type */
           if (ntohs(reply->addr_type) != AF_INET6) {
-             USER_MSG("mdns_spoof: can not spoof AAAA record for %s "
+             USER_MSG("dns_spoof: can not spoof AAAA record for %s "
                       "because the value is not a IPv6 address\n", name);
              return;
           }

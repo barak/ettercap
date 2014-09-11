@@ -1,7 +1,5 @@
-
-
-#ifndef EC_STRINGS_H
-#define EC_STRINGS_H
+#ifndef ETTERCAP_STRINGS_H
+#define ETTERCAP_STRINGS_H
 
 #ifdef HAVE_CTYPE_H
    #include <ctype.h>
@@ -9,11 +7,23 @@
    extern int isprint(int c);
 #endif
 
-#ifndef HAVE_STRLCAT
-   #include <missing/strlcat.h>
+#ifndef HAVE_STRLCAT_FUNCTION
+   #ifndef HAVE_STRLCAT
+      #include <missing/strlcat.h>
+   #else
+      #include <bsd/string.h>
+   #endif
+#else
+   #include <string.h>
 #endif
-#ifndef HAVE_STRLCPY 
-   #include <missing/strlcpy.h>
+#ifndef HAVE_STRLCPY_FUNCTION
+   #ifndef HAVE_STRLCPY
+      #include <missing/strlcpy.h>
+   #else
+      #include <bsd/string.h>
+   #endif
+#else
+   #include <string.h>
 #endif
 #ifndef HAVE_STRSEP 
    #include <missing/strsep.h>

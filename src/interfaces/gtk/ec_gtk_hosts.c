@@ -25,13 +25,7 @@
 
 /* proto */
 
-void gtkui_scan(void);
-void gtkui_load_hosts(void);
-void gtkui_save_hosts(void);
-void gtkui_host_list(void);
-void gtkui_refresh_host_list(void);
-
-static void load_hosts(char *file);
+static void load_hosts(const char *file);
 static void save_hosts(void);
 static void gtkui_hosts_destroy(void);
 static void gtkui_button_callback(GtkWidget *widget, gpointer data);
@@ -46,16 +40,25 @@ enum { HOST_DELETE, HOST_TARGET1, HOST_TARGET2 };
 
 /*******************************************/
 
+#ifdef WITH_IPV6
+void toggle_ip6scan(void)
+{
+    if (GBL_OPTIONS->ip6scan) {
+        GBL_OPTIONS->ip6scan = 0;
+    } else {
+        GBL_OPTIONS->ip6scan = 1;
+    }
+}
+#endif
+
 /*
  * scan the lan for hosts 
  */
 void gtkui_scan(void)
 {
-   /* wipe the current list */
-   del_hosts_list();
-
    /* no target defined...  force a full scan */
    if (GBL_TARGET1->all_ip && GBL_TARGET2->all_ip &&
+       GBL_TARGET1->all_ip6 && GBL_TARGET2->all_ip6 &&
       !GBL_TARGET1->scan_all && !GBL_TARGET2->scan_all) {
       GBL_TARGET1->scan_all = 1;
       GBL_TARGET2->scan_all = 1;
@@ -71,26 +74,33 @@ void gtkui_scan(void)
 void gtkui_load_hosts(void)
 {
    GtkWidget *dialog;
-   const char *filename;
+   gchar *filename;
    int response = 0;
 
    DEBUG_MSG("gtk_load_hosts");
 
-   dialog = gtk_file_selection_new ("Select a hosts file...");
+   dialog = gtk_file_chooser_dialog_new("Select a hosts file...",
+            GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN,
+            GTK_STOCK_OPEN, GTK_RESPONSE_OK,
+            GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+            NULL);
+   gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), "");
 
    response = gtk_dialog_run (GTK_DIALOG (dialog));
    
    if (response == GTK_RESPONSE_OK) {
       gtk_widget_hide(dialog);
-      filename = gtk_file_selection_get_filename (GTK_FILE_SELECTION (dialog));
+      filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 
       load_hosts(filename);
-      gtkui_refresh_host_list();
+      gtkui_refresh_host_list(NULL);
+
+      g_free(filename);
    }
    gtk_widget_destroy (dialog);
 }
 
-static void load_hosts(char *file)
+static void load_hosts(const char *file)
 {
    char *tmp;
    char current[PATH_MAX];
@@ -131,13 +141,32 @@ static void load_hosts(char *file)
 void gtkui_save_hosts(void)
 {
 #define FILE_LEN  40
+   GtkWidget *dialog;
+   gchar *filename;
    
    DEBUG_MSG("gtk_save_hosts");
 
    SAFE_FREE(GBL_OPTIONS->hostsfile);
    SAFE_CALLOC(GBL_OPTIONS->hostsfile, FILE_LEN, sizeof(char));
+
+   dialog = gtk_file_chooser_dialog_new("Save hosts to file...",
+           GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_SAVE,
+           GTK_STOCK_SAVE, GTK_RESPONSE_OK,
+           GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+           NULL);
+   gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), ".");
+
+   if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK) {
+       gtk_widget_hide(dialog);
+       filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+       gtk_widget_destroy(dialog);
+       memcpy(GBL_OPTIONS->hostsfile, filename, FILE_LEN);
+       g_free(filename);
+       save_hosts();
+   } else {
+       gtk_widget_destroy(dialog);
+   }
    
-   gtkui_input("Output file :", GBL_OPTIONS->hostsfile, FILE_LEN, save_hosts);
 }
 
 static void save_hosts(void)
@@ -167,6 +196,9 @@ void gtkui_host_list(void)
    GtkWidget *scrolled, *treeview, *vbox, *hbox, *button;
    GtkCellRenderer   *renderer;
    GtkTreeViewColumn *column;
+   static gint host_delete = HOST_DELETE;
+   static gint host_target1 = HOST_TARGET1;
+   static gint host_target2 = HOST_TARGET2;
 
    DEBUG_MSG("gtk_host_list");
 
@@ -180,7 +212,11 @@ void gtkui_host_list(void)
    
    hosts_window = gtkui_page_new("Host List", &gtkui_hosts_destroy, &gtkui_hosts_detach);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
    vbox = gtk_vbox_new(FALSE, 0);
+#endif
    gtk_container_add(GTK_CONTAINER (hosts_window), vbox);
    gtk_widget_show(vbox);
 
@@ -213,28 +249,32 @@ void gtkui_host_list(void)
    gtk_tree_view_append_column (GTK_TREE_VIEW(treeview), column);
 
    /* populate the list or at least allocate a spot for it */
-   gtkui_refresh_host_list();
+   gtkui_refresh_host_list(NULL);
   
    /* set the elements */
    gtk_tree_view_set_model(GTK_TREE_VIEW (treeview), GTK_TREE_MODEL (liststore));
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#else
    hbox = gtk_hbox_new(TRUE, 0);
+#endif
    gtk_box_pack_start(GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
    gtk_widget_show(hbox);
 
    button = gtk_button_new_with_mnemonic("_Delete Host");
    gtk_box_pack_start(GTK_BOX (hbox), button, TRUE, TRUE, 0);
-   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_button_callback), (gpointer)HOST_DELETE);
+   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_button_callback), &host_delete);
    gtk_widget_show(button);
 
    button = gtk_button_new_with_mnemonic("Add to Target _1");
    gtk_box_pack_start(GTK_BOX (hbox), button, TRUE, TRUE, 0);
-   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_button_callback), (gpointer)HOST_TARGET1);
+   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_button_callback), &host_target1);
    gtk_widget_show(button);
 
    button = gtk_button_new_with_mnemonic("Add to Target _2");
    gtk_box_pack_start(GTK_BOX (hbox), button, TRUE, TRUE, 0);
-   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_button_callback), (gpointer)HOST_TARGET2);
+   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_button_callback), &host_target2);
    gtk_widget_show(button);
 
    gtk_widget_show(hosts_window);
@@ -273,7 +313,7 @@ void gtkui_hosts_destroy(void)
 /*
  * populate the list
  */
-void gtkui_refresh_host_list(void)
+gboolean gtkui_refresh_host_list(gpointer data)
 {
    GtkTreeIter   iter;
    struct hosts_list *hl;
@@ -281,6 +321,8 @@ void gtkui_refresh_host_list(void)
    char tmp2[MAX_ASCII_ADDR_LEN];
    char name[MAX_HOSTNAME_LEN];
 
+   /* avoid warning */
+   (void)data;
    DEBUG_MSG("gtk_refresh_host_list");
 
    /* The list store contains a 4th column that is NOT displayed 
@@ -309,6 +351,9 @@ void gtkui_refresh_host_list(void)
          gtk_list_store_set (liststore, &iter, 2, name, -1);
       }
    }
+
+   /* return FALSE so that g_idle_add() only calls it once */
+   return FALSE;
 }
 
 void gtkui_button_callback(GtkWidget *widget, gpointer data)
@@ -318,6 +363,13 @@ void gtkui_button_callback(GtkWidget *widget, gpointer data)
    GtkTreeModel *model;
    char tmp[MAX_ASCII_ADDR_LEN];
    struct hosts_list *hl = NULL;
+   gint *type = data;
+
+   /* variable not used */
+   (void) widget;
+
+   if (type == NULL)
+       return;
 
    model = GTK_TREE_MODEL (liststore);
 
@@ -327,7 +379,7 @@ void gtkui_button_callback(GtkWidget *widget, gpointer data)
          gtk_tree_model_get_iter(model, &iter, list->data);
          gtk_tree_model_get(model, &iter, 3, &hl, -1);
 
-         switch((int)data) {
+         switch(*type) {
             case HOST_DELETE:
                DEBUG_MSG("gtkui_button_callback: delete host");
                gtk_list_store_remove(GTK_LIST_STORE (liststore), &iter);

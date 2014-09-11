@@ -1,7 +1,5 @@
-
-
-#ifndef EC_DECODE_H
-#define EC_DECODE_H
+#ifndef ETTERCAP_DECODE_H
+#define ETTERCAP_DECODE_H
 
 #include <ec_proto.h>
 #include <ec_packet.h>
@@ -39,6 +37,8 @@ enum {
 
 #define DECLARE_DISP_PTR_END(x,y) u_char *x = po->DATA.disp_data; \
                                   u_char *y = x + po->DATA.disp_len
+
+#define DECLARE_DISP_PTR(x)       u_char *x = po->DATA.disp_data
                                   
 #define DISPLAY_DATA    po->disp_data
 #define DISPLAY_LEN     po->disp_len                             

@@ -29,6 +29,8 @@
 #include <ec_file.h>
 #include <ec_version.h>
 #include <ec_socket.h>
+#include <ec_utils.h>
+#include <ec_sleep.h>
 
 #include <sys/types.h>
 #ifndef OS_WINDOWS
@@ -40,10 +42,7 @@
 #endif
 
 #include <fcntl.h>
-#include <time.h>
 #include <pthread.h>
-
-#ifdef HAVE_OPENSSL
 
 // XXX - check if we have poll.h
 #ifdef HAVE_SYS_POLL_H
@@ -69,8 +68,6 @@
    }                                \
 } while(0)
 
-#endif /* HAVE_OPENSSL */
-
 /* globals */
 
 static LIST_HEAD (, listen_entry) listen_ports;
@@ -83,9 +80,6 @@ struct listen_entry {
    char *name;
    LIST_ENTRY (listen_entry) next;
 };
-
-
-#ifdef HAVE_OPENSSL
 
 struct accepted_entry {
    int32 fd[2];   /* 0->Client, 1->Server */
@@ -124,17 +118,6 @@ static EVP_PKEY *global_pk;
 static u_int16 number_of_services;
 static struct pollfd *poll_fd = NULL;
 
-#endif /* HAVE_OPENSSL */
-
-/* protos */
-
-void sslw_dissect_add(char *name, u_int32 port, FUNC_DECODER_PTR(decoder), u_char status);
-void sslw_dissect_move(char *name, u_int16 port);
-EC_THREAD_FUNC(sslw_start);
-void ssl_wrap_init(void);
-
-#ifdef HAVE_OPENSSL
-
 static EC_THREAD_FUNC(sslw_child);
 static int sslw_is_ssl(struct packet_object *po);
 static int sslw_connect_server(struct accepted_entry *ae);
@@ -157,8 +140,6 @@ static void ssl_wrap_fini(void);
 static int sslw_ssl_connect(SSL *ssl_sk);
 static int sslw_ssl_accept(SSL *ssl_sk);
 static int sslw_remove_sts(struct packet_object *po);
-
-#endif /* HAVE_OPENSSL */
 
 /*******************************************/
 
@@ -208,13 +189,6 @@ void ssl_wrap_init(void)
 {
    struct listen_entry *le;
 
-#ifndef HAVE_OPENSSL
-   /* avoid gcc warning about unused variable */
-   (void)le;
-   
-   DEBUG_MSG("ssl_wrap_init: not supported");
-   return;
-#else
    /* disable if the aggressive flag is not set */
    if (!GBL_CONF->aggressive_dissectors) {
       DEBUG_MSG("ssl_wrap_init: not aggressive");
@@ -242,11 +216,9 @@ void ssl_wrap_init(void)
    SAFE_CALLOC(poll_fd, 1, sizeof(struct pollfd) * number_of_services);
 
    atexit(ssl_wrap_fini);
-#endif
 }
 
 
-#ifdef HAVE_OPENSSL
 static void ssl_wrap_fini(void)
 {
    struct listen_entry *le, *old;
@@ -263,27 +235,22 @@ static void ssl_wrap_fini(void)
    SSL_CTX_free(ssl_ctx_client);
 
 }
-#endif
 
 /* 
  * SSL thread main function.
  */
 EC_THREAD_FUNC(sslw_start)
 {
-#ifdef HAVE_OPENSSL
    struct listen_entry *le;
    struct accepted_entry *ae;
    u_int len = sizeof(struct sockaddr_in), i;
    struct sockaddr_in client_sin;
-#endif
+
+   /* variable not used */
+   (void) EC_THREAD_PARAM;
 
    ec_thread_init();
 
-#ifndef HAVE_OPENSSL
-   DEBUG_MSG("sslw_start: openssl support not compiled in");
-   return NULL;
-#else
-   
    /* disabled if not aggressive */
    if (!GBL_CONF->aggressive_dissectors)
       return NULL;
@@ -339,11 +306,8 @@ EC_THREAD_FUNC(sslw_start)
    }
 
    return NULL;
-#endif /* HAVE_OPENSSL */
    
 }	 
-
-#ifdef HAVE_OPENSSL
 
 /* 
  * Filter SSL related packets and create NAT sessions.
@@ -393,7 +357,7 @@ static int sslw_insert_redirect(u_int16 sport, u_int16 dport)
    /* the script is not defined */
    if (GBL_CONF->redir_command_on == NULL)
    {
-      USER_MSG("SSLStrip: cannot setup the redirect, did you uncomment the redir_command_on command on your etter.conf file?");
+      USER_MSG("SSLStrip: cannot setup the redirect, did you uncomment the redir_command_on command on your etter.conf file?\n");
       return -EFATAL;
    }
    snprintf(asc_sport, 16, "%u", sport);
@@ -428,18 +392,22 @@ static int sslw_insert_redirect(u_int16 sport, u_int16 dport)
    /* execute the script */ 
    switch (fork()) {
       case 0:
+         regain_privs();
          execvp(param[0], param);
+         drop_privs();
          WARN_MSG("Cannot setup http redirect (command: %s), please edit your etter.conf file and put a valid value in redir_command_on field\n", param[0]);
          safe_free_mem(param, &param_length, command);
-         _exit(EINVALID);
+         _exit(-EINVALID);
       case -1:
          safe_free_mem(param, &param_length, command);
          return -EINVALID;
       default:
          safe_free_mem(param, &param_length, command);
          wait(&ret_val);
-         if (ret_val == EINVALID)
+         if (WIFEXITED(ret_val) && WEXITSTATUS(ret_val)) {
+            USER_MSG("sslwrap: redir_command_on had non-zero exit status (%d): [%s]\n", WEXITSTATUS(ret_val), command);
             return -EINVALID;
+         }
    }    
    
    return ESUCCESS;
@@ -496,17 +464,19 @@ static int sslw_remove_redirect(u_int16 sport, u_int16 dport)
    /* execute the script */ 
    switch (fork()) {
       case 0:
+         regain_privs();
          execvp(param[0], param);
+         drop_privs();
          WARN_MSG("Cannot remove http redirect (command: %s), please edit your etter.conf file and put a valid value in redir_command_on field\n", param[0]);
          safe_free_mem(param, &param_length, command);
-         _exit(EINVALID);
+         _exit(-EINVALID);
       case -1:
          safe_free_mem(param, &param_length, command);
          return -EINVALID;
       default:
          safe_free_mem(param, &param_length, command);
          wait(&ret_val);
-         if (ret_val == EINVALID)
+         if (ret_val == -EINVALID)
             return -EINVALID;
    }    
    
@@ -548,7 +518,8 @@ static void sslw_bind_wrapper(void)
    LIST_FOREACH(le, &listen_ports, next) { 
    
       le->fd = socket(AF_INET, SOCK_STREAM, 0);
-
+      if (le->fd == -1)
+        FATAL_ERROR("Unable to create socket in sslw_bind_wrapper()");
       memset(&sa_in, 0, sizeof(sa_in));
       sa_in.sin_family = AF_INET;
       sa_in.sin_addr.s_addr = INADDR_ANY;
@@ -560,7 +531,8 @@ static void sslw_bind_wrapper(void)
       } while ( bind(le->fd, (struct sockaddr *)&sa_in, sizeof(sa_in)) != 0);
 
       DEBUG_MSG("sslw - bind %d on %d", le->sslw_port, le->redir_port);
-      listen(le->fd, 100);      
+      if(listen(le->fd, 100) == -1)
+        FATAL_ERROR("Unable to accept connections for socket");      
       if (sslw_insert_redirect(le->sslw_port, le->redir_port) != ESUCCESS)
         FATAL_ERROR("Can't insert firewall redirects");
    }
@@ -594,12 +566,6 @@ static int sslw_ssl_connect(SSL *ssl_sk)
    int loops = (GBL_CONF->connect_timeout * 10e5) / TSLEEP;
    int ret, ssl_err;
 
-#if !defined(OS_WINDOWS)
-   struct timespec tm;
-   tm.tv_sec = 0;
-   tm.tv_nsec = TSLEEP * 1000;
-#endif
-   
    do {
       /* connect to the server */
       if ( (ret = SSL_connect(ssl_sk)) == 1)
@@ -612,11 +578,7 @@ static int sslw_ssl_connect(SSL *ssl_sk)
          return -EINVALID;
       
       /* sleep a quirk of time... */
-#if defined(OS_WINDOWS)
-      usleep(TSLEEP);
-#else
-      nanosleep(&tm, NULL);
-#endif
+      ec_usleep(TSLEEP);
    } while(loops--);
 
    return -EINVALID;
@@ -632,12 +594,6 @@ static int sslw_ssl_accept(SSL *ssl_sk)
    int loops = (GBL_CONF->connect_timeout * 10e5) / TSLEEP;
    int ret, ssl_err;
 
-#if !defined(OS_WINDOWS)
-   struct timespec tm;
-   tm.tv_sec = 0;
-   tm.tv_nsec = TSLEEP * 1000;
-#endif
-   
    do {
       /* accept the ssl connection */
       if ( (ret = SSL_accept(ssl_sk)) == 1)
@@ -650,11 +606,7 @@ static int sslw_ssl_accept(SSL *ssl_sk)
          return -EINVALID;
       
       /* sleep a quirk of time... */
-#if defined(OS_WINDOWS)
-      usleep(TSLEEP);
-#else
-      nanosleep(&tm, NULL);
-#endif
+      ec_usleep(TSLEEP);
    } while(loops--);
 
    return -EINVALID;
@@ -730,22 +682,12 @@ static int sslw_get_peer(struct accepted_entry *ae)
    
    sslw_create_ident(&ident, &po);
 
-#if !defined(OS_WINDOWS)
-   struct timespec tm;
-   tm.tv_sec = SSLW_WAIT;
-   tm.tv_nsec = 0;
-#endif
-   
    /* 
     * A little waiting loop because the sniffing thread , 
     * which creates the session, may be slower than this
     */
    for (i=0; i<SSLW_RETRY && session_get_and_del(&s, ident, SSLW_IDENT_LEN)!=ESUCCESS; i++)
-#if defined(OS_WINDOWS)
-      usleep(SSLW_WAIT);
-#else
-      nanosleep(&tm, NULL); 
-#endif /* OS_WINDOWS */
+      ec_usleep(SEC2MICRO(SSLW_WAIT));
 
    if (i==SSLW_RETRY) {
       SAFE_FREE(ident);
@@ -784,7 +726,7 @@ static int sslw_connect_server(struct accepted_entry *ae)
     * strdup it to avoid race conditions.
     * Btw int_ntoa is not so used in the code.
     */
-   dest_ip = strdup(int_ntoa(ip_addr_to_int32(ae->ip[SSL_SERVER].addr)));
+   dest_ip = strdup(int_ntoa(*ae->ip[SSL_SERVER].addr32));
  
    /* Standard connection to the server */
    if (!dest_ip || (ae->fd[SSL_SERVER] = open_socket(dest_ip, ntohs(ae->port[SSL_SERVER]))) < 0) {
@@ -871,14 +813,6 @@ static int sslw_write_data(struct accepted_entry *ae, u_int32 direction, struct 
    packet_len = (int32)(po->DATA.len + po->DATA.inject_len);
    p_data = po->DATA.data;
 
-#if !defined(OS_WINDOWS)
-   struct timespec tm;
-   tm.tv_sec = 1;
-   tm.tv_nsec = 0;
-#else
-   int timeout = 1000;
-#endif
-   
    if (packet_len == 0)
       return ESUCCESS;
 
@@ -918,11 +852,7 @@ static int sslw_write_data(struct accepted_entry *ae, u_int32 direction, struct 
       
       /* XXX - Set a proper sleep time */
       if (not_written)
-#if defined(OS_WINDOWS)
-         usleep(timeout);
-#else
-         nanosleep(&tm, NULL);
-#endif
+         ec_usleep(SEC2MICRO(1));
 	 	 
    } while (not_written);
          
@@ -1138,13 +1068,6 @@ EC_THREAD_FUNC(sslw_child)
    struct packet_object po;
    int direction, ret_val, data_read;
    struct accepted_entry *ae;
-#if !defined(OS_WINDOWS)
-   struct timespec tm;
-   tm.tv_sec = 0;
-   tm.tv_nsec = 3000*1000;
-#else
-   int timeout = 3000;
-#endif
 
    ae = (struct accepted_entry *)args;
    ec_thread_init();
@@ -1211,11 +1134,7 @@ EC_THREAD_FUNC(sslw_child)
       /* XXX - Set a proper sleep time */
       /* Should we poll both fd's instead of guessing and sleeping? */
       if (!data_read)
-#if defined(OS_WINDOWS)
-        usleep(timeout);
-#else
-        nanosleep(&tm, NULL);
-#endif
+         ec_usleep(3000); // 3ms
    }
 
    return NULL;
@@ -1346,7 +1265,6 @@ static void sslw_create_session(struct ec_session **s, struct packet_object *po)
    /* alloc of data elements */
    SAFE_CALLOC((*s)->data, 1, sizeof(struct ip_addr));
 }
-#endif /* HAVE_OPENSSL */
 
 /* EOF */
 

@@ -28,7 +28,6 @@ set(EC_SRC
         ec_mitm.c
         ec_network.c
         ec_packet.c
-        ec_parser.c
         ec_passive.c
         ec_plugins.c
         ec_poll.c
@@ -38,7 +37,9 @@ set(EC_SRC
         ec_send.c
         ec_services.c
         ec_session.c
+        ec_set.c
         ec_signals.c
+        ec_sleep.c
         ec_sniff_bridge.c
         ec_sniff.c
         ec_sniff_unified.c
@@ -49,11 +50,13 @@ set(EC_SRC
         ec_strings.c
         ec_threads.c
         ec_ui.c
+        ec_utils.c
 
         dissectors/ec_bgp.c
         dissectors/ec_cvs.c
         dissectors/ec_dhcp.c
         dissectors/ec_ftp.c
+        dissectors/ec_gg.c
         dissectors/ec_http.c
         dissectors/ec_icq.c
         dissectors/ec_imap.c
@@ -80,6 +83,7 @@ set(EC_SRC
         dissectors/ec_smtp.c
         dissectors/ec_snmp.c
         dissectors/ec_socks.c
+        dissectors/ec_ssh.c
         dissectors/ec_telnet.c
         dissectors/ec_TN3270.c
         dissectors/ec_vnc.c
@@ -101,7 +105,7 @@ set(EC_SRC
         protocols/ec_icmp.c
         protocols/ec_ip.c
         protocols/ec_mpls.c
-        protocols/ec_pap.c
+        protocols/ec_null.c
         protocols/ec_ppi.c
         protocols/ec_ppp.c
         protocols/ec_pppoe.c
@@ -125,11 +129,6 @@ if(HAVE_DN_EXPAND)
     set(EC_SRC ${EC_SRC} dissectors/ec_dns.c)
 endif(HAVE_DN_EXPAND)
 
-if(ENABLE_SSL)
-   set(EC_SRC ${EC_SRC} dissectors/ec_ssh.c)
-   set(EC_SRC ${EC_SRC} dissectors/ec_gg.c)
-endif(ENABLE_SSL)
-
 if(OS_LINUX)
     set(EC_SRC ${EC_SRC} os/ec_linux.c)
 elseif(OS_BSD)
@@ -144,12 +143,12 @@ elseif(OS_GNU)
     set(EC_SRC ${EC_SRC} os/ec_gnu.c)
 endif()
 
-if(NOT HAVE_STRLCAT)
+if(NOT HAVE_STRLCAT AND NOT HAVE_STRLCAT_FUNCTION)
     set(EC_SRC ${EC_SRC} missing/strlcat.c)
-endif(NOT HAVE_STRLCAT)
-if(NOT HAVE_STRLCPY)
+endif(NOT HAVE_STRLCAT AND NOT HAVE_STRLCAT_FUNCTION)
+if(NOT HAVE_STRLCPY AND NOT HAVE_STRLCPY_FUNCTION)
     set(EC_SRC ${EC_SRC} missing/strlcpy.c)
-endif(NOT HAVE_STRLCPY)
+endif(NOT HAVE_STRLCPY AND NOT HAVE_STRLCPY_FUNCTION)
 if(NOT HAVE_STRSEP)
     set(EC_SRC ${EC_SRC} missing/strsep.c)
 endif(NOT HAVE_STRSEP)
@@ -165,21 +164,21 @@ endif(NOT HAVE_BASENAME)
 if(NOT HAVE_STRNDUP)
     set(EC_SRC ${EC_SRC} missing/strndup.c)
 endif(NOT HAVE_STRNDUP)
-
-
-if(NOT LIBRARY_BUILD)
-	add_subdirectory(interfaces)
-endif(NOT LIBRARY_BUILD)
+if(NOT HAVE_INET_ATON)
+    set(EC_SRC ${EC_SRC} missing/inet_aton.c)
+endif(NOT HAVE_INET_ATON)
+if(NOT HAVE_GETOPT_LONG)
+    set(EC_SRC ${EC_SRC} missing/getopt.c)
+endif(NOT HAVE_GETOPT_LONG)
 
 add_library(lib_ettercap SHARED ${EC_SRC})
 add_dependencies(lib_ettercap libnet)
 target_link_libraries(lib_ettercap ${EC_LIBETTERCAP_LIBS})
 
-
 # Only compile lua stuff if lua is enabled!
 IF(ENABLE_LUA)
   add_subdirectory(lua)
-  target_link_libraries(lib_ettercap ec_lua)
+  target_link_libraries(lib_ettercap ec_lua ${LUAJIT_LIBRARY})
   if(OS_DARWIN AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
     # On 64-bit OSX platforms, luajit requires the following flags to be added.
     # See: http://luajit.org/install.html
@@ -200,21 +199,29 @@ endif(ENABLE_LUA)
 
 set_target_properties(lib_ettercap PROPERTIES 
   ENABLE_EXPORTS On
-  LINK_INTERFACE_LIBRARIES ""
+  #  LINK_INTERFACE_LIBRARIES ""
   #  INSTALL_RPATH ${INSTALL_LIBDIR}
   OUTPUT_NAME ettercap
-  VERSION 0.0.1
+  VERSION 0.0.0
   SOVERSION 0
   )
 
 if (NOT LIBRARY_BUILD)
-	add_executable(ettercap ec_interfaces.c ec_main.c)
-	target_link_libraries(ettercap ec_interfaces lib_ettercap)
-	set_target_properties(ettercap PROPERTIES 
-  	INSTALL_RPATH ${INSTALL_LIBDIR}
-  	)
+  add_subdirectory(interfaces)
+  include_directories( interfaces/daemon interfaces/text )
+  if (ENABLE_CURSES)
+    include_directories( interfaces/curses interfaces/curses/widgets )
+  endif (ENABLE_CURSES)
+  if (ENABLE_GTK)
+    include_directories( interfaces/gtk )
+  endif(ENABLE_GTK)
+  add_executable(ettercap ec_parser.c ec_main.c)
+  target_link_libraries(ettercap ec_interfaces lib_ettercap ${EC_LIBS})
+  set_target_properties(ettercap PROPERTIES 
+  INSTALL_RPATH ${INSTALL_LIBDIR})
 endif(NOT LIBRARY_BUILD)
+
 install(TARGETS lib_ettercap DESTINATION ${INSTALL_LIBDIR})
 if(NOT LIBRARY_BUILD)
-	install(TARGETS ettercap DESTINATION ${INSTALL_BINDIR})
+  install(TARGETS ettercap DESTINATION ${INSTALL_BINDIR})
 endif(NOT LIBRARY_BUILD)

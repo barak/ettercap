@@ -24,14 +24,8 @@
 
 /* proto */
 
-void toggle_reverse(void);
-void gtkui_select_protocol(void);
-void wipe_targets(void);
-void gtkui_select_targets(void);
-void gtkui_current_targets(void);
 static void set_protocol(void);
 static void set_targets(void);
-void gtkui_create_targets_array(void);
 static void gtkui_add_target1(void *);
 static void gtkui_add_target2(void *);
 static void add_target1(void);
@@ -110,7 +104,7 @@ static void set_protocol(void)
  */
 void gtkui_select_targets(void)
 {
-   GtkWidget *dialog, *hbox, *label, *entry1, *entry2;  
+   GtkWidget *dialog, *hbox, *label, *entry1, *entry2, *content_area;  
    
 #define TARGET_LEN 50
    
@@ -119,15 +113,21 @@ void gtkui_select_targets(void)
    dialog = gtk_dialog_new_with_buttons("Enter Targets", GTK_WINDOW(window),
                                         GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
                                         GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
-   gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), 20);
+   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+   gtk_container_set_border_width(GTK_CONTAINER(content_area), 20);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#else
    hbox = gtk_hbox_new(FALSE, 0);
+#endif
    label = gtk_label_new ("Target 1: ");
    
    gtk_box_pack_start(GTK_BOX (hbox), label, TRUE, TRUE, 0);
    gtk_widget_show(label);
 
-   entry1 = gtk_entry_new_with_max_length(TARGET_LEN);
+   entry1 = gtk_entry_new();
+   gtk_entry_set_max_length(GTK_ENTRY(entry1), TARGET_LEN);
    gtk_entry_set_width_chars (GTK_ENTRY (entry1), TARGET_LEN);
    
    if (GBL_OPTIONS->target1)
@@ -135,15 +135,20 @@ void gtkui_select_targets(void)
    
    gtk_box_pack_start(GTK_BOX (hbox), entry1, FALSE, FALSE, 0);
    gtk_widget_show(entry1);
-   gtk_box_pack_start(GTK_BOX (GTK_DIALOG (dialog)->vbox), hbox, TRUE, TRUE, 5);
+   gtk_box_pack_start(GTK_BOX(content_area), hbox, TRUE, TRUE, 5);
    gtk_widget_show(hbox);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#else
    hbox = gtk_hbox_new(FALSE, 0);
+#endif
    label = gtk_label_new ("Target 2: ");
    gtk_box_pack_start(GTK_BOX (hbox), label, TRUE, TRUE, 0);
    gtk_widget_show(label);
 
-   entry2 = gtk_entry_new_with_max_length(TARGET_LEN);
+   entry2 = gtk_entry_new();
+   gtk_entry_set_max_length(GTK_ENTRY(entry2), TARGET_LEN);
    gtk_entry_set_width_chars (GTK_ENTRY (entry2), TARGET_LEN);
    
    if (GBL_OPTIONS->target2)
@@ -151,7 +156,7 @@ void gtkui_select_targets(void)
    
    gtk_box_pack_start(GTK_BOX (hbox), entry2, FALSE, FALSE, 0);
    gtk_widget_show(entry2);
-   gtk_box_pack_start(GTK_BOX (GTK_DIALOG (dialog)->vbox), hbox, TRUE, TRUE, 5);
+   gtk_box_pack_start(GTK_BOX(content_area), hbox, TRUE, TRUE, 5);
    gtk_widget_show(hbox);
 
    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -204,6 +209,8 @@ void gtkui_current_targets(void)
    GtkWidget *scrolled, *treeview, *vbox, *hbox, *button;
    GtkCellRenderer   *renderer;
    GtkTreeViewColumn *column;
+   static gint delete_targets1 = 1;
+   static gint delete_targets2 = 2;
 
    DEBUG_MSG("gtk_current_targets");
 
@@ -220,11 +227,19 @@ void gtkui_current_targets(void)
 
    targets_window = gtkui_page_new("Targets", &gtkui_targets_destroy, &gtkui_targets_detach);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
    vbox = gtk_vbox_new(FALSE, 0);
+#endif
    gtk_container_add(GTK_CONTAINER (targets_window), vbox);
    gtk_widget_show(vbox);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+#else
    hbox = gtk_hbox_new(TRUE, 5);
+#endif
    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
    gtk_widget_show(hbox);
 
@@ -269,17 +284,21 @@ void gtkui_current_targets(void)
    gtk_tree_view_append_column (GTK_TREE_VIEW(treeview), column);
 
    /* buttons */
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+#else
    hbox = gtk_hbox_new(TRUE, 5);
+#endif
    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
    button = gtk_button_new_with_mnemonic("Delete");
-   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_delete_targets), (gpointer)1);
+   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_delete_targets), &delete_targets1);
    gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
    button = gtk_button_new_with_mnemonic("Add");
    g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_add_target1), NULL);
    gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
    button = gtk_button_new_with_mnemonic("Delete");
-   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_delete_targets), (gpointer)2);
+   g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_delete_targets), &delete_targets2);
    gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
    button = gtk_button_new_with_mnemonic("Add");
    g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK (gtkui_add_target2), NULL);
@@ -341,6 +360,16 @@ void gtkui_create_targets_array(void)
       gtk_list_store_set (liststore1, &iter, 0, ip_addr_ntoa(&il->ip, tmp), 1, il, -1);
    }
 
+#ifdef WITH_IPV6
+   /* walk TARGET 1 - IPv6 */
+   LIST_FOREACH(il, &GBL_TARGET1->ip6, next) {
+      /* enlarge the array */
+      gtk_list_store_append (liststore1, &iter);
+      /* fill the element */
+      gtk_list_store_set (liststore1, &iter, 0, ip_addr_ntoa(&il->ip, tmp), 1, il, -1);
+   }
+#endif
+
    if(liststore2)
       gtk_list_store_clear(GTK_LIST_STORE (liststore2));
    else
@@ -353,6 +382,16 @@ void gtkui_create_targets_array(void)
       /* fill the element */
       gtk_list_store_set (liststore2, &iter, 0, ip_addr_ntoa(&il->ip, tmp), 1, il, -1);
    }
+   
+#ifdef WITH_IPV6
+   /* walk TARGET 2 - IPv6 */
+   LIST_FOREACH(il, &GBL_TARGET2->ip6, next) {
+      /* enlarge the array */
+      gtk_list_store_append (liststore2, &iter);
+      /* fill the element */
+      gtk_list_store_set (liststore2, &iter, 0, ip_addr_ntoa(&il->ip, tmp), 1, il, -1);
+   }
+#endif
 }
 
 /*
@@ -360,6 +399,9 @@ void gtkui_create_targets_array(void)
  */
 static void gtkui_add_target1(void *entry)
 {
+   /* variable not used */
+   (void) entry;
+
    DEBUG_MSG("gtk_add_target1");
 
    gtkui_input("IP address :", thost, MAX_ASCII_ADDR_LEN, add_target1);
@@ -367,6 +409,9 @@ static void gtkui_add_target1(void *entry)
 
 static void gtkui_add_target2(void *entry)
 {
+   /* variable not used */
+   (void) entry;
+
    DEBUG_MSG("gtk_add_target2");
 
    gtkui_input("IP address :", thost, MAX_ASCII_ADDR_LEN, add_target2);
@@ -375,15 +420,24 @@ static void gtkui_add_target2(void *entry)
 static void add_target1(void)
 {
    struct in_addr ip;
+#ifdef WITH_IPV6
+   struct in6_addr ip6;
+#endif
    struct ip_addr host;
    
-   if (inet_aton(thost, &ip) == 0) {
+   if (inet_pton(AF_INET, thost, &ip) == 1) { /* is IPv4 */
+      ip_addr_init(&host, AF_INET, (u_char *)&ip);
+   }
+#ifdef WITH_IPV6
+   else if (inet_pton(AF_INET6, thost, &ip6) == 1) { /* is IPv6 */
+      ip_addr_init(&host, AF_INET6, (u_char *)&ip6);
+   }
+#endif
+   else { /* neither IPv4 nor IPv6 - inform user */
       gtkui_message("Invalid ip address");
       return;
    }
    
-   ip_addr_init(&host, AF_INET, (char *)&ip);
-
    add_ip_list(&host, GBL_TARGET1);
    
    /* refresh the list */
@@ -393,15 +447,24 @@ static void add_target1(void)
 static void add_target2(void)
 {
    struct in_addr ip;
+#ifdef WITH_IPV6
+   struct in6_addr ip6;
+#endif
    struct ip_addr host;
    
-   if (inet_aton(thost, &ip) == 0) {
+   if (inet_pton(AF_INET, thost, &ip) == 1) { /* is IPv4 */
+      ip_addr_init(&host, AF_INET, (u_char *)&ip);
+   }
+#ifdef WITH_IPV6
+   else if (inet_pton(AF_INET6, thost, &ip6) == 1) { /* is IPv6 */
+      ip_addr_init(&host, AF_INET6, (u_char *)&ip6);
+   }
+#endif
+   else { /* neither IPv4 nor IPv6 - inform user */
       gtkui_message("Invalid ip address");
       return;
    }
    
-   ip_addr_init(&host, AF_INET, (char *)&ip);
-
    add_ip_list(&host, GBL_TARGET2);
    
    /* refresh the list */
@@ -413,8 +476,15 @@ static void gtkui_delete_targets(GtkWidget *widget, gpointer data) {
    GtkTreeIter iter;
    GtkTreeModel *model;
    struct ip_list *il = NULL;
+   gint *type = data;
 
-   switch((int)data) {
+   /* variable not used */
+   (void) widget;
+
+   if (type == NULL)
+       return;
+
+   switch(*type) {
       case 1:
          DEBUG_MSG("gtkui_delete_target: list 1");
          model = GTK_TREE_MODEL (liststore1);

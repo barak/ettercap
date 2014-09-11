@@ -26,8 +26,6 @@
 #include <ec_streambuf.h>
 #include <ec_checksum.h>
 
-#ifdef HAVE_OPENSSL
-
 
 /* don't include kreberos. RH sux !! */
 #define OPENSSL_NO_KRB5 1
@@ -141,6 +139,11 @@ FUNC_DECODER(dissector_ssh)
    u_int32 ssh_len, ssh_mod;
    u_char ssh_packet_type, *ptr, *key_to_put;
 
+   /* don't complain about unused var */
+   (void) DECODE_DATA; 
+   (void) DECODE_DATALEN;
+   (void) DECODED_LEN;
+   
    /* skip empty packets (ACK packets) */
    if (PACKET->DATA.len == 0)
       return NULL;
@@ -602,6 +605,8 @@ static void *des3_init(u_char *sesskey, int len)
    struct des3_state *state;
 
    state = malloc(sizeof(*state));
+   if (state == NULL) /* oops, couldn't allocate memory */
+      return NULL;
 
    des_set_key((void *)sesskey, (state->k1));
    des_set_key((void *)(sesskey + 8), (state->k2));
@@ -647,6 +652,8 @@ static void *blowfish_init(u_char *sesskey, int len)
    struct blowfish_state *state;
 
    state = malloc(sizeof(*state));
+   if (state == NULL) /* oops, couldn't allocate memory */
+      return NULL;
    BF_set_key(&state->key, len, sesskey);
    memset(state->iv, 0, 8);
    return (state);
@@ -711,9 +718,15 @@ static void rsa_public_encrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 
    olen = BN_num_bytes(key->n);
    outbuf = malloc(olen);
+   if (outbuf == NULL) /* oops, couldn't allocate memory */
+      return;
 
    ilen = BN_num_bytes(in);
    inbuf = malloc(ilen);
+   if (inbuf == NULL) { /* oops, couldn't allocate memory */
+      SAFE_FREE(outbuf);
+      return;
+   }
 
    BN_bn2bin(in, inbuf);
 
@@ -733,9 +746,15 @@ static void rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 
    olen = BN_num_bytes(key->n);
    outbuf = malloc(olen);
+   if (outbuf == NULL) /* oops, couldn't allocate memory */
+      return;
 
    ilen = BN_num_bytes(in);
    inbuf = malloc(ilen);
+   if (inbuf == NULL) { /* oops, couldn't allocate memory */
+      SAFE_FREE(outbuf);
+      return;
+   }
 
    BN_bn2bin(in, inbuf);
 
@@ -747,8 +766,6 @@ static void rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
    free(outbuf);
    free(inbuf);
 }
-
-#endif
 
 /* EOF */
 

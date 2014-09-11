@@ -3,7 +3,7 @@
 # This will build curl using the release that we've included with
 # our distribution of ettercap.
 include(ExternalProject)
-SET(CURL_VERSION 7.32.0)
+SET(CURL_VERSION 7.37.1)
 SET(CURL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 SET(CURL_TARGET bundled-curl-${CURL_VERSION}-${CMAKE_BUILD_TYPE})
 SET(CURL_BUILD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${CURL_TARGET})
@@ -17,17 +17,29 @@ SET(CURL_LIB_DIR ${CURL_PREFIX}/lib)
 SET(CURL_INCLUDE_DIR ${CURL_PREFIX}/include)
 
 if (NOT OPENSSL_LIBRARIES)
-  message(FATAL_ERROR "Cannot build bundled Curl without OpenSSL support enabled (ENABLE_SSL=On)")
+  message(FATAL_ERROR "Cannot build bundled Curl without OpenSSL support enabled")
 endif()
 
 if (NOT ZLIB_LIBRARIES)
   message(FATAL_ERROR "Cannot build bundled Curl without zlib")
 endif()
 
+find_package(LibIDN)
+if (NOT LIBIDN_FOUND)
+   message(FATAL_ERROR "Cannot build bundled Curl without idn")
+endif (NOT LIBIDN_FOUND)
+
+find_package(LibRTMP)
+if (NOT RTMP_FOUND)
+   message(FATAL_ERROR "Cannot build bundled Curl without rtmp")
+endif (NOT RTMP_FOUND)
+
 # Ensure that we include all the required stuff for linking to libcurl
 SET(CURL_LIBRARY ${CURL_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}curl${CMAKE_STATIC_LIBRARY_SUFFIX}
   ${OPENSSL_LIBRARIES}
   ${ZLIB_LIBRARIES}
+  ${LIBIDN_LIBRARIES}
+  ${RTMP_LIBRARIES}
   )  
 
 #Figure out the parent directory for our openssl installation.

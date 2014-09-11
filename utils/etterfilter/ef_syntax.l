@@ -27,7 +27,6 @@
 /* from bison */
 #include <ef_grammar.h>
 
-#define YY_NO_UNPUT
 
 %}
 
@@ -38,12 +37,15 @@
  */
  
 %option  noyywrap
+%option  nounput
+%option  noinput
 
 OFFSET         [[:alnum:]]+\.[A-Za-z]+[\.[A-Za-z]+]*
 FUNCTION       [a-z_]+\((.*\".*\"[^)]*)*\)
-CONST          [0-9]+|0x[0-9]+|[A-Z]+
-STRING         \"([^"\\]*(\\.[^"\\]*)*)\"
+CONST          [0-9]+|0x[0-9a-fA-F]+|[A-Z6]+
+STRING         \"([^\0"\\]*(\\.[^\0"\\]*)*)\"
 IPADDR         \'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\'
+IP6ADDR        \'[0-9a-fA-F]{4}[0-9a-fA-F:]+:[0-9a-fA-F]{1,4}\'|\'::1\'
 SPACES         [ \t]+
 
 %%
@@ -184,6 +186,16 @@ SPACES         [ \t]+
    return TOKEN_CONST;
 }
 
+{IP6ADDR} {
+   ef_debug(4, "IP6ADDR: %s\n", yytext);
+   
+   if (encode_const(yytext, &yylval.fop) != ESUCCESS)
+      SCRIPT_ERROR("Invalid ipv6 address [%s]", yytext);
+  
+   /* ip addresses are translated into network order integer */
+   return TOKEN_CONST;
+}
+
 {SPACES}       /* eat up the blank spaces */
 
 "/*".*"*/"     /* eat up one line comments */
@@ -191,7 +203,7 @@ SPACES         [ \t]+
 
 [\n\r] {
    /* increment the line number (used for error reporting) */
-   GBL.lineno++;
+   GBL->lineno++;
 }
 
 . {

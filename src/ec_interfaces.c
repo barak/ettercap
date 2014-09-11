@@ -20,20 +20,15 @@
 */
 
 #include <ec.h>
+#ifdef HAVE_NCURSES
+   #include <ec_curses.h>
+#endif
+#include <ec_daemon.h>
+#if defined HAVE_GTK || defined HAVE_GTK3
+   #include <ec_gtk.h>
+#endif
 
-/* extern from various interfaces */
-
-extern void set_daemon_interface(void);
-extern void set_text_interface(void);
-extern void set_curses_interface(void);
-extern void set_gtk_interface(void);
-
-/* protos */
-
-void select_daemon_interface(void);
-void select_text_interface(void);
-void select_curses_interface(void);
-void select_gtk_interface(void);
+#include <ec_text.h>
 
 /*******************************************/
 
@@ -69,7 +64,7 @@ void select_curses_interface(void)
 void select_gtk_interface(void)
 {
    DEBUG_MSG("select_gtk_interface");
-#ifdef HAVE_GTK
+#if defined HAVE_GTK || defined HAVE_GTK3
    set_gtk_interface();
 #else
    FATAL_ERROR("GTK support is not compiled in %s", GBL_PROGRAM);

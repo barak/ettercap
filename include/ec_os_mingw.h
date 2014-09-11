@@ -1,5 +1,5 @@
-#ifndef EC_OS_MINGW_H
-#define EC_OS_MINGW_H
+#ifndef ETTERCAP_OS_MINGW_H
+#define ETTERCAP_OS_MINGW_H
 
 /* This file is *not* MingW specific, but Ettercap requires gcc.
  * So that leaves other Win32 compilers out.
@@ -133,7 +133,7 @@ EC_API_EXTERN const char *ec_win_get_user_dir (void);
 EC_API_EXTERN const char *ec_win_get_ec_dir (void);
 
 /* This is a stupid hack. How can we on compile time know the install location on a
- * on-Unix system?
+ * non-Unix system?
  */
 #ifndef INSTALL_PREFIX
    #define INSTALL_PREFIX  ec_win_get_ec_dir()
@@ -162,6 +162,8 @@ EC_API_EXTERN const char *ec_win_get_ec_dir (void);
 /* dlopen() emulation (not exported)
  */
 #if !defined(HAVE_DLOPEN)
+   #define RTLD_NOW  0         /* No importance */
+   #define RTLD_LOCAL 0        /* No importance */
    #define RTLD_NOW 0
    #define PLUGIN_EXT           "*.dll"
 
@@ -194,6 +196,8 @@ EC_API_EXTERN const char *ec_win_get_ec_dir (void);
 
 #if !defined(HAVE_WAIT)
   #define wait(st)  ec_win_wait(st)
+  #define WEXITSTATUS(w) 1
+  #define WIFEXITED(w)  1
 
   EC_API_EXTERN int ec_win_wait (int *status);
 #endif

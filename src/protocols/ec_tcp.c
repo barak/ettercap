@@ -84,8 +84,6 @@ FUNC_INJECTOR(inject_tcp);
 void tcp_init(void);
 int tcp_match(void *id_sess, void *id_curr);
 void tcp_create_session(struct ec_session **s, struct packet_object *po);
-size_t tcp_create_ident(void **i, struct packet_object *po);            
-int tcp_find_direction(void *ids, void *id);
 
 /*******************************************/
 
@@ -193,7 +191,7 @@ FUNC_DECODER(decode_tcp)
      
    /* 
     * complete the passive fingerprint (started at IP layer)
-    * we are intereste only in SYN or SYN+ACK packets 
+    * we are interested only in SYN or SYN+ACK packets
     * else we can destroy the fingerprint
     */
    if ( tcp->flags & TH_SYN ) {

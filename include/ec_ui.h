@@ -1,7 +1,5 @@
-
-
-#ifndef EC_UI_H
-#define EC_UI_H
+#ifndef ETTERCAP_UI_H
+#define ETTERCAP_UI_H
 
 #include <stdarg.h>
 
@@ -19,6 +17,7 @@ struct ui_ops {
       #define UI_PROGRESS_UPDATED      1
    void (*update)(int);
       #define UI_UPDATE_HOSTLIST       1
+      #define UI_UPDATE_PLUGINLIST     2
    char initialized;
    char type;
       #define UI_TEXT      0

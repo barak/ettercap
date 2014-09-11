@@ -26,7 +26,7 @@
 #include <ec_hook.h>
 #include <ec_send.h>
 #include <ec_mitm.h>
-#include <time.h>
+#include <ec_sleep.h>
 
 
 /* protos */
@@ -65,6 +65,9 @@ int plugin_load(void *handle)
 
 static int repoison_arp_init(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* It doesn't work if unoffensive */
    if (GBL_OPTIONS->unoffensive) {
       INSTANT_USER_MSG("repoison_arp: plugin doesn't work in UNOFFENSIVE mode\n");
@@ -81,6 +84,9 @@ static int repoison_arp_init(void *dummy)
 
 static int repoison_arp_fini(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    USER_MSG("repoison_arp: plugin terminated...\n");
 
    hook_del(HOOK_PACKET_ARP_RQ, &repoison_func);
@@ -97,22 +103,11 @@ void repoison_victims(void *group_ptr, struct packet_object *po)
 {
    struct hosts_list *t;
 
-#if !defined(OS_WINDOWS)
-   struct timespec tm;
- 
-   tm.tv_sec = GBL_CONF->arp_storm_delay;
-   tm.tv_nsec = 0;
-#endif
-
    LIST_HEAD(, hosts_list) *group_head = group_ptr;
 
    LIST_FOREACH(t, group_head, next) {
 
-#if !defined(OS_WINDOWS)
-      nanosleep(&tm, NULL);
-#else
-      usleep(GBL_CONF->arp_storm_delay*1000);
-#endif
+      ec_usleep(MILLI2MICRO(GBL_CONF->arp_storm_delay));
 
       /* equal ip must be skipped, you cant poison itself */
       if (!ip_addr_cmp(&t->ip, &po->L3.src))

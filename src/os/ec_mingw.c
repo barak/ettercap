@@ -25,6 +25,7 @@
  */
 
 #include <ec.h>
+#include <ec_inet.h>
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>
@@ -38,7 +39,10 @@
 
 #include <pcap.h>
 #include <Packet32.h>
-#include <NtddNdis.h>
+#include <ddk/NtddNdis.h>
+
+HANDLE pcap_getevent(pcap_t *p);
+
 
 #if defined(HAVE_NCURSES) && !defined(BUILDING_UTILS)
     #include <missing/ncurses.h>
@@ -69,7 +73,6 @@ static void __attribute__((destructor)) exit_console (void);
 static BOOL has_console;
 static BOOL started_from_a_gui;
 static BOOL attached_to_console;
-
 
 /***************************************/
 
@@ -128,10 +131,27 @@ u_int16 get_iface_mtu(const char *iface)
    return (1514);  /* Assume ethernet */
 }
 
-void disable_ip_forward (void)
+void disable_ip_forward(void)
 {
    DEBUG_MSG ("disable_ip_forward (no-op)\n");
 }
+
+void restore_ip_forward(void)
+{
+   DEBUG_MSG ("restore_ip_forward (no-op)\n");
+}
+
+#ifdef WITH_IPV6
+void disable_ipv6_forward(void)
+{
+   DEBUG_MSG ("disable_ipv6_forward (no-op)\n");
+}
+
+void restore_ipv6_forward(void)
+{
+   DEBUG_MSG ("restore_ipv6_forward (no-op)\n");
+}
+#endif
 
 /*
  * Get and set the read-event associated with the pcap handle. This
@@ -181,7 +201,7 @@ int ec_win_gettimeofday (struct timeval *tv, struct timezone *tz)
   _ftime (&tb);
   if (tv) {
   tv->tv_sec  = tb.time;
-    tv->tv_usec = tb.millitm * 1000;
+    tv->tv_usec = MILLI2MICRO(tb.millitm);
   }
   if (tz) {
     tz->tz_minuteswest = tb.timezone;
@@ -241,8 +261,8 @@ int ec_win_poll (struct pollfd *p, int num, int timeout)
   if (timeout < 0)
      ret = select (n+1, &read[0], &write[0], &excpt[0], NULL);
   else {
-    tv.tv_sec  = timeout / 1000;
-    tv.tv_usec = 1000 * (timeout % 1000);
+    tv.tv_sec  = MILLI2SEC(timeout);
+    tv.tv_usec = MILLI2MICRO((timeout % 1000));
     ret = select (n+1, &read[0], &write[0], &excpt[0], &tv);
   }
 
@@ -1196,6 +1216,16 @@ static void __attribute__((destructor)) exit_console (void)
   has_console = FALSE;
 #endif
 }
+
+int inet_pton (int af, const char *src, void *dst)
+{
+    if (af != AF_INET) {
+      errno = WSAEAFNOSUPPORT;
+      return -1;
+    }
+    return inet_aton (src, dst);
+}
+
 
 /* EOF */
 

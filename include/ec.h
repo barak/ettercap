@@ -1,7 +1,5 @@
-
-
-#ifndef EC_H
-#define EC_H
+#ifndef ETTERCAP_H
+#define ETTERCAP_H
 
 #include <config.h>
 
@@ -14,6 +12,11 @@
 
 #ifdef OS_WINDOWS
    #include <windows.h>
+#endif
+
+#if defined OS_DARWIN || defined OS_BSD
+   #define PCAP_DONT_INCLUDE_PCAP_BPF_H 1
+   #include <net/bpf.h>
 #endif
 
 #ifndef PATH_MAX
@@ -90,13 +93,14 @@
 #define EC_STRINGIFY(in) #in
 #define EC_TOSTRING(in) EC_STRINGIFY(in)
 
-#ifdef OS_LINUX
-#define __init       __attribute__((constructor(101)))
-#define __init_last  __attribute__((constructor(200))
+// No need to have a priority in the constructor at this moment
+/*
+#if __GNUC_PREREQ(4,3)
+#define __init __attribute__ ((constructor(101)))
 #else
-#define __init __attribute__((constructor))
-#define __init_last __init
-#endif
+*/
+#define __init __attribute__ ((constructor))
+//#endif
 
 #ifndef __set_errno
 #define __set_errno(e) (errno = (e))
@@ -122,6 +126,16 @@
 #ifndef MAX
    #define MAX(a, b)    (((a) > (b)) ? (a) : (b))
 #endif
+
+/* timeunit conversions */
+#define SEC2NANO(x)     x * 1000000000
+#define MILLI2NANO(x)   x *    1000000
+#define MICRO2NANO(x)   x *       1000
+#define SEC2MICRO(x)    x *    1000000
+#define MILLI2MICRO(x)  x *       1000
+#define MILLI2SEC(x)    x /       1000
+#define MICRO2SEC(x)    x /    1000000
+#define NANO2SEC(x)     x / 1000000000
 
 /* file operations */ 
 #ifndef OS_WINDOWS

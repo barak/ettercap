@@ -22,26 +22,18 @@
 #include <ec.h>
 #include <ec_gtk.h>
 #include <ec_format.h>
-#include <ec_parser.h>
+#include <ec_utils.h>
 #include <ec_encryption.h>
 
 /* proto */
 
-void gtkui_show_stats(void);
-void toggle_resolve(void);
-void gtkui_vis_method(void);
-void gtkui_vis_regex(void);
 static void gtkui_set_regex(void);
-void gtkui_wifi_key(void);
 static void gtkui_set_wifikey(void);
 
 static void gtkui_stop_stats(void);
 static void gtkui_stats_detach(GtkWidget *child);
 static void gtkui_stats_attach(void);
 static gboolean refresh_stats(gpointer data);
-
-extern void gtkui_show_profiles(void);
-extern void gtkui_show_connections(void);
 
 /* globals */
 
@@ -60,12 +52,33 @@ static GtkWidget *stats_window, *packets_recv, *packets_drop, *packets_forw,
 /*******************************************/
 
 
+/* 
+ * If this option is being activated,
+ * it runs through the current hosts list and triggeres 
+ * name resolution in the background. 
+ * That way subsequent actions benefits from the filled cache
+ */
 void toggle_resolve(void)
 {
+   char name[MAX_HOSTNAME_LEN];
+   struct hosts_list *hl;
+
+   /* resolution already set */
    if (GBL_OPTIONS->resolve) {
       GBL_OPTIONS->resolve = 0;
-   } else {
-      GBL_OPTIONS->resolve = 1;
+      return;
+   } 
+
+   DEBUG_MSG("toggle_resolve: activate name resolution");
+
+   /* set the option */
+   GBL_OPTIONS->resolve = 1;
+
+   /* run through the current hosts list and trigger resolution */
+   LIST_FOREACH(hl, &GBL_HOSTLIST, next) {
+      if (hl->hostname)
+         continue;
+      host_iptoa(&hl->ip, name);
    }
 }
 
@@ -212,7 +225,7 @@ void gtkui_show_stats(void)
 
    /* refresh the stats window every 200 ms */
    /* GTK has a gtk_idle_add also but it calls too much and uses 100% cpu */
-   stats_idle = gtk_timeout_add(200, refresh_stats, NULL);
+   stats_idle = g_timeout_add(200, refresh_stats, NULL);
 }
 
 static void gtkui_stats_detach(GtkWidget *child)
@@ -239,7 +252,7 @@ static void gtkui_stats_attach(void)
 static void gtkui_stop_stats(void)
 {
    DEBUG_MSG("gtk_stop_stats");
-   gtk_timeout_remove(stats_idle);
+   g_source_remove(stats_idle);
 
    gtk_widget_destroy(stats_window);
    stats_window = NULL;
@@ -249,42 +262,45 @@ static gboolean refresh_stats(gpointer data)
 {
    char line[50];
 
+   /* variable not used */
+   (void) data;
+
    /* if not focused don't refresh it */
    /* this also removes the idle call, but should 
       only occur if the window isn't visible */
-   if (!GTK_WIDGET_VISIBLE(stats_window))
+   if (!gtk_widget_get_visible(stats_window))
       return FALSE;
 
-   snprintf(line, 50, "%8lld", GBL_STATS->ps_recv);
+   snprintf(line, 50, "%8"PRIu64, GBL_STATS->ps_recv);
    gtk_label_set_text(GTK_LABEL (packets_recv), line);
-   snprintf(line, 50, "%8lld  %.2f %%", GBL_STATS->ps_drop, 
+   snprintf(line, 50, "%8"PRIu64"  %.2f %%", GBL_STATS->ps_drop, 
          (GBL_STATS->ps_recv) ? (float)GBL_STATS->ps_drop * 100 / GBL_STATS->ps_recv : 0 );
    gtk_label_set_text(GTK_LABEL (packets_drop), line);
-   snprintf(line, 50, "%8lld  bytes: %8lld ", GBL_STATS->ps_sent, GBL_STATS->bs_sent);
+   snprintf(line, 50, "%8"PRIu64"  bytes: %8"PRIu64" ", GBL_STATS->ps_sent, GBL_STATS->bs_sent);
    gtk_label_set_text(GTK_LABEL (packets_forw), line);
-   snprintf(line, 50, "%d/%d ", GBL_STATS->queue_curr, GBL_STATS->queue_max);
+   snprintf(line, 50, "%lu/%lu ", GBL_STATS->queue_curr, GBL_STATS->queue_max);
    gtk_label_set_text(GTK_LABEL (queue_len), line);
    snprintf(line, 50, "%d ", GBL_CONF->sampling_rate);
    gtk_label_set_text(GTK_LABEL (sample_rate), line);
-   snprintf(line, 50, "pck: %8lld  bytes: %8lld", 
+   snprintf(line, 50, "pck: %8"PRIu64"  bytes: %8"PRIu64, 
          GBL_STATS->bh.pck_recv, GBL_STATS->bh.pck_size);
    gtk_label_set_text(GTK_LABEL (recv_bottom), line);
-   snprintf(line, 50, "pck: %8lld  bytes: %8lld", 
+   snprintf(line, 50, "pck: %8"PRIu64"  bytes: %8"PRIu64, 
          GBL_STATS->th.pck_recv, GBL_STATS->th.pck_size);
    gtk_label_set_text(GTK_LABEL (recv_top), line);
    snprintf(line, 50, "%.2f %%",
          (GBL_STATS->bh.pck_recv) ? (float)GBL_STATS->th.pck_recv * 100 / GBL_STATS->bh.pck_recv : 0 );
    gtk_label_set_text(GTK_LABEL (interesting), line);
-   snprintf(line, 50, "worst: %8d  adv: %8d p/s", 
+   snprintf(line, 50, "worst: %8lu  adv: %8lu p/s", 
          GBL_STATS->bh.rate_worst, GBL_STATS->bh.rate_adv);
    gtk_label_set_text(GTK_LABEL (rate_bottom), line);
-   snprintf(line, 50, "worst: %8d  adv: %8d p/s", 
+   snprintf(line, 50, "worst: %8lu  adv: %8lu p/s", 
          GBL_STATS->th.rate_worst, GBL_STATS->th.rate_adv);
    gtk_label_set_text(GTK_LABEL (rate_top), line);
-   snprintf(line, 50, "worst: %8d  adv: %8d b/s", 
+   snprintf(line, 50, "worst: %8lu  adv: %8lu b/s", 
          GBL_STATS->bh.thru_worst, GBL_STATS->bh.thru_adv);
    gtk_label_set_text(GTK_LABEL (through_bottom), line);
-   snprintf(line, 50, "worst: %8d  adv: %8d b/s", 
+   snprintf(line, 50, "worst: %8lu  adv: %8lu b/s", 
          GBL_STATS->th.thru_worst, GBL_STATS->th.thru_adv);
    gtk_label_set_text(GTK_LABEL (through_top), line);
 
@@ -296,14 +312,16 @@ static gboolean refresh_stats(gpointer data)
  */
 void gtkui_vis_method(void)
 {
-   GtkWidget *dialog, *button, *prev, *vbox;
+   GtkWidget *dialog, *button, *prev, *vbox, *content_area;
    GSList *curr = NULL;
    gint active = 0, response = 0;
-
-   GList *lang_list = NULL;
+   GtkTreeModel *model;
+   GtkTreeIter iter;
+   GtkListStore *lang_list = NULL;
+   GtkCellRenderer *cell = NULL;
    GtkWidget *hbox, *lang_combo, *label;
-   char encoding[50], *local_lang, def_lang[75];
-
+   char encoding[50], def_lang[75];
+   const char *local_lang, *selected_lang;
 
    DEBUG_MSG("gtk_vis_method");
 
@@ -313,39 +331,46 @@ void gtkui_vis_method(void)
                GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
    gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 
-   vbox = GTK_DIALOG (dialog)->vbox;
+   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
+   vbox = gtk_vbox_new(FALSE, 0);
+#endif
+   gtk_container_add(GTK_CONTAINER(content_area), vbox);
 
    button = gtk_radio_button_new_with_label(NULL, 
                "hex     Print the packets in hex format.");
-   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), button, FALSE, FALSE, 0);
+   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
    if(strcmp(vmethod, "hex") == 0)
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
    prev = button;
 
    button = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (prev),
                "ascii   Print only \"printable\" characters, the others are displayed as dots '.'");
-   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), button, FALSE, FALSE, 0);
+   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
    if(strcmp(vmethod, "ascii") == 0)
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
    prev = button;
 
    button = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (prev),
                "text    Print only the \"printable\" characters and skip the others.");
-   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), button, FALSE, FALSE, 0);
+   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
    if(strcmp(vmethod, "text") == 0)
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
    prev = button;
 
    button = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (prev),
                "ebcdic  Convert an EBCDIC text to ASCII.");
-   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), button, FALSE, FALSE, 0);
+   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
    if(strcmp(vmethod, "ebcdic") == 0)
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
    prev = button;
 
    button = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (prev),
                "html    Strip all the html tags from the text. A tag is every string between < and >.");
-   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), button, FALSE, FALSE, 0);
+   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
    if(strcmp(vmethod, "html") == 0)
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
    prev = button;
@@ -353,48 +378,74 @@ void gtkui_vis_method(void)
 /* start UTF8 */
    button = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (prev),
                "utf8    Convert the data from the encoding specified below to UTF8 before displaying it.");
-   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), button, FALSE, FALSE, 0);
+   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
    if(strcmp(vmethod, "utf8") == 0)
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
    prev = button;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+#else
    hbox = gtk_hbox_new (FALSE, 6);
-   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), hbox, FALSE, FALSE, 0);
+#endif
+   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
    label = gtk_label_new ("Character encoding : ");
    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
+   /* Fill a list of available encodings */
+   lang_list = gtk_list_store_new(1, G_TYPE_STRING);
+
    /* get the system's default encoding, and if it's not UTF8, add it to the list */
    if(!g_get_charset(&local_lang)) {
       snprintf(def_lang, 75, "%s (System Default)", local_lang);
-      lang_list = g_list_append(lang_list, def_lang);
+      gtk_list_store_append(lang_list, &iter);
+      gtk_list_store_set(lang_list, &iter, 0, def_lang, -1);
    }
 
    /* some other common encodings */
-   lang_list = g_list_append(lang_list, "UTF-8");
-   lang_list = g_list_append(lang_list, "EBCDIC-US (IBM)");
-   lang_list = g_list_append(lang_list, "ISO-8859-15 (Western Europe)");
-   lang_list = g_list_append(lang_list, "ISO-8859-2 (Central Europe)");
-   lang_list = g_list_append(lang_list, "ISO-8859-7 (Greek)");
-   lang_list = g_list_append(lang_list, "ISO-8859-8 (Hebrew)");
-   lang_list = g_list_append(lang_list, "ISO-8859-9 (Turkish)");
-   lang_list = g_list_append(lang_list, "ISO-2022-JP (Japanese)");
-   lang_list = g_list_append(lang_list, "SJIS (Japanese)");
-   lang_list = g_list_append(lang_list, "CP949 (Korean)");
-   lang_list = g_list_append(lang_list, "CP1251 (Cyrillic)");
-   lang_list = g_list_append(lang_list, "CP1256 (Arabic)");
-   lang_list = g_list_append(lang_list, "GB18030 (Chinese)");
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "UTF-8", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "EBCDIC-US (IBM)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "ISO-8859-15 (Western Europe)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "ISO-8859-2 (Central Europe)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "ISO-8859-7 (Greek)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "ISO-8859-8 (Hebrew)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "ISO-8859-9 (Turkish)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "ISO-2022-JP (Japanese)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "SJIS (Japanese)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "CP949 (Korean)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "CP1251 (Cyrillic)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "CP1256 (Arabic)", -1);
+   gtk_list_store_append(lang_list, &iter);
+   gtk_list_store_set(lang_list, &iter, 0, "GB18030 (Chinese)", -1);
 
    /* make a drop down box and assign the list to it */
-   lang_combo = gtk_combo_new();
-   gtk_combo_set_popdown_strings (GTK_COMBO (lang_combo), lang_list);
-   gtk_box_pack_start (GTK_BOX (hbox), lang_combo, TRUE, TRUE, 0);
+   lang_combo = gtk_combo_box_new();
+   gtk_combo_box_set_model(GTK_COMBO_BOX(lang_combo), GTK_TREE_MODEL(lang_list));
 
    /* list is stored in the widget, can safely free this copy */
-   g_list_free(lang_list);
+   g_object_unref(lang_list);
 /* end UTF8 */
+
+   cell = gtk_cell_renderer_text_new();
+   gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(lang_combo), cell, TRUE);
+   gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(lang_combo), cell, "text", 0, NULL);
+   gtk_combo_box_set_active(GTK_COMBO_BOX(lang_combo), 0);
+   gtk_box_pack_start (GTK_BOX(hbox), lang_combo, TRUE, TRUE, 0);
       
-   gtk_widget_show_all(GTK_DIALOG(dialog)->vbox);
+   gtk_widget_show_all(vbox);
 
    response = gtk_dialog_run(GTK_DIALOG (dialog));
    if(response == GTK_RESPONSE_OK) {
@@ -418,8 +469,10 @@ void gtkui_vis_method(void)
          case 2: strncpy(vmethod, "html", 4); break;
          case 1: /* utf8 */
             /* copy first word from encoding choice */
-            i=sscanf(gtk_entry_get_text(GTK_ENTRY (GTK_COMBO (lang_combo)->entry)),
-                   "%[^ ]", encoding);
+            gtk_combo_box_get_active_iter(GTK_COMBO_BOX(lang_combo), &iter);
+            model = gtk_combo_box_get_model(GTK_COMBO_BOX(lang_combo));
+            gtk_tree_model_get(model, &iter, 0, &selected_lang, -1);
+            i=sscanf(selected_lang, "%[^ ]", encoding);
             BUG_IF(i!=1);
             if(strlen(encoding) > 0) {
                strncpy(vmethod, "utf8", 4);

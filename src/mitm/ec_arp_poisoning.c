@@ -23,8 +23,9 @@
 #include <ec_mitm.h>
 #include <ec_send.h>
 #include <ec_threads.h>
+#include <ec_hook.h>
 #include <ec_ui.h>
-#include <time.h>
+#include <ec_sleep.h>
 
 /* globals */
 
@@ -48,6 +49,7 @@ void arp_poisoning_init(void);
 EC_THREAD_FUNC(arp_poisoner);
 static int arp_poisoning_start(char *args);
 static void arp_poisoning_stop(void);
+static void arp_poisoning_confirm(struct packet_object *po);
 static int create_silent_list(void);
 static int create_list(void);
 
@@ -128,6 +130,9 @@ static int arp_poisoning_start(char *args)
    if (ret != ESUCCESS)
       SEMIFATAL_ERROR("ARP poisoning process cannot start.\n");
 
+   /* create a hook to look for ARP requests while poisoning */
+   hook_add(HOOK_PACKET_ARP_RQ, &arp_poisoning_confirm);
+
    /* create the poisoning thread */
    ec_thread_new("arp_poisoner", "ARP poisoning module", &arp_poisoner, NULL);
 
@@ -150,17 +155,14 @@ static void arp_poisoning_stop(void)
    /* destroy the poisoner thread */
    pid = ec_thread_getpid("arp_poisoner");
 
-#if !defined(OS_WINDOWS)
-   struct timespec tm, ts;
-   tm.tv_nsec = GBL_CONF->arp_storm_delay * 1000;
-   tm.tv_sec = 0;
-#endif
-   
    /* the thread is active or not ? */
    if (!pthread_equal(pid, EC_PTHREAD_NULL))
       ec_thread_destroy(pid);
    else
       return;
+
+   /* stop confirming ARP requests with poisoned answers */
+   hook_del(HOOK_PACKET_ARP_RQ, &arp_poisoning_confirm);
         
    USER_MSG("ARP poisoner deactivated.\n");
  
@@ -198,22 +200,12 @@ static void arp_poisoning_stop(void)
                   send_arp(ARPOP_REQUEST, &g1->ip, g1->mac, &g2->ip, g2->mac); 
             }
            
-#if !defined(OS_WINDOWS) 
-            nanosleep(&tm, NULL);
-#else
-            usleep(GBL_CONF->arp_storm_delay);
-#endif
+            ec_usleep(MILLI2MICRO(GBL_CONF->arp_storm_delay));
          }
       }
       
       /* sleep the correct delay, same as warm_up */
-#if !defined(OS_WINDOWS)
-      ts.tv_sec = GBL_CONF->arp_poison_warm_up;
-      ts.tv_nsec = 0;
-      nanosleep(&ts, NULL);
-#else
-      usleep(GBL_CONF->arp_poison_warm_up*1000);
-#endif
+      ec_usleep(SEC2MICRO(GBL_CONF->arp_poison_warm_up));
    }
    
    /* delete the elements in the first list */
@@ -243,12 +235,9 @@ EC_THREAD_FUNC(arp_poisoner)
    int i = 1;
    struct hosts_list *g1, *g2;
 
-#if !defined(OS_WINDOWS)
-   struct timespec tm, ts;
-   tm.tv_nsec = GBL_CONF->arp_storm_delay * 1000;
-   tm.tv_sec = 0;
-#endif
-   
+   /* variable not used */
+   (void) EC_THREAD_PARAM;
+
    /* init the thread and wait for start up */
    ec_thread_init();
   
@@ -296,40 +285,71 @@ EC_THREAD_FUNC(arp_poisoner)
                   send_arp(ARPOP_REQUEST, &g1->ip, GBL_IFACE->mac, &g2->ip, g2->mac); 
             }
           
-#if !defined(OS_WINDOWS) 
-            nanosleep(&tm, NULL);
-#else
-            usleep(GBL_CONF->arp_storm_delay);
-#endif
+            ec_usleep(MILLI2MICRO(GBL_CONF->arp_storm_delay));
          }
       }
       
+      /* if smart poisoning is enabled only poison inital and then only on request */
+      if (GBL_CONF->arp_poison_smart && i < 3)
+          return NULL;
+
       /* 
        * wait the correct delay:
        * for the first 5 time use the warm_up
        * then use normal delay
        */
       if (i < 5) {
-#if !defined(OS_WINDOWS)
-         ts.tv_sec = GBL_CONF->arp_poison_warm_up;
-         ts.tv_nsec = 0;
-         nanosleep(&ts, NULL);
-#else
-         usleep(GBL_CONF->arp_poison_warm_up*1000);
-#endif
+         ec_usleep(SEC2MICRO(GBL_CONF->arp_poison_warm_up));
          i++;
-      } else
-#if !defined(OS_WINDOWS)
-         ts.tv_sec = GBL_CONF->arp_poison_delay;
-         ts.tv_nsec = 0;
-	 nanosleep(&ts, NULL);
-#else
-         usleep(GBL_CONF->arp_poison_delay);
-#endif
+      } else {
+         ec_usleep(SEC2MICRO(GBL_CONF->arp_poison_delay));
+      }
    }
    
    return NULL; 
 }
+
+
+/*
+ * if a target wants to reconfirm the poisoned ARP information
+ * it should be confirmed while poisoning
+ */
+static void arp_poisoning_confirm(struct packet_object *po)
+{
+   struct hosts_list *g1, *g2;
+   char tmp[MAX_ASCII_ADDR_LEN];
+
+   /* ignore ARP requests origined by ourself */
+   if (!memcmp(po->L2.src, GBL_IFACE->mac, MEDIA_ADDR_LEN)) 
+      return;
+
+   DEBUG_MSG("arp_poisoning_confirm(%s)", ip_addr_ntoa(&po->L3.dst, tmp));
+
+   /* walk through the lists if ARP request was for a victim */
+   LIST_FOREACH(g1, &arp_group_one, next) {
+      /* if the sender is in group one ... */
+      if (!ip_addr_cmp(&po->L3.src, &g1->ip)) {
+         /* look if the target is in group two ... */
+         LIST_FOREACH(g2, &arp_group_two, next) {
+            if (!ip_addr_cmp(&po->L3.dst, &g2->ip)) {
+               /* confirm the sender with the poisoned ARP reply */
+               send_arp(ARPOP_REPLY, &po->L3.dst, GBL_IFACE->mac, &po->L3.src, po->L2.src);
+            }
+         }
+      }
+      /* else if the target is in group one ... */
+      if (!ip_addr_cmp(&po->L3.dst, &g1->ip)) {
+         /* look if the sender is in group two ... */
+         LIST_FOREACH(g2, &arp_group_two, next) {
+            if (!ip_addr_cmp(&po->L3.src, &g2->ip)) {
+               /* confirm the sender with the poisoned ARP reply */
+               send_arp(ARPOP_REPLY, &po->L3.dst, GBL_IFACE->mac, &po->L3.src, po->L2.src);
+            }
+         }
+      }
+   }
+}
+
 
 /*
  * create the list of victims
@@ -375,7 +395,7 @@ static int create_silent_list(void)
       memcpy(&h->ip, &GBL_IFACE->network, sizeof(struct ip_addr));
       /* XXX - IPv6 compatible */
       /* the broadcast is the network address | ~netmask */
-      *(u_int32 *)&h->ip.addr |= ~(*(u_int32 *)&GBL_IFACE->netmask.addr);
+      *h->ip.addr32 |= ~(*GBL_IFACE->netmask.addr32);
 
       /* broadcast mac address */
       memcpy(&h->mac, MEDIA_BROADCAST, MEDIA_ADDR_LEN);
@@ -402,14 +422,16 @@ static int create_silent_list(void)
       memcpy(&g->ip, &GBL_IFACE->network, sizeof(struct ip_addr));
       /* XXX - IPv6 compatible */
       /* the broadcast is the network address | ~netmask */
-      *(u_int32 *)&g->ip.addr |= ~(*(u_int32 *)&GBL_IFACE->netmask.addr);
+      *g->ip.addr32 |= ~(*GBL_IFACE->netmask.addr32);
 
       /* broadcast mac address */
       memcpy(&g->mac, MEDIA_BROADCAST, MEDIA_ADDR_LEN);
    }
 
-   if (i == j) {
-      USER_MSG("\nERROR: Cannot poison theese targets...\n");
+   if (i == j || 
+       ntohs(i->ip.addr_type) != AF_INET || 
+       ntohs(j->ip.addr_type) != AF_INET) {
+      USER_MSG("\nERROR: Cannot ARP poison these targets...\n");
       SAFE_FREE(h);
       SAFE_FREE(g);
       return -EFATAL;
@@ -464,6 +486,9 @@ static int create_list(void)
       
       /* add them */ 
       LIST_FOREACH(h, &GBL_HOSTLIST, next) {
+         /* only IPv4 */
+         if (ntohs(h->ip.addr_type) != AF_INET)
+            continue;
            
          /* create the element and insert it in the list */
          SAFE_CALLOC(g, 1, sizeof(struct hosts_list));
@@ -503,6 +528,9 @@ static int create_list(void)
       
       /* add them */ 
       LIST_FOREACH(h, &GBL_HOSTLIST, next) {
+         /* only IPv4 */
+         if (ntohs(h->ip.addr_type) != AF_INET)
+            continue;
            
          /* create the element and insert it in the list */
          SAFE_CALLOC(g, 1, sizeof(struct hosts_list));

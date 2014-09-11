@@ -1,16 +1,9 @@
-=========================
-  TODO for libettercap
-========================
-
-1. Generate build logic for libettercap
-2. Remove all interfaces if building libettercap
-
 ==========================
   TODO for the NG series
 ==========================
 
 >>> things to be fixed
-   
+
    + remove GBL_OPTIONS->quiet from some plugins
 
    + PCAP RELATED
@@ -23,6 +16,10 @@
 ============================
   In the next release(s)
 ============================
+
+   + Host impersonation (issue #31)
+
+   + RDP MITM feature (issue #32)
    
    + ETTERLOG
       - reassemble the stream based on sequence numbers
@@ -61,6 +58,10 @@
   LONG TERM TODO
 ==================
    
+   + GTK
+      - Rework GTK3 UI using the latest API (GtkBuilder)
+      - Phase out GTK2
+
    + SSH2 dissection :) (yes, it can be done)
 
    + IPv6
@@ -68,7 +69,9 @@
       - UI support for IPv6 address
       - neighbor discovery poisoning
       - scan method for IPv6 hosts 
-      
+      - DHCPv6 MITM 
+      - make etterfilter IPv6 capable
+      - make etterlog IPv6 capable
 
    + Rendevouz mitm
 

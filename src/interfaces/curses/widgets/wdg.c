@@ -22,9 +22,16 @@
 #include <wdg.h>
 
 #include <ncurses.h>
+#include <pthread.h>
 
 
 /* GLOBALS */
+
+/* mutexes */
+static pthread_mutex_t wdg_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define WDG_LOCK do { pthread_mutex_lock(&wdg_mutex); } while (0)
+#define WDG_UNLOCK do { pthread_mutex_unlock(&wdg_mutex); } while (0)
+
 
 /* information about the current screen */
 struct wdg_scr current_screen;
@@ -54,37 +61,10 @@ static int wdg_exit_key;
 
 /* PROTOS */
 
-void wdg_init(void);
-void wdg_cleanup(void);
-void wdg_exit(void);
-void wdg_update_screen(void);
-void wdg_redraw_all(void);
-
-void wdg_add_idle_callback(void (*callback)(void));
-void wdg_del_idle_callback(void (*callback)(void));
-
-int wdg_events_handler(int exit_key);
 static void wdg_dispatch_msg(int key, struct wdg_mouse_event *mouse);
 static void wdg_switch_focus(int type);
 #define SWITCH_FOREWARD 1
 #define SWITCH_BACKWARD 2
-void wdg_set_focus(struct wdg_object *wo);
-
-int wdg_create_object(struct wdg_object **wo, size_t type, size_t flags);
-int wdg_destroy_object(struct wdg_object **wo);
-void wdg_add_destroy_key(struct wdg_object *wo, int key, void (*callback)(void));
-
-void wdg_set_size(struct wdg_object *wo, int x1, int y1, int x2, int y2);
-void wdg_draw_object(struct wdg_object *wo);
-size_t wdg_get_type(struct wdg_object *wo);
-void wdg_init_color(u_char pair, u_char fg, u_char bg);
-void wdg_set_color(wdg_t *wo, size_t part, u_char pair);
-void wdg_screen_color(u_char pair);
-
-size_t wdg_get_nlines(struct wdg_object *wo);
-size_t wdg_get_ncols(struct wdg_object *wo);
-size_t wdg_get_begin_x(struct wdg_object *wo);
-size_t wdg_get_begin_y(struct wdg_object *wo);
 
 /* creation function from other widgets */
 extern void wdg_create_compound(struct wdg_object *wo);
@@ -217,7 +197,9 @@ void wdg_exit(void)
  */
 void wdg_update_screen(void)
 {
+   WDG_LOCK;
    doupdate();
+   WDG_UNLOCK;
 }
 
 /* 
@@ -267,7 +249,9 @@ int wdg_events_handler(int exit_key)
             /* switch focus between objects */
             wdg_switch_focus(SWITCH_FOREWARD);
             /* update the screen */
+            WDG_LOCK;
             doupdate();
+            WDG_UNLOCK;
             break;
 
          case KEY_CTRL_L:
@@ -276,7 +260,9 @@ int wdg_events_handler(int exit_key)
             /* the screen has been resized */
             wdg_redraw_all();
             /* update the screen */
+            WDG_LOCK;
             doupdate();
+            WDG_UNLOCK;
             break;
             
          case ERR:
@@ -299,7 +285,9 @@ int wdg_events_handler(int exit_key)
              * update the screen.
              * all the function uses wnoutrefresh() funcions 
              */
+            WDG_LOCK;
             doupdate();
+            WDG_UNLOCK;
             break;
             
          default:
@@ -325,7 +313,9 @@ int wdg_events_handler(int exit_key)
             /* dispatch the user input */
             wdg_dispatch_msg(key, &mouse);
             /* update the screen */
+            WDG_LOCK;
             doupdate();
+            WDG_UNLOCK;
             break;
       }
    }

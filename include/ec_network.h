@@ -1,5 +1,5 @@
-#ifndef EC_INIT_H
-#define EC_INIT_H
+#ifndef ETTERCAP_INIT_H
+#define ETTERCAP_INIT_H
 
 #include <ec.h>
 #include <ec_inet.h>
@@ -26,7 +26,6 @@ struct iface_env {
    u_int8 unoffensive:1;
 
    pcap_t* pcap;
-   pcap_dumper_t *dump;
    libnet_t* lnet;
 };
 

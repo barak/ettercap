@@ -44,11 +44,8 @@ static pthread_mutex_t filters_mutex;
 
 /* protos */
 
-int filter_load_file(char *filename, struct filter_list **list, uint8_t enabled);
-void filter_unload(struct filter_list **list);
 static void reconstruct_strings(struct filter_env *fenv, struct filter_header *fh);
-static int compile_regex(struct filter_env *fenv, struct filter_header *fh);
-void filter_walk_list( int(*cb)(struct filter_list*, void*), void *arg);
+static int compile_regex(struct filter_env *fenv);
    
 static int filter_engine(struct filter_op *fop, struct packet_object *po);
 static int execute_test(struct filter_op *fop, struct packet_object *po);
@@ -61,6 +58,7 @@ static int func_regex(struct filter_op *fop, struct packet_object *po);
 static int func_pcre(struct filter_op *fop, struct packet_object *po);
 static int func_replace(struct filter_op *fop, struct packet_object *po);
 static int func_inject(struct filter_op *fop, struct packet_object *po);
+static int func_execinject(struct filter_op *fop, struct packet_object *po);
 static int func_log(struct filter_op *fop, struct packet_object *po);
 static int func_drop(struct packet_object *po);
 static int func_kill(struct packet_object *po);
@@ -224,6 +222,12 @@ static int execute_func(struct filter_op *fop, struct packet_object *po)
          if (func_inject(fop, po) == ESUCCESS)
             return FLAG_TRUE;
          break;
+
+      case FFUNC_EXECINJECT:
+         /* replace the string through output of a executable */
+         if (func_execinject(fop, po) == ESUCCESS)
+            return FLAG_TRUE;
+         break;
          
       case FFUNC_LOG:
          /* log the packet */
@@ -348,6 +352,10 @@ static int execute_test(struct filter_op *fop, struct packet_object *po)
       case 4:
          /* int comparison */
          if (cmp_func(htonl(*(u_int32 *)(base + fop->op.test.offset)), (fop->op.test.value & 0xffffffff)) )
+            return FLAG_TRUE;
+         break;
+      case 16: /* well IPv6 addresses should be handled as 16-byte pointer */
+         if (cmp_func(memcmp(base + fop->op.test.offset, fop->op.test.ipaddr, fop->op.test.size), 0) )
             return FLAG_TRUE;
          break;
       default:
@@ -545,6 +553,8 @@ static int func_regex(struct filter_op *fop, struct packet_object *po)
 static int func_pcre(struct filter_op *fop, struct packet_object *po)
 {
 #ifndef HAVE_PCRE
+   (void) fop;
+   (void) po;
    JIT_FAULT("pcre_regex support not compiled in ettercap");
    return -ENOTFOUND;
 #else
@@ -566,7 +576,8 @@ static int func_pcre(struct filter_op *fop, struct packet_object *po)
          if (fop->op.func.replace) {
             u_char *replaced;
             u_char *q = fop->op.func.replace;
-            size_t i, slen = 0;
+            size_t i;
+            int slen = 0;
 
             /* don't modify if in unoffensive mode */
             if (GBL_OPTIONS->unoffensive)
@@ -789,7 +800,7 @@ static int func_inject(struct filter_op *fop, struct packet_object *po)
       FATAL_MSG("Cannot read the file into memory");
  
    /* check if we are overflowing pcap buffer */
-   if(GBL_PCAP->snaplen - (po->L4.header - (po->packet + po->L2.len) + po->L4.len) <= po->DATA.len + size)
+   if(GBL_PCAP->snaplen - (po->L4.header - (po->packet + po->L2.len) + po->L4.len) <= po->DATA.len + (unsigned)size)
       JIT_FAULT("injected file too long");
          
    /* copy the file into the buffer */
@@ -808,6 +819,68 @@ static int func_inject(struct filter_op *fop, struct packet_object *po)
 
    /* close and unmap the file */
    SAFE_FREE(file);
+   
+   return ESUCCESS;
+}
+
+/*
+ * inject output of a executable into the communication
+ */
+static int func_execinject(struct filter_op *fop, struct packet_object *po)
+{
+   FILE *pstream = NULL;
+   unsigned char *output = NULL;
+   size_t n = 0, offset = 0, size = 128;
+   unsigned char buf[size];
+   
+   /* check the offensiveness */
+   if (GBL_OPTIONS->unoffensive)
+      JIT_FAULT("Cannot inject packets in unoffensive mode");
+   
+
+   DEBUG_MSG("filter engine: func_execinject %s", fop->op.func.string);
+   
+   /* open the pipe */
+   if ((pstream = popen((const char*)fop->op.func.string, "r")) == NULL) {
+      USER_MSG("filter engine: execinject(): Command not found (%s)\n", fop->op.func.string);
+      return -EFATAL;
+   }
+   
+   while ((n = read(fileno(pstream), buf, size)) != 0) {
+      if (output == NULL) {
+         SAFE_CALLOC(output, offset+n, sizeof(unsigned char));
+      }
+      else {
+         SAFE_REALLOC(output, sizeof(unsigned char)*(offset+n));
+      }
+
+      memcpy(output+offset, buf, n);
+      offset += n;
+   }
+   
+   /* close pipe stream */
+   pclose(pstream);
+
+   /* check if we are overflowing pcap buffer */
+   if(GBL_PCAP->snaplen - (po->L4.header - (po->packet + po->L2.len) + po->L4.len) <= po->DATA.len + (unsigned)offset)
+      JIT_FAULT("injected output too long");
+         
+   /* copy the output into the buffer */
+   memcpy(po->DATA.data + po->DATA.len, output, offset);
+
+   /* Adjust packet len and delta */
+   po->DATA.delta += offset;
+   po->DATA.len += offset;    
+
+   /* mark the packet as modified */
+   po->flags |= PO_MODIFIED;
+   
+   /* unset the flag to be dropped */
+   if (po->flags & PO_DROPPED)
+      po->flags ^= PO_DROPPED;
+
+   /* free memory */
+   SAFE_FREE(output);
    
    return ESUCCESS;
 }
@@ -992,7 +1065,7 @@ static int cmp_geq(u_int32 a, u_int32 b)
 /*
  * load the filter from a file 
  */
-int filter_load_file(char *filename, struct filter_list **list, uint8_t enabled)
+int filter_load_file(const char *filename, struct filter_list **list, uint8_t enabled)
 {
    int fd;
    void *file;
@@ -1063,7 +1136,7 @@ int filter_load_file(char *filename, struct filter_list **list, uint8_t enabled)
    FILTERS_UNLOCK;
 
    /* compile the regex to speed up the matching */
-   if (compile_regex(fenv, &fh) != ESUCCESS)
+   if (compile_regex(fenv) != ESUCCESS)
       return -EFATAL;
    
    USER_MSG("Content filters loaded from %s...\n", filename);
@@ -1179,7 +1252,7 @@ static void reconstruct_strings(struct filter_env *fenv, struct filter_header *f
 /*
  * compile the regex of a filter_op
  */
-static int compile_regex(struct filter_env *fenv, struct filter_header *fh)
+static int compile_regex(struct filter_env *fenv)
 {
    size_t i = 0;
    struct filter_op *fop = fenv->chain;

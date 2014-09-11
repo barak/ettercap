@@ -17,7 +17,8 @@ ec_uid = 65534                # nobody is the default
 ec_gid = 65534                # nobody is the default
 
 [mitm]
-arp_storm_delay = 10          # seconds
+arp_storm_delay = 10          # milliseconds
+arp_poison_smart = 0          # boolean
 arp_poison_warm_up = 1        # seconds
 arp_poison_delay = 10         # seconds
 arp_poison_icmp = 1           # boolean
@@ -27,7 +28,12 @@ arp_poison_equal_mac = 1      # boolean
 dhcp_lease_time = 1800        # seconds
 port_steal_delay = 10         # seconds
 port_steal_send_delay = 2000  # microseconds
-nadv_poison_send_delay = 1500 # microseconds
+ndp_poison_warm_up = 1        # seconds
+ndp_poison_delay = 5          # seconds
+ndp_poison_send_delay = 1500  # microseconds
+ndp_poison_icmp = 1           # boolean
+ndp_poison_equal_mac = 1      # boolean
+icmp6_probe_delay = 3         # seconds
 
 [connections]
 connection_timeout = 300      # seconds
@@ -46,6 +52,7 @@ skip_forwarded_pcks = 1       # boolean value
 checksum_check = 0            # boolean value
 submit_fingerprint = 0        # boolean valid (set if you want ettercap to submit unknown finger prints)
 checksum_warning = 0          # boolean value (valid only if checksum_check is 1)
+sniffing_at_startup = 1       # boolean value
 
 ############################################################################
 #
@@ -98,6 +105,7 @@ cvs = 2401                 # tcp    2401
 mysql = 3306               # tcp    3306
 icq = 5190                 # tcp    5190
 ymsg = 5050                # tcp    5050
+mdns = 5353                # udp    5353
 vnc = 5900,5901,5902,5903  # tcp    5900 5901 5902 5903
 x11 = 6000,6001,6002,6003  # tcp    6000 6001 6002 6003
 irc = 6666,6667,6668,6669  # tcp    6666 6667 6668 6669
@@ -105,6 +113,7 @@ gg = 8074	           # tcp    8074
 proxy = 8080               # tcp    8080
 rcon = 27015,27960         # udp    27015 27960
 ppp = 34827                # special case ;) this is the Net Layer code
+TN3270 = 23,992            # tcp    23 992
 
 # 
 # you can change the colors of the curses GUI.
@@ -175,7 +184,7 @@ remote_browser = "xdg-open http://%host%url"
 #---------------
 
 # quick and dirty way:
-   #redir_command_on = "ipfw add set %set fwd 127.0.0.1,%rport tcp from any to any %port in via %iface"
+   #redir_command_on = "ipfw -q add set %set fwd 127.0.0.1,%rport tcp from any to any %port in via %iface"
    #redir_command_off = "ipfw -q delete set %set"
 
 # a better solution is to use a script that keeps track of the rules interted

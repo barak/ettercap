@@ -45,7 +45,6 @@ struct termios new_tc;
 
 /* proto */
 
-void set_text_interface(void);
 void text_interface(void);
 static void text_init(void);
 static void text_cleanup(void);
@@ -216,6 +215,9 @@ static int text_progress(char *title, int value, int max)
 {
    float percent;
    int i;
+   
+   /* variable not used */
+   (void) title;
   
    /* calculate the percent */
    percent = (float)(value)*100/(max);
@@ -267,12 +269,18 @@ static int text_progress(char *title, int value, int max)
 
 void text_interface(void)
 {
+   struct plugin_list *plugin, *tmp;
+
    DEBUG_MSG("text_interface");
    
-   /* check if the specified plugin exists */
-   if (GBL_OPTIONS->plugin && search_plugin(GBL_OPTIONS->plugin) != ESUCCESS) {
-      tcsetattr(0, TCSANOW, &old_tc);
-      FATAL_ERROR("%s plugin can not be found !", GBL_OPTIONS->plugin);
+   LIST_FOREACH_SAFE(plugin, &GBL_OPTIONS->plugins, next, tmp) {
+      /* check if the specified plugin exists */
+      if (search_plugin(plugin->name) != ESUCCESS) {
+         plugin->exists = false;
+         USER_MSG("Sorry, plugin '%s' can not be found - skipping!\n\n", 
+               plugin->name);
+      }
+
    }
 
    /* build the list of active hosts */
@@ -294,15 +302,18 @@ void text_interface(void)
    ui_msg_flush(MSG_ALL);
   
    /* if we have to activate a plugin */
-   if (GBL_OPTIONS->plugin) {
+   if (!LIST_EMPTY(&GBL_OPTIONS->plugins)) {
       /* 
        * execute the plugin and close the interface if 
        * the plugin was not found or it has completed
        * its execution
        */
-      if (text_plugin(GBL_OPTIONS->plugin) != PLUGIN_RUNNING)
-         /* end the interface */
-         return;
+      LIST_FOREACH_SAFE(plugin, &GBL_OPTIONS->plugins, next, tmp) {
+          if (plugin->exists && text_plugin(plugin->name) != PLUGIN_RUNNING)
+             /* skip plugin */
+             USER_MSG("Plugin '%s' can not be started - skipping!\n\n", 
+                   plugin->name);
+      }
    }
 
    /* neverending loop for user input */
@@ -442,9 +453,6 @@ static void text_run_plugin(void)
    fprintf(stdout, "Plugin name (0 to quit): ");
    fflush(stdout);
    
-   /* flush the buffer */
-   fflush(stdin);
-   
    /* get the user input */
    fgets(name, 20, stdin);
 
@@ -540,44 +548,46 @@ static void text_run_filter(void) {
  */
 static void text_stats(void)
 {
-   DEBUG_MSG("text_stats (pcap) : %llu %llu %llu", GBL_STATS->ps_recv, 
+   DEBUG_MSG("text_stats (pcap) : %" PRIu64 " %" PRIu64 " %" PRIu64,
+                                                GBL_STATS->ps_recv,
                                                 GBL_STATS->ps_drop,
                                                 GBL_STATS->ps_ifdrop);
    DEBUG_MSG("text_stats (BH) : [%lu][%lu] p/s -- [%lu][%lu] b/s", 
-         (unsigned long)GBL_STATS->bh.rate_adv, (unsigned long)GBL_STATS->bh.rate_worst, 
-         (unsigned long)GBL_STATS->bh.thru_adv, (unsigned long)GBL_STATS->bh.thru_worst); 
+         GBL_STATS->bh.rate_adv, GBL_STATS->bh.rate_worst, 
+         GBL_STATS->bh.thru_adv, GBL_STATS->bh.thru_worst); 
    
    DEBUG_MSG("text_stats (TH) : [%lu][%lu] p/s -- [%lu][%lu] b/s", 
-         (unsigned long)GBL_STATS->th.rate_adv, (unsigned long)GBL_STATS->th.rate_worst, 
-         (unsigned long)GBL_STATS->th.thru_adv, (unsigned long)GBL_STATS->th.thru_worst); 
+         GBL_STATS->th.rate_adv, GBL_STATS->th.rate_worst, 
+         GBL_STATS->th.thru_adv, GBL_STATS->th.thru_worst); 
    
-   DEBUG_MSG("text_stats (queue) : %lu %lu", (unsigned long)GBL_STATS->queue_curr, (unsigned long)GBL_STATS->queue_max); 
+   DEBUG_MSG("text_stats (queue) : %lu %lu", GBL_STATS->queue_curr, GBL_STATS->queue_max); 
   
    
-   fprintf(stdout, "\n Received packets    : %8llu\n", (long long unsigned int)GBL_STATS->ps_recv);
-   fprintf(stdout,   " Dropped packets     : %8llu  %.2f %%\n", (long long unsigned int)GBL_STATS->ps_drop,
+   fprintf(stdout, "\n Received packets    : %8" PRIu64 "\n", GBL_STATS->ps_recv);
+   fprintf(stdout,   " Dropped packets     : %8" PRIu64 "  %.2f %%\n", GBL_STATS->ps_drop,
          (GBL_STATS->ps_recv) ? (float)GBL_STATS->ps_drop * 100 / GBL_STATS->ps_recv : 0 );
-   fprintf(stdout,   " Forwarded           : %8llu  bytes: %8llu\n\n", (long long unsigned int)GBL_STATS->ps_sent, (long long unsigned int)GBL_STATS->bs_sent);
+   fprintf(stdout,   " Forwarded           : %8" PRIu64 "  bytes: %8" PRIu64 "\n\n",
+           GBL_STATS->ps_sent, GBL_STATS->bs_sent);
    
-   fprintf(stdout,   " Current queue len   : %lu/%lu\n", (unsigned long)GBL_STATS->queue_curr, (unsigned long)GBL_STATS->queue_max);
+   fprintf(stdout,   " Current queue len   : %lu/%lu\n", GBL_STATS->queue_curr, GBL_STATS->queue_max);
    fprintf(stdout,   " Sampling rate       : %d\n\n", GBL_CONF->sampling_rate);
    
-   fprintf(stdout,   " Bottom Half received packet : pck: %8llu  byte: %8lld\n", 
-         (long long unsigned int)GBL_STATS->bh.pck_recv, GBL_STATS->bh.pck_size);
-   fprintf(stdout,   " Top Half received packet    : pck: %8llu  byte: %8lld\n", 
-         (long long unsigned int)GBL_STATS->th.pck_recv, GBL_STATS->th.pck_size);
+   fprintf(stdout,   " Bottom Half received packet : pck: %8" PRIu64 "  byte: %8" PRIu64 "\n",
+         GBL_STATS->bh.pck_recv, GBL_STATS->bh.pck_size);
+   fprintf(stdout,   " Top Half received packet    : pck: %8" PRIu64 "  byte: %8" PRIu64 "\n",
+         GBL_STATS->th.pck_recv, GBL_STATS->th.pck_size);
    fprintf(stdout,   " Interesting packets         : %.2f %%\n\n",
          (GBL_STATS->bh.pck_recv) ? (float)GBL_STATS->th.pck_recv * 100 / GBL_STATS->bh.pck_recv : 0 );
 
    fprintf(stdout,   " Bottom Half packet rate : worst: %8lu  adv: %8lu p/s\n", 
-         (unsigned long)GBL_STATS->bh.rate_worst, (unsigned long)GBL_STATS->bh.rate_adv);
+         GBL_STATS->bh.rate_worst, GBL_STATS->bh.rate_adv);
    fprintf(stdout,   " Top Half packet rate    : worst: %8lu  adv: %8lu p/s\n\n", 
-         (unsigned long)GBL_STATS->th.rate_worst, (unsigned long)GBL_STATS->th.rate_adv);
+         GBL_STATS->th.rate_worst, GBL_STATS->th.rate_adv);
    
-   fprintf(stdout,   " Bottom Half thruoutput  : worst: %8lu  adv: %8lu b/s\n", 
-         (unsigned long)GBL_STATS->bh.thru_worst, (unsigned long)GBL_STATS->bh.thru_adv);
-   fprintf(stdout,   " Top Half thruoutput     : worst: %8lu  adv: %8lu b/s\n\n", 
-         (unsigned long)GBL_STATS->th.thru_worst, (unsigned long)GBL_STATS->th.thru_adv);
+   fprintf(stdout,   " Bottom Half throughput  : worst: %8lu  adv: %8lu b/s\n", 
+         GBL_STATS->bh.thru_worst, GBL_STATS->bh.thru_adv);
+   fprintf(stdout,   " Top Half throughput     : worst: %8lu  adv: %8lu b/s\n\n", 
+         GBL_STATS->th.thru_worst, GBL_STATS->th.thru_adv);
 }
 
 /*

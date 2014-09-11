@@ -36,21 +36,13 @@
 void __init profiles_init(void);
 
 static void profile_purge(int flag);
-void profile_purge_local(void);
-void profile_purge_remote(void);
-void profile_purge_all(void);
-int profile_convert_to_hostlist(void);
-int profile_dump_to_file(char *filename);
 
-void profile_parse(struct packet_object *po);
 static int profile_add_host(struct packet_object *po);
 static int profile_add_user(struct packet_object *po);
 static void update_info(struct host_profile *h, struct packet_object *po);
 static void update_port_list(struct host_profile *h, struct packet_object *po);
 static void update_port_list_with_advertised(struct host_profile *h, uint8_t L4_proto, uint16_t L4_src);
 static void set_gateway(u_char *L2_addr);
-
-void * profile_print(int mode, void *list, char **desc, size_t len);
 
 /* global mutex on interface */
 
@@ -168,6 +160,7 @@ static int profile_add_host(struct packet_object *po)
    struct host_profile *h;
    struct host_profile *c;
    struct host_profile *last = NULL;
+   char tmp[MAX_ASCII_ADDR_LEN];
    
    /* 
     * do not store profiles for hosts with ip == 0.0.0.0
@@ -215,7 +208,7 @@ static int profile_add_host(struct packet_object *po)
   
    PROFILE_UNLOCK;
   
-   DEBUG_MSG("profile_add_host %x", ip_addr_to_int32(&po->L3.src.addr));
+   DEBUG_MSG("profile_add_host %s", ip_addr_ntoa(&po->L3.src, tmp));
    
    /* 
     * the host was not found, create a new entry 

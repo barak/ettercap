@@ -1,5 +1,5 @@
 /*
-    ettercap -- dissector FTP -- TCP 21
+    ettercap -- dissector FTP -- TCP 21 992
 
     Copyright (C) ALoR & NaGA
 
@@ -23,7 +23,7 @@
 #include <ec_decode.h>
 #include <ec_dissect.h>
 #include <ec_session.h>
-
+#include <ec_sslwrap.h>
 
 /* protos */
 
@@ -40,6 +40,7 @@ void ftp_init(void);
 void __init ftp_init(void)
 {
    dissect_add("ftp", APP_LAYER_TCP, 21, dissector_ftp);
+   sslw_dissect_add("ftps", 992, dissector_ftp, SSL_ENABLED);
 }
 
 FUNC_DECODER(dissector_ftp)
@@ -49,6 +50,11 @@ FUNC_DECODER(dissector_ftp)
    void *ident = NULL;
    char tmp[MAX_ASCII_ADDR_LEN];
 
+   /* don't complain about unused var */
+   (void) DECODE_DATA; 
+   (void) DECODE_DATALEN;
+   (void) DECODED_LEN;
+   
    /* the connection is starting... create the session */
    CREATE_SESSION_ON_SYN_ACK("ftp", s, dissector_ftp);
    

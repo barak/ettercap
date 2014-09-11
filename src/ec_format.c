@@ -70,23 +70,6 @@ static u_int8 EBCDIC_to_ASCII[256] = {
    0x38, 0x39, 0x2E, 0x2E, 0x2E, 0x2E, 0x2E, 0x2E
 };
 
-
-
-/* protos */
-
-int hex_len(int len);
-int hex_format(const u_char *buf, size_t len, u_char *dst);
-int ascii_format(const u_char *buf, size_t len, u_char *dst);
-int text_format(const u_char *buf, size_t len, u_char *dst);
-int ebcdic_format(const u_char *buf, size_t len, u_char *dst);
-int html_format(const u_char *buf, size_t len, u_char *dst);
-int bin_format(const u_char *buf, size_t len, u_char *dst);
-int zero_format(const u_char *buf, size_t len, u_char *dst);
-int utf8_format(const u_char *buf, size_t len, u_char *dst);
-int set_utf8_encoding(u_char *fromcode);
-
-int set_format(char *format);
-
 /**********************************/
 
 /*
@@ -352,6 +335,10 @@ int bin_format(const u_char *buf, size_t len, u_char *dst)
 
 int zero_format(const u_char *buf, size_t len, u_char *dst)
 {
+   /* variable not used */
+   (void) buf;
+   (void) len;
+
    strncpy((char*)dst, "", 1);
    return 0;
 }
@@ -376,7 +363,7 @@ int utf8_format(const u_char *buf, size_t len, u_char *dst)
 #else
    
    iconv_t cd;
-#ifdef OS_LINUX
+#if defined (OS_BSD) || defined (OS_LINUX) || defined (OS_GNU)
    char *inbuf;
 #else
    const char *inbuf;
@@ -415,6 +402,7 @@ int utf8_format(const u_char *buf, size_t len, u_char *dst)
 int set_utf8_encoding(u_char *fromcode)
 {
 #ifndef HAVE_UTF8
+   (void) fromcode;
    USER_MSG("UTF-8 support not compiled in.\n");
    return ESUCCESS;
 #else

@@ -23,12 +23,6 @@
 #include <ec_file.h>
 #include <ec_version.h>
 
-/* protos */
-
-char * get_full_path(const char *dir, const char *file);
-char * get_local_path(const char *file);
-FILE * open_data(char *dir, char *file, char *mode);
-
 /*******************************************/
 
 /*
@@ -62,7 +56,7 @@ char * get_local_path(const char *file)
 
 #ifdef OS_WINDOWS
    /* get the path in wich ettercap is running */
-   char *self_root = ec_win_get_ec_dir();
+   const char *self_root = ec_win_get_ec_dir();
 #else
    char *self_root = ".";
 #endif

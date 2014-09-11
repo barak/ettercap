@@ -29,6 +29,8 @@
 #include <ec_socket.h>
 #include <ec_threads.h>
 #include <ec_decode.h>
+#include <ec_utils.h>
+#include <ec_sleep.h>
 
 #include <sys/wait.h>
 
@@ -66,7 +68,8 @@
 //#define URL_PATTERN "(href=|src=|url\\(|action=)?[\"']?(https)://([^ \r\\)/\"'>\\)]*)/?([^ \\)\"'>\\)\r]*)"
 //#define URL_PATTERN "(href=|src=|url\\(|action=)?[\"']?(https)(\\%3A|\\%3a|:)//([^ \r\\)/\"'>\\)]*)/?([^ \\)\"'>\\)\r]*)"
 #define URL_PATTERN "(https://[\\w\\d:#@%/;$()~_?\\+-=\\\\.&]*)"
-#define COOKIE_PATTERN "Set-Cookie: (.*?;)(.?Secure;|.?Secure)(.*?)\r\n"
+//#define COOKIE_PATTERN "Set-Cookie: (.*?;)(.?Secure;|.?Secure)(.*?)\r\n"
+#define COOKIE_PATTERN "Set-Cookie: ([ \\w\\d:#@%/;$()~_?\\+-=\\\\.&]+); ?Secure"
 
 
 #define REQUEST_TIMEOUT 120 /* If a request has not been used in 120 seconds, remove it from list */
@@ -119,7 +122,7 @@ struct http_request {
 
 struct http_response {
 	char *html;
-	size_t len;
+	unsigned long int len;
 };
 
 struct http_connection {
@@ -168,7 +171,7 @@ static void Find_Url(u_char *to_parse, char **ret);
 static int http_sync_conn(struct http_connection *connection);
 static int http_get_peer(struct http_connection *connection);
 static int http_read(struct http_connection *connection, struct packet_object *po);
-static int http_write(int fd, char *ptr, size_t total_len);
+static int http_write(int fd, char *ptr, unsigned long int total_len);
 static int http_insert_redirect(u_int16 dport);
 static int http_remove_redirect(u_int16 port);
 static void http_remove_header(char *header, struct http_connection *connection);
@@ -198,12 +201,12 @@ static EC_THREAD_FUNC(http_accept_thread);
 #define PO_FROMSSLSTRIP ((u_int16)(1<<13))
 
 struct plugin_ops sslstrip_ops = {
-	ettercap_version:	EC_VERSION, /* must match global EC_VERSION */
-	name:			"sslstrip",
-	info:			"SSLStrip plugin",
-	version:		"1.1",
-	init:			&sslstrip_init,
-	fini:			&sslstrip_fini,
+	.ettercap_version =	EC_VERSION, /* must match global EC_VERSION */
+	.name =			"sslstrip",
+	.info =			"SSLStrip plugin",
+	.version =		"1.1",
+	.init =			&sslstrip_init,
+	.fini =			&sslstrip_fini,
 };
 
 int plugin_load(void *handle)
@@ -215,6 +218,11 @@ static int sslstrip_init(void *dummy)
 {
 	const char *error;
 	int erroroffset;
+	int err;
+	char errbuf[100];
+
+   /* variable not used */
+   (void) dummy;
 
 	/*
 	 * Add IPTables redirect for port 80
@@ -232,9 +240,11 @@ static int sslstrip_init(void *dummy)
 		return PLUGIN_FINISHED;
 	}	
 
-	if(regcomp(&find_cookie_re, COOKIE_PATTERN, REG_EXTENDED | REG_NEWLINE | REG_ICASE)) {
-		USER_MSG("SSLStrip: plugin load failed: Could not compile find_cookie regex\n");
-                pcre_free(https_url_pcre);
+	err = regcomp(&find_cookie_re, COOKIE_PATTERN, REG_EXTENDED | REG_NEWLINE | REG_ICASE);
+	if (err) {
+		regerror(err, &find_cookie_re, errbuf, sizeof(errbuf));
+		USER_MSG("SSLStrip: plugin load failed: Could not compile find_cookie regex: %d\n", err);
+		pcre_free(https_url_pcre);
 		http_remove_redirect(bind_port);
 		return PLUGIN_FINISHED;
 	}
@@ -252,6 +262,9 @@ static int sslstrip_init(void *dummy)
 
 static int sslstrip_fini(void *dummy)
 {
+
+   /* variable not used */
+   (void) dummy;
 
 	DEBUG_MSG("SSLStrip: Removing redirect\n");
 	if (http_remove_redirect(bind_port) != ESUCCESS) {
@@ -459,7 +472,7 @@ static int http_insert_redirect(u_int16 dport)
 
 	if (GBL_CONF->redir_command_on == NULL)
 	{
-		USER_MSG("SSLStrip: cannot setup the redirect, did you uncomment the redir_command_on command on your etter.conf file?");
+		USER_MSG("SSLStrip: cannot setup the redirect, did you uncomment the redir_command_on command on your etter.conf file?\n");
 		return -EFATAL;
 	}
 	snprintf(asc_dport, 16, "%u", dport);
@@ -487,16 +500,18 @@ static int http_insert_redirect(u_int16 dport)
 
 	switch(fork()) {
 		case 0:
+			regain_privs();
 			execvp(param[0], param);
+			drop_privs();
 			WARN_MSG("Cannot setup http redirect (command: %s), please edit your etter.conf file and put a valid value in redir_command_on field\n", param[0]);
 			safe_free_http_redirect(param, &param_length, command, orig_command);
-			_exit(EINVALID);
+			_exit(-EINVALID);
 		case -1:
 			safe_free_http_redirect(param, &param_length, command, orig_command);
 			return -EINVALID;
 		default:
 			wait(&ret_val);
-			if (WEXITSTATUS(ret_val)) {
+			if (WIFEXITED(ret_val) && WEXITSTATUS(ret_val)) {
 			    USER_MSG("SSLStrip: redir_command_on had non-zero exit status (%d): [%s]\n", WEXITSTATUS(ret_val), orig_command);
 			    safe_free_http_redirect(param, &param_length, command, orig_command);
 			    return -EINVALID;
@@ -548,16 +563,18 @@ static int http_remove_redirect(u_int16 dport)
 
         switch(fork()) {
 		case 0:
+			regain_privs();
 			execvp(param[0], param);
+			drop_privs();
 			WARN_MSG("Cannot remove http redirect (command: %s), please edit your etter.conf file and put a valid value in redir_command_on field\n", param[0]);
 			safe_free_http_redirect(param, &param_length, command, orig_command);
-			_exit(EINVALID);
+			_exit(-EINVALID);
                 case -1:
                         safe_free_http_redirect(param, &param_length, command, orig_command);
                         return -EINVALID;
                 default:
                         wait(&ret_val);
-                        if (WEXITSTATUS(ret_val)) {
+                        if (WIFEXITED(ret_val) && WEXITSTATUS(ret_val)) {
                             USER_MSG("SSLStrip: redir_command_off had non-zero exit status (%d): [%s]\n", WEXITSTATUS(ret_val), orig_command);
                             safe_free_http_redirect(param, &param_length, command, orig_command);
                             return -EINVALID;
@@ -577,6 +594,9 @@ static EC_THREAD_FUNC(http_accept_thread)
 	struct sockaddr_in client_sin;
 	int optval = 1;
 	socklen_t optlen = sizeof(optval);
+
+   /* variable not used */
+   (void) EC_THREAD_PARAM;
 
 	ec_thread_init();
 
@@ -640,19 +660,9 @@ static int http_get_peer(struct http_connection *connection)
 
 	http_create_ident(&ident, &po);
 
-#ifndef OS_WINDOWS
-	struct timespec tm;
-	tm.tv_sec = HTTP_WAIT;
-	tm.tv_nsec = 0;
-#endif
-
 	/* Wait for sniffing thread */
 	for (i=0; i<HTTP_RETRY && session_get_and_del(&s, ident, HTTP_IDENT_LEN)!=ESUCCESS; i++)
-#ifndef OS_WINDOWS
-	nanosleep(&tm, NULL);
-#else	
-	usleep(HTTP_WAIT);
-#endif
+	ec_usleep(SEC2MICRO(HTTP_WAIT));
 
 	if (i==HTTP_RETRY) {
 		SAFE_FREE(ident);
@@ -937,16 +947,13 @@ static void http_send(struct http_connection *connection, struct packet_object *
 	DEBUG_MSG("SSLStrip: Done");
 }
 
-static int http_write(int fd, char *ptr, size_t total_len)
+static int http_write(int fd, char *ptr, unsigned long int total_len)
 {
 	int len, err;
 	unsigned int bytes_sent = 0;
 	int bytes_remaining = total_len;
-	struct timespec tm;
-	tm.tv_sec = 0;
-	tm.tv_nsec = 100 * 1000 * 1000; //100ms
 
-	DEBUG_MSG("SSLStrip: Total length %ld", total_len);
+	DEBUG_MSG("SSLStrip: Total length %lu", total_len);
 
 	while (bytes_sent < total_len) {
 
@@ -967,7 +974,7 @@ static int http_write(int fd, char *ptr, size_t total_len)
 		bytes_remaining -= len;
 
 		DEBUG_MSG("SSLStrip: Bytes sent %d", bytes_sent);
-		nanosleep(&tm, NULL);
+      ec_usleep(MILLI2MICRO(100)); // 100ms
 
 	
 	}
@@ -1265,6 +1272,10 @@ static int http_bind_wrapper(void)
 	DEBUG_MSG("http_listen_thread: initialized and ready");
 	
 	main_fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (main_fd == -1) { /* oops, unable to create socket */
+            DEBUG_MSG("Unable to create socket() for HTTP...");
+            return -EFATAL;
+        }
 	memset(&sa_in, 0, sizeof(sa_in));
 	sa_in.sin_family = AF_INET;
 	sa_in.sin_addr.s_addr = INADDR_ANY;
@@ -1274,7 +1285,10 @@ static int http_bind_wrapper(void)
 		sa_in.sin_port = htons(bind_port);	
 	} while (bind(main_fd, (struct sockaddr *)&sa_in, sizeof(sa_in)) != 0);
 
-	listen(main_fd, 100);
+	if(listen(main_fd, 100) == -1) {
+            DEBUG_MSG("SSLStrip plugin: unable to listen() on socket");
+            return -EFATAL;
+        }
 	USER_MSG("SSLStrip plugin: bind 80 on %d\n", bind_port);
 	
 	if (http_insert_redirect(bind_port) != ESUCCESS)

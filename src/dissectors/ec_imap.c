@@ -62,6 +62,11 @@ FUNC_DECODER(dissector_imap)
    void *ident = NULL;
    char tmp[MAX_ASCII_ADDR_LEN];
    
+   /* don't complain about unused var */
+   (void) DECODE_DATA; 
+   (void) DECODE_DATALEN;
+   (void) DECODED_LEN;
+   
    /* the connection is starting... create the session */
    CREATE_SESSION_ON_SYN_ACK("imap", s, dissector_imap);
    /* create the session even if we are into an ssl tunnel */
@@ -227,10 +232,10 @@ FUNC_DECODER(dissector_imap)
      
       DEBUG_MSG("\tDissector_imap AUTHENTICATE LOGIN USER");
       
-      SAFE_CALLOC(user, strlen((const char*)ptr), sizeof(char));
+      //SAFE_CALLOC(user, strlen((const char*)ptr), sizeof(char));
      
       /* username is encoded in base64 */
-      i = base64_decode(user, (const char*)ptr);
+      i = base64decode((const char*)ptr, &user);
      
       SAFE_FREE(s->data);
 
@@ -250,10 +255,10 @@ FUNC_DECODER(dissector_imap)
      
       DEBUG_MSG("\tDissector_imap AUTHENTICATE LOGIN PASS");
       
-      SAFE_CALLOC(pass, strlen((const char*)ptr), sizeof(char));
+      //SAFE_CALLOC(pass, strlen((const char*)ptr), sizeof(char));
       
       /* password is encoded in base64 */
-      base64_decode(pass, (const char*)ptr);
+      base64decode((const char *)ptr, &pass);
      
       /* fill the structure */
       PACKET->DISSECTOR.user = strdup(s->data + strlen("AUTH USER "));
@@ -279,10 +284,10 @@ FUNC_DECODER(dissector_imap)
      
       DEBUG_MSG("\tDissector_imap AUTHENTICATE PLAIN USER/PASS");
       
-      SAFE_CALLOC(cred, strlen((const char*)ptr), sizeof(char));
+      //SAFE_CALLOC(cred, strlen((const char*)ptr), sizeof(char));
       
       /* password is encoded in base64 */
-      i = base64_decode(cred, (const char*)ptr);
+      i = base64decode((const char *)ptr, &cred);
       p = cred;
       cred_end = cred+i;
       /* move to the username right after the first \0  */

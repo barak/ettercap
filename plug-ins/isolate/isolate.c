@@ -26,7 +26,7 @@
 #include <ec_hook.h>
 #include <ec_send.h>
 #include <ec_threads.h>
-#include <time.h>
+#include <ec_sleep.h>
 
 /* globals */
 
@@ -71,6 +71,10 @@ int plugin_load(void *handle)
 static int isolate_init(void *dummy) 
 {
    struct ip_list *t;
+
+   /* variable not used */
+   (void) dummy;
+
    /* sanity check */
    if (LIST_EMPTY(&GBL_TARGET1->ips) && LIST_EMPTY(&GBL_TARGET1->ip6)) {
       INSTANT_USER_MSG("isolate: please specify the TARGET host\n");
@@ -97,6 +101,9 @@ static int isolate_fini(void *dummy)
    pthread_t pid;
    struct hosts_list *h, *tmp;
   
+   /* variable not used */
+   (void) dummy;
+
    /* remove the hook */
    hook_del(HOOK_PACKET_ARP_RQ, &parse_arp);
    
@@ -183,11 +190,6 @@ EC_THREAD_FUNC(isolate)
    struct hosts_list *h;
    struct ip_list *t;
  
-#if !defined(OS_WINDOWS) 
-   struct timespec tm;
-   tm.tv_sec = GBL_CONF->arp_storm_delay;
-   tm.tv_nsec = 0;
-#endif
    /* init the thread and wait for start up */
    ec_thread_init();
  
@@ -204,15 +206,11 @@ EC_THREAD_FUNC(isolate)
          /* send the fake arp message */
          send_arp(ARPOP_REPLY, &h->ip, h->mac, &t->ip, h->mac);
          
-#if !defined(OS_WINDOWS)
-         nanosleep(&tm, NULL);
-#else
-         usleep(GBL_CONF->arp_storm_delay);
-#endif
+         ec_usleep(MILLI2MICRO(GBL_CONF->arp_storm_delay));
       }
       
       /* sleep between two storms */
-      sleep(GBL_CONF->arp_poison_warm_up * 3);
+      ec_usleep(SEC2MICRO(GBL_CONF->arp_poison_warm_up * 3));
    }
 
    return NULL;

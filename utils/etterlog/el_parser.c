@@ -36,9 +36,6 @@
 /* protos... */
 
 static void el_usage(void);
-void parse_options(int argc, char **argv);
-
-void expand_token(char *s, u_int max, void (*func)(void *t, int n), void *t );
 
 /*******************************************/
 
@@ -53,8 +50,8 @@ void el_usage(void)
    fprintf(stdout, "  -f, --filter <TARGET>       print packets only from this target\n");
    fprintf(stdout, "  -t, --proto <proto>         display only this proto (default is all)\n");
    fprintf(stdout, "  -F, --filcon <CONN>         print packets only from this connection \n");
-   fprintf(stdout, "      -s, --only-source           print packets only from the source\n");
-   fprintf(stdout, "      -d, --only-dest             print packets only from the destination\n");
+   fprintf(stdout, "  -s, --only-source           print packets only from the source\n");
+   fprintf(stdout, "  -d, --only-dest             print packets only from the destination\n");
    fprintf(stdout, "  -r, --reverse               reverse the target/connection matching\n");
    fprintf(stdout, "  -n, --no-headers            skip header information between packets\n");
    fprintf(stdout, "  -m, --show-mac              show mac addresses in the headers\n");
@@ -66,8 +63,8 @@ void el_usage(void)
    fprintf(stdout, "  -e, --regex <regex>         display only packets that match the regex\n");
    fprintf(stdout, "  -u, --user <user>           search for info about the user <user>\n");
    fprintf(stdout, "  -p, --passwords             print only accounts information\n");
-   fprintf(stdout, "      -i, --show-client       show client address in the password profiles\n");
-   fprintf(stdout, "      -I, --client <ip>       search for pass from a specific client\n");
+   fprintf(stdout, "  -i, --show-client           show client address in the password profiles\n");
+   fprintf(stdout, "  -I, --client <ip>           search for pass from a specific client\n");
    
    fprintf(stdout, "\nEditing Options:\n");
    fprintf(stdout, "  -C, --concat                concatenate more files into one single file\n");
@@ -149,21 +146,31 @@ void parse_options(int argc, char **argv)
       switch (c) {
 
          case 'a':
-                  GBL.analyze = 1;
+                  GBL_OPTIONS->analyze = 1;
                   break;
                   
          case 'c':
-                  GBL.connections = 1;
+                  GBL_OPTIONS->connections = 1;
                   break;
                   
          case 'D':
-                  GBL.connections = 1;
-                  GBL.decode = 1;
+                  GBL_OPTIONS->connections = 1;
+                  GBL_OPTIONS->decode = 1;
                   NOT_IMPLEMENTED();
                   break;
          
          case 'f':
-                  target_compile(optarg);
+#ifdef WITH_IPV6
+                  if (!strncmp(optarg, "///", 3) &&
+                        strlen(optarg) == 3)
+                     GBL_TARGET->scan_all = 1;
+#else
+                  if (!strncmp(optarg, "//", 2) &&
+                        strlen(optarg) == 2)
+                     GBL_TARGET->scan_all = 1;
+#endif
+                  compile_target(optarg, GBL_TARGET);
+
                   break;
 
          case 'F':
@@ -171,19 +178,19 @@ void parse_options(int argc, char **argv)
                   break;
                   
          case 's':
-                  GBL.only_source = 1;
+                  GBL_OPTIONS->only_source = 1;
                   break;
                   
          case 'd':
-                  GBL.only_dest = 1;
+                  GBL_OPTIONS->only_dest = 1;
                   break;
                   
          case 'k':
-                  GBL.color = 1;
+                  GBL_OPTIONS->color = 1;
                   break;
                      
          case 'r':
-                  GBL.reverse = 1;
+                  GBL_OPTIONS->reverse = 1;
                   break;
                   
          case 't':
@@ -191,15 +198,15 @@ void parse_options(int argc, char **argv)
                   break;
                   
          case 'n':
-                  GBL.no_headers = 1;
+                  GBL_OPTIONS->no_headers = 1;
                   break;
                   
          case 'm':
-                  GBL.showmac = 1;
+                  GBL_OPTIONS->showmac = 1;
                   break;
                   
          case 'i':
-                  GBL.showclient = 1;
+                  GBL_OPTIONS->showclient = 1;
                   break;
                   
          case 'I':
@@ -207,26 +214,27 @@ void parse_options(int argc, char **argv)
                      FATAL_ERROR("Invalid client ip address");
                      return;                    
                   }
-                  ip_addr_init(&GBL.client, AF_INET, (u_char *)&ip);
+                  ip_addr_init(&GBL->client, AF_INET, (u_char *)&ip);
                   break;
 
          case 'l':
-                  GBL.only_local = 1;
+                  GBL_OPTIONS->only_local = 1;
                   break;
          
          case 'L':
-                  GBL.only_remote = 1;
+                  GBL_OPTIONS->only_remote = 1;
                   break;
                   
          case 'u':
-                  GBL.user = strdup(optarg);
+                  GBL->user = strdup(optarg);
                   break;
                   
          case 'p':
-                  GBL.passwords = 1;
+                  GBL_OPTIONS->passwords = 1;
                   break;
 
          case 'e':
+                  GBL_OPTIONS->regex = 1;
                   set_display_regex(optarg);
                   break;
                  
@@ -235,44 +243,44 @@ void parse_options(int argc, char **argv)
                   break;
                   
          case 'C':
-                  GBL.concat = 1;
+                  GBL_OPTIONS->concat = 1;
                   break;
                   
          case 'B':
-                  GBL.format = &bin_format;
+                  GBL->format = &bin_format;
                   break;
                   
          case 'X':
-                  GBL.format = &hex_format;
+                  GBL->format = &hex_format;
                   break;
                   
          case 'A':
-                  GBL.format = &ascii_format;
+                  GBL->format = &ascii_format;
                   break;
                   
          case 'T':
-                  GBL.format = &text_format;
+                  GBL->format = &text_format;
                   break;
                   
          case 'E':
-                  GBL.format = &ebcdic_format;
+                  GBL->format = &ebcdic_format;
                   break;
                   
          case 'H':
-                  GBL.format = &html_format;
+                  GBL->format = &html_format;
                   break;
                   
          case 'U':
                   set_utf8_encoding((u_char*)optarg);
-                  GBL.format = &utf8_format;
+                  GBL->format = &utf8_format;
                   break;
                   
          case 'Z':
-                  GBL.format = &zero_format;
+                  GBL->format = &zero_format;
                   break;
                   
          case 'x':
-                  GBL.xml = 1;
+                  GBL_OPTIONS->xml = 1;
                   break;
                   
          case 'h':
@@ -297,7 +305,7 @@ void parse_options(int argc, char **argv)
    }
 
    /* file concatenation */
-   if (GBL.concat) {
+   if (GBL_OPTIONS->concat) {
       if (argv[optind] == NULL)
          FATAL_ERROR("You MUST specify at least one logfile");
    
@@ -312,70 +320,10 @@ void parse_options(int argc, char **argv)
       FATAL_ERROR("You MUST specify a logfile\n");
   
    /* default to ASCII view */ 
-   if (GBL.format == NULL)
-      GBL.format = &ascii_format;
+   if (GBL->format == NULL)
+      GBL->format = &ascii_format;
 
    return;
-}
-
-
-/*
- * This function parses the input in the form [1-3,17,5-11]
- * and fill the structure with expanded numbers.
- */
-
-void expand_token(char *s, u_int max, void (*func)(void *t, int n), void *t )
-{
-   char *str = strdup(s);
-   char *p, *q, r;
-   char *end;
-   u_int a = 0, b = 0;
-   
-   p = str;
-   end = p + strlen(p);
-   
-   while (p < end) {
-      q = p;
-      
-      /* find the end of the first digit */
-      while ( isdigit((int)*q) && q++ < end);
-      
-      r = *q;   
-      *q = 0;
-      /* get the first digit */
-      a = atoi(p);
-      if (a > max) 
-         FATAL_ERROR("Out of range (%d) !!", max);
-      
-      /* it is a range ? */
-      if ( r == '-') {
-         p = ++q;
-         /* find the end of the range */
-         while ( isdigit((int)*q) && q++ < end);
-         *q = 0;
-         if (*p == '\0') 
-            FATAL_ERROR("Invalid range !!");
-         /* get the second digit */
-         b = atoi(p);
-         if (b > max) 
-            FATAL_ERROR("Out of range (%d)!!", max);
-         if (b < a)
-            FATAL_ERROR("Invalid decrementing range !!");
-      } else {
-         /* it is not a range */
-         b = a; 
-      } 
-      
-      /* process the range */
-      for(; a <= b; a++) {
-         func(t, a);
-      }
-      
-      if (q == end) break;
-      else  p = q + 1;      
-   }
-  
-   SAFE_FREE(str);
 }
 
 

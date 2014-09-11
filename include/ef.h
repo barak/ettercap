@@ -1,7 +1,5 @@
-
-
-#ifndef EF_H
-#define EF_H
+#ifndef ETTERFILTER_H
+#define ETTERFILTER_H
 
 #include <config.h>
 
@@ -67,7 +65,7 @@ struct globals {
 };
 
 /* in el_main.c */
-extern struct globals gbls;
+extern struct globals *gbls;
 
 #define GBL_OPTIONS  gbls
 #define GBL          gbls
@@ -79,7 +77,6 @@ extern struct globals gbls;
 #define BIT_RESET(r,b)     ( r[b>>3] &= ~ 1<<(b&7) )
 #define BIT_TEST(r,b)      ( r[b>>3]  &   1<<(b&7) )
 #define BIT_NOT(r,b)       ( r[b>>3] ^=   1<<(b&7) )
-
 
 /* ANSI colors */
 #ifndef OS_WINDOWS
@@ -102,6 +99,9 @@ extern struct globals gbls;
    #define EC_COLOR_BLUE
    #define EC_COLOR_CYAN
 #endif
+
+EC_API_EXTERN void globals_alloc(void);
+EC_API_EXTERN void globals_free(void);
 
 #endif   /*  EL_H */
 

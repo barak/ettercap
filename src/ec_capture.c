@@ -28,7 +28,9 @@
 
 #include <pcap.h>
 #include <libnet.h>
+#if !defined(OS_WINDOWS)
 #include <ifaddrs.h>
+#endif
 
 
 /* globals */
@@ -40,19 +42,6 @@ struct align_entry {
    FUNC_ALIGNER_PTR(aligner);
    SLIST_ENTRY (align_entry) next;
 };
-
-/* protos */
-
-void capture_start(struct iface_env *);
-void capture_stop(struct iface_env *);
-
-EC_THREAD_FUNC(capture);
-
-void capture_getifs(void);
-int is_pcap_file(char *file, char *pcap_errbuf);
-
-u_int8 get_alignment(int dlt);
-void add_aligner(int dlt, int (*aligner)(void));
 
 /*******************************************/
 
@@ -98,7 +87,7 @@ EC_THREAD_FUNC(capture)
     * infinite loop 
     * dispatch packets to ec_decode
     */
-   ret = pcap_loop(iface->pcap, -1, ec_decode, (unsigned char *) iface->dump);
+   ret = pcap_loop(iface->pcap, -1, ec_decode, EC_THREAD_PARAM);
    ON_ERROR(ret, -1, "Error while capturing: %s", pcap_geterr(iface->pcap));
 
    if (GBL_OPTIONS->read) {
@@ -141,7 +130,8 @@ void capture_getifs(void)
          dev->description = dev->name;
 
       /* remove the pseudo device 'any' 'nflog' and 'nfqueue' */
-      if (!strcmp(dev->name, "any") || !strcmp(dev->name, "nflog") || !strcmp(dev->name, "nfqueue")) {
+      /* remove the pseudo device 'dbus-system' and 'dbus-session' shown on mac when ran without sudo*/
+      if (!strcmp(dev->name, "any") || !strcmp(dev->name, "nflog") || !strcmp(dev->name, "nfqueue")  || !strcmp(dev->name, "dbus-system") || !strcmp(dev->name, "dbus-session")) {
          /* check if it is the first in the list */
          if (dev == GBL_PCAP->ifs)
             GBL_PCAP->ifs = ndev;

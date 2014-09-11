@@ -56,20 +56,22 @@ struct plugin_entry {
 
 static SLIST_HEAD(, plugin_entry) plugin_head;
 
+/* mutexes */
+static pthread_mutex_t kill_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define KILL_LOCK do { pthread_mutex_lock(&kill_mutex); } while (0)
+#define KILL_UNLOCK do { pthread_mutex_unlock(&kill_mutex); } while (0)
+
+static pthread_mutex_t plugin_list_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define PLUGIN_LIST_LOCK do { pthread_mutex_lock(&plugin_list_mutex); } \
+                         while (0)
+#define PLUGIN_LIST_UNLOCK do { pthread_mutex_unlock(&plugin_list_mutex); } \
+                           while (0)
+
 /* protos... */
 
-void plugin_load_all(void);
 void plugin_unload_all(void);
-int plugin_load_single(char *path, char *name);
-int plugin_register(void *handle, struct plugin_ops *ops);
-int plugin_init(char *name);
-int plugin_fini(char *name);
-int plugin_list_walk(int min, int max, void (*func)(char, struct plugin_ops *));
-int plugin_is_activated(char *name);
-int search_plugin(char *name);
-void plugin_list(void);
 static void plugin_print(char active, struct plugin_ops *ops);
-#if defined(OS_BSD) || defined (OS_DARWIN)
+#if defined (OS_DARWIN)
 int plugin_filter(struct dirent *d);
 #else
 int plugin_filter(const struct dirent *d);
@@ -81,7 +83,7 @@ int plugin_filter(const struct dirent *d);
  * load a plugin given the full path
  */
 
-int plugin_load_single(char *path, char *name)
+int plugin_load_single(const char *path, char *name)
 {
 #ifdef HAVE_PLUGINS
    char file[strlen(path)+strlen(name)+2];
@@ -117,6 +119,8 @@ int plugin_load_single(char *path, char *name)
     */
    return plugin_load(handle);
 #else
+   (void) path;
+   (void) name;
    return -EINVALID;
 #endif
 }
@@ -124,7 +128,7 @@ int plugin_load_single(char *path, char *name)
 /*
  * filter for the scandir function
  */
-#if defined(OS_BSD) || defined (OS_DARWIN)
+#if defined (OS_DARWIN)
 int plugin_filter(struct dirent *d)
 #else
 int plugin_filter(const struct dirent *d)
@@ -169,7 +173,7 @@ void plugin_load_all(void)
    if (n <= 0) {
       DEBUG_MSG("plugin_loadall: no plugin in %s searching locally...", where);
       /* change the path to the local one */
-      where = ".";
+      where = "plug-ins";
       n = scandir(where, &namelist, plugin_filter, alphasort);
       DEBUG_MSG("plugin_loadall: %d found", n);
    }
@@ -262,6 +266,8 @@ int plugin_register(void *handle, struct plugin_ops *ops)
 
    return ESUCCESS;
 #else
+   (void) handle;
+   (void) ops;
    return -EINVALID;
 #endif
 }
@@ -310,6 +316,57 @@ int plugin_fini(char *name)
          return ret;
       }
    }
+   
+   return -ENOTFOUND;
+}
+
+/* 
+ * self-destruct a plugin thread.
+ * it resets the activity state and destructs itself by calling the plugin fini function.
+ * it does not replace the <plugin>_fini standard function rather than it depends on it.
+ * this function does not do anything if not executed by a thread.
+ */
+int plugin_kill_thread(char *name, char *thread)
+{
+   struct plugin_entry *p;
+   int ret;
+   pthread_t pid;
+
+   pid = ec_thread_getpid(thread); 
+
+   /* do not execute if not being a thread */
+   if (pthread_equal(pid, EC_PTHREAD_NULL))
+      return -EINVALID;
+
+   /* the thread can only kill itself */
+   if (!pthread_equal(pid, pthread_self()))
+      return -EINVALID;
+
+   DEBUG_MSG("plugin_kill_thread");
+
+   KILL_LOCK;
+   SLIST_FOREACH(p, &plugin_head, next) {
+      if (p->activated == 1 && !strcmp(p->ops->name, name)) {
+         /* flag plugin as inactive */
+         p->activated = 0;
+         /* update the UI */
+         ui_update(UI_UPDATE_PLUGINLIST);
+         /* release the lock */
+         KILL_UNLOCK;
+         /* call plugin's destruction routine */
+         ret = p->ops->fini(NULL);
+         /*
+          * normally the thread should not return from the call - 
+          * just in case the thread wasn't destroyed in the fini callback
+          * destroy it here 
+          */
+         ec_thread_destroy(pid);
+
+         /* should never be reached */
+         return ret;
+      }
+   }
+   KILL_UNLOCK;
    
    return -ENOTFOUND;
 }
@@ -402,10 +459,31 @@ void plugin_list(void)
 }
 
 /*
+ * walk through the list of plugin names and free
+ */
+void free_plugin_list(struct plugin_list_t plugins)
+{
+   struct plugin_list *plugin, *tmp;
+
+   PLUGIN_LIST_LOCK;
+
+   LIST_FOREACH_SAFE(plugin, &plugins, next, tmp) {
+      LIST_REMOVE(plugin, next);
+      SAFE_FREE(plugin->name);
+      SAFE_FREE(plugin);
+   }
+
+   PLUGIN_LIST_UNLOCK;
+}
+
+/*
  * callback function for displaying the plugin list 
  */
 static void plugin_print(char active, struct plugin_ops *ops)
 {
+   /* variable not used */
+   (void) active;
+
    fprintf(stdout, " %15s %4s  %s\n", ops->name, ops->version, ops->info);  
 }
 

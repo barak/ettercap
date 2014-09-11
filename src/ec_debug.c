@@ -21,28 +21,18 @@
 */
 
 #include <ec.h>
+#ifdef HAVE_EC_LUA
+#include <ec_lua.h>
+#endif
+
 #include <ec_threads.h>
 
 #include <ctype.h>
 
 #ifdef DEBUG
 
-#ifdef HAVE_NCURSES
-   extern char *curses_version(void);
-#endif
-#ifdef HAVE_GTK 
-   /* 
-    * hack here because this file is compiled 
-    * without the include directive for gtk
-    */
-   extern int gtk_major_version;
-   extern int gtk_minor_version;
-   extern int gtk_micro_version;
-#endif
-#ifdef HAVE_OPENSSL
-   #include <openssl/opensslv.h>
-   #include <openssl/crypto.h>
-#endif
+#include <openssl/opensslv.h>
+#include <openssl/crypto.h>
 #ifdef HAVE_PCRE
    #include <pcre.h>
 #endif
@@ -69,9 +59,7 @@ static pthread_mutex_t debug_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* protos */
 
-void debug_init(void);
 static void debug_close(void);
-void debug_msg(const char *message, ...);
 
 /**********************************/
 
@@ -94,6 +82,10 @@ void debug_init(void)
   	fprintf (debug_file, "-> ${sysconfdir}    %s\n", INSTALL_SYSCONFDIR);
   	fprintf (debug_file, "-> ${datadir}       %s\n\n", INSTALL_DATADIR);
 
+   #ifdef HAVE_EC_LUA
+	ec_lua_print_info(debug_file);
+   #endif
+
   	fprintf (debug_file, "-> %s %s\n\n", GBL_PROGRAM, GBL_VERSION);
    #ifdef HAVE_SYS_UTSNAME_H
       uname(&buf);
@@ -111,16 +103,11 @@ void debug_init(void)
    #ifdef HAVE_PCRE
    fprintf(debug_file, "-> libpcre version %s\n", pcre_version());
    #endif
-   #ifdef HAVE_OPENSSL 
-      fprintf (debug_file, "-> lib     %s\n", SSLeay_version(SSLEAY_VERSION));
-      fprintf (debug_file, "-> headers %s\n", OPENSSL_VERSION_TEXT);
+   #ifdef HAVE_EC_LUA
+	ec_lua_print_version(debug_file);
    #endif
-   #ifdef HAVE_NCURSES 
-      fprintf (debug_file, "-> %s\n", curses_version());
-   #endif
-   #ifdef HAVE_GTK 
-      fprintf (debug_file, "-> gtk+ %d.%d.%d\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
-   #endif
+   fprintf (debug_file, "-> lib     %s\n", SSLeay_version(SSLEAY_VERSION));
+   fprintf (debug_file, "-> headers %s\n", OPENSSL_VERSION_TEXT);
    fprintf (debug_file, "\n\nDEVICE OPENED FOR %s DEBUGGING\n\n", GBL_PROGRAM);
    fflush(debug_file);
    

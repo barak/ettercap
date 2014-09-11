@@ -102,6 +102,9 @@ int plugin_load(void *handle)
 
 static int mdns_spoof_init(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* 
     * add the hook in the dissector.
     * this will pass only valid dns packets
@@ -114,6 +117,9 @@ static int mdns_spoof_init(void *dummy)
 
 static int mdns_spoof_fini(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* remove the hook */
    hook_del(HOOK_PROTO_MDNS, &mdns_spoof);
 
@@ -561,7 +567,7 @@ static int parse_line (const char *str, int line, int *type_p, char **ip_p, u_in
          send_mdns_reply(po->L4.src, sender, target, tmac, 
                          ntohs(mdns->id), answer, sizeof(answer), 2, 0, 0);
 
-         USER_MSG("dns_spoof: SRV [%s] spoofed to [%s:%d]\n", name, ip_addr_ntoa(reply, tmp), port);
+         USER_MSG("mdns_spoof: SRV [%s] spoofed to [%s:%d]\n", name, ip_addr_ntoa(reply, tmp), port);
       }
     }
 

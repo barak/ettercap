@@ -1,9 +1,8 @@
-
-
-#ifndef EC_GTK_H
-#define EC_GTK_H
+#ifndef ETTERCAP_GTK_H
+#define ETTERCAP_GTK_H
 #define G_DISABLE_CONST_RETURNS
 #include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 
 #define LOGO_FILE "ettercap.png"
 
@@ -16,12 +15,15 @@ struct gtk_conf_entry {
    short value;
 };
 
-
 /* ec_gtk.c */
 extern GtkWidget *window;  /* main window */
 extern GtkWidget *notebook;
 extern GtkWidget *main_menu;
+extern GtkUIManager *menu_manager;
+extern guint merge_id;
+extern GTimer *progress_timer;
 
+extern void set_gtk_interface(void);
 extern void gtkui_message(const char *msg);
 extern void gtkui_input(const char *title, char *input, size_t n, void (*callback)(void));
 extern void gtkui_exit(void);
@@ -29,8 +31,10 @@ extern void gtkui_exit(void);
 extern void gtkui_sniff_offline(void);
 extern void gtkui_sniff_live(void);
 
+
 extern GtkTextBuffer *gtkui_details_window(char *title);
 extern void gtkui_details_print(GtkTextBuffer *textbuf, char *data);
+extern gboolean gtkui_combo_enter(GtkWidget *widget, GdkEventKey *event, gpointer data);
 extern void gtkui_dialog_enter(GtkWidget *widget, gpointer data);
 extern gboolean gtkui_context_menu(GtkWidget *widget, GdkEventButton *event, gpointer data);
 extern void gtkui_filename_browse(GtkWidget *widget, gpointer data);
@@ -63,10 +67,14 @@ extern void gtkui_load_filter(void);
 extern void gtkui_stop_filter(void);
 
 /* ec_gtk_hosts.c */
+#ifdef WITH_IPV6
+extern void toggle_ip6scan(void);
+#endif
 extern void gtkui_scan(void);
 extern void gtkui_load_hosts(void);
 extern void gtkui_save_hosts(void);
 extern void gtkui_host_list(void);
+extern gboolean gtkui_refresh_host_list(gpointer data);
 
 /* ec_gtk_view.c */
 extern void gtkui_show_stats(void);
@@ -91,6 +99,9 @@ extern void gtkui_arp_poisoning(void);
 extern void gtkui_icmp_redir(void);
 extern void gtkui_port_stealing(void);
 extern void gtkui_dhcp_spoofing(void);
+#ifdef WITH_IPV6
+extern void gtkui_ndp_poisoning(void);
+#endif
 extern void gtkui_mitm_stop(void);
 
 /* ec_gtk_logging.c */
@@ -104,6 +115,7 @@ extern void gtkui_stop_msg(void);
 /* ec_gtk_plugins.c */
 extern void gtkui_plugin_mgmt(void);
 extern void gtkui_plugin_load(void);
+extern gboolean gtkui_refresh_plugin_list(gpointer data);
 
 /* ec_gtk_view_connections.c */
 extern void gtkui_show_connections(void);

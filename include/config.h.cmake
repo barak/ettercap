@@ -22,6 +22,7 @@
 #cmakedefine HAVE_LTDL_H
 #cmakedefine HAVE_DLFCN_H
 #cmakedefine HAVE_CTYPE_H
+#cmakedefine HAVE_INTTYPES_H
 #cmakedefine HAVE_MUTEX_RECURSIVE_NP
 
 #cmakedefine HAVE_PCRE
@@ -31,7 +32,9 @@
 #cmakedefine HAVE_SELECT
 #cmakedefine HAVE_SCANDIR
 #cmakedefine HAVE_STRLCAT
+#cmakedefine HAVE_STRLCAT_FUNCTION
 #cmakedefine HAVE_STRLCPY
+#cmakedefine HAVE_STRLCPY_FUNCTION
 #cmakedefine HAVE_STRSEP
 #cmakedefine HAVE_STRCASESTR
 #cmakedefine HAVE_MEMMEM
@@ -39,7 +42,7 @@
 
 #cmakedefine HAVE_NCURSES
 #cmakedefine HAVE_GTK
-#cmakedefine HAVE_OPENSSL
+#cmakedefine HAVE_GTK3
 
 #cmakedefine HAVE_UTF8
 #cmakedefine HAVE_PLUGINS
@@ -54,4 +57,8 @@
 #cmakedefine INSTALL_BINDIR         "@INSTALL_BINDIR@"
 
 #cmakedefine JUST_LIBRARY
+
+#cmakedefine LIBNET_VERSION         "@LIBNET_VERSION@"
+#cmakedefine LIBNET_VERSION_MAJOR   @LIBNET_VERSION_MAJOR@
+#cmakedefine LIBNET_VERSION_MINOR   @LIBNET_VERSION_MINOR@
 #endif

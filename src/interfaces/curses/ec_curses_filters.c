@@ -31,7 +31,7 @@
 static void curses_manage_filters(void);
 static void curses_select_filter(void *filter);
 static void curses_load_filter(void);
-static void load_filter(char *path, char *file);
+static void load_filter(const char *path, char *file);
 static void curses_stop_filter(void);
 
 /* globals */
@@ -51,6 +51,9 @@ static int n_filters = 0;
 
 static int add_filter_to_list(struct filter_list *f, void *data)
 {
+   /* variable not used */
+   (void) data;
+
    SAFE_REALLOC(wdg_filters_elements, (n_filters + 1) * sizeof(struct wdg_list));
    SAFE_CALLOC(wdg_filters_elements[n_filters].desc, MAX_DESC_LEN + 1, sizeof(char));
    snprintf(wdg_filters_elements[n_filters].desc, MAX_DESC_LEN, "[%c] %s", f->enabled?'X':' ', f->name);
@@ -138,7 +141,7 @@ static void curses_load_filter(void)
    wdg_set_focus(fop);
 }
 
-static void load_filter(char *path, char *file)
+static void load_filter(const char *path, char *file)
 {
    char *tmp;
    

@@ -23,6 +23,7 @@
 #include <ec_mitm.h>
 #include <ec_poll.h>
 #include <ec_scan.h>
+#include <ec_sleep.h>
 
 /* globals */
 
@@ -37,15 +38,6 @@ struct mitm_entry {
 };
 
 static char *mitm_args = "";
-
-/* protos */
-
-void mitm_add(struct mitm_method *mm);
-int mitm_set(char *name);
-int mitm_start(void);
-void mitm_stop(void);
-void only_mitm(void);
-int is_mitm_active(char *name);
 
 /*******************************************/
 
@@ -195,7 +187,7 @@ void only_mitm(void)
 
    if (GBL_UI->type == UI_DAEMONIZE)
        LOOP {
-           sleep(1);
+           ec_usleep(SEC2MICRO(1));
        }
   
    /* wait for user to exit */

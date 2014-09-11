@@ -10,6 +10,7 @@
 #include <ec_plugins.h>
 #include <ec_send.h>
 #include <ec_threads.h>
+#include <ec_sleep.h>
 
 /* protos */
 int plugin_load(void *);
@@ -38,6 +39,9 @@ int plugin_load(void *handle)
 static int smurf_attack_init(void *dummy)
 {
    struct ip_list *i;
+
+   /* variable not used */
+   (void) dummy;
 
    DEBUG_MSG("smurf_attack_init");
 
@@ -76,6 +80,9 @@ static int smurf_attack_fini(void *dummy)
 {
    pthread_t pid;
 
+   /* variable not used */
+   (void) dummy;
+
    DEBUG_MSG("smurf_attack_fini");
 
    while(!pthread_equal(EC_PTHREAD_NULL, pid = ec_thread_getpid("smurfer"))) {
@@ -90,7 +97,8 @@ static EC_THREAD_FUNC(smurfer)
    struct ip_addr *ip;
    struct ip_list *i, *itmp;
    struct hosts_list *h, *htmp;
-   LIST_HEAD(, ip_list) *ips;
+   LIST_HEAD(ip_list_t, ip_list) *ips = NULL;
+
    u_int16 proto;
    int (*icmp_send)(struct ip_addr*, struct ip_addr*);
 
@@ -104,12 +112,12 @@ static EC_THREAD_FUNC(smurfer)
    switch(proto) {
       case AF_INET:
          icmp_send = send_L3_icmp_echo;
-         ips = &GBL_TARGET2->ips;
+         ips = (struct ip_list_t *)&GBL_TARGET2->ips;
          break;
 #ifdef WITH_IPV6
       case AF_INET6:
          icmp_send = send_icmp6_echo;
-         ips = &GBL_TARGET2->ip6;
+         ips = (struct ip_list_t *)&GBL_TARGET2->ip6;
          break;
 #endif
       default:
@@ -134,7 +142,7 @@ static EC_THREAD_FUNC(smurfer)
             if(ntohs(h->ip.addr_type) == proto)
                icmp_send(ip, &h->ip);
 
-      usleep(1000*1000/GBL_CONF->sampling_rate);
+      ec_usleep(1000*1000/GBL_CONF->sampling_rate);
    }
 
    return NULL;

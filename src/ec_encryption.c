@@ -38,21 +38,11 @@ static pthread_mutex_t root_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* protos */
 
-int wifi_key_prepare(char *key_string);
-
-int wep_decrypt(u_char *buf, size_t len, u_char *wkey, size_t wlen);
 static int set_wep_key(char *string);
 static void make_key_64(u_char *string, u_char *key);
 static void make_key_128(u_char *string, u_char *key);
 
 static int set_wpa_key(char *string);
-void wpa_sess_add(u_char *sta, struct wpa_sa *sa);
-void wpa_sess_del(u_char *sta);
-int wpa_sess_get(u_char *sta, struct wpa_sa *sa);
-int wpa_generate_PTK(u_char *bssid, u_char *sta, u_char *pmk, u_char *snonce, u_char *anonce,u_int16 bits, u_char *kck);
-int wpa_check_MIC(struct eapol_header *eapol, struct eapol_key_header* eapol_key, size_t eapol_len, u_char *kck, int algo);
-int wpa_decrypt_broadcast_key(struct eapol_key_header *eapol_key, struct rsn_ie_header *rsn_ie, struct wpa_sa *sa);
-int wpa_decrypt(u_char *mac, u_char *data, size_t len, struct wpa_sa sa);
 extern int wpa_ccmp_decrypt(u_char *mac, u_char *data, size_t len, struct wpa_sa sa);
 extern int wpa_tkip_decrypt(u_char *mac, u_char *data, size_t len, struct wpa_sa sa);
 
@@ -529,7 +519,10 @@ int wpa_decrypt_broadcast_key(struct eapol_key_header *eapol_key, struct rsn_ie_
    u_int16 key_len = 0;
    //static AIRPDCAP_KEY_ITEM dummy_key; /* needed in case AirPDcapRsnaMng() wants the key structure */
 
-char tmp[512];
+   char tmp[512];
+
+   /* variable not used */
+   (void) rsn_ie;
 
    /* Preparation for decrypting the group key - determine group key data length */
    /* depending on whether it's a TKIP or AES encryption key */
@@ -546,9 +539,9 @@ char tmp[512];
    /* Encrypted key is in the information element field of the EAPOL key packet */
    SAFE_CALLOC(encrypted_key, key_len, sizeof(u_int8));
 
-   DEBUG_MSG("Encrypted Broadcast key:", str_tohex(encrypted_key, key_len, tmp, sizeof(tmp)));
-   DEBUG_MSG("KeyIV:", str_tohex(eapol_key->key_IV, 16, tmp, sizeof(tmp)));
-   DEBUG_MSG("decryption_key:", str_tohex(sa->ptk + 16, 16, tmp, sizeof(tmp)));
+   DEBUG_MSG("Encrypted Broadcast key: %s\n", str_tohex(encrypted_key, key_len, tmp, sizeof(tmp)));
+   DEBUG_MSG("KeyIV: %s\n", str_tohex(eapol_key->key_IV, 16, tmp, sizeof(tmp)));
+   DEBUG_MSG("decryption_key: %s\n", str_tohex(sa->ptk + 16, 16, tmp, sizeof(tmp)));
 
    /*
     * XXX - implement broadcast key

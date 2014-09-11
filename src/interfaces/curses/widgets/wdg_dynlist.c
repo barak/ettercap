@@ -58,12 +58,7 @@ static void wdg_dynlist_border(struct wdg_object *wo);
 static void wdg_dynlist_move(struct wdg_object *wo, int key);
 static void wdg_dynlist_mouse(struct wdg_object *wo, int key, struct wdg_mouse_event *mouse);
 
-void wdg_dynlist_refresh(wdg_t *wo);
-void wdg_dynlist_print_callback(wdg_t *wo, void * func(int mode, void *list, char **desc, size_t len));
-void wdg_dynlist_select_callback(wdg_t *wo, void (*callback)(void *));
-void wdg_dynlist_add_callback(wdg_t *wo, int key, void (*callback)(void *));
 static int wdg_dynlist_callback(struct wdg_object *wo, int key);
-void wdg_dynlist_reset(wdg_t *wo);
 
 /*******************************************/
 
@@ -557,6 +552,9 @@ static void wdg_dynlist_mouse(struct wdg_object *wo, int key, struct wdg_mouse_e
    size_t y = wdg_get_begin_y(wo) + 2;
    size_t line, i = 0;
    void *next;
+
+   /* variable currently not used */
+   (void) key;
    
    /* calculate which line was selected */
    line = mouse->y - y;

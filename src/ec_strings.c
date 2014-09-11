@@ -20,6 +20,7 @@
 */
 
 #include <ec.h>
+#include <ec_sleep.h>
 
 #include <ctype.h>
 
@@ -28,14 +29,7 @@
 #ifndef HAVE_CTYPE_H
    int isprint(int c);
 #endif
-int match_pattern(const char *s, const char *pattern);
-int base64_decode(char *bufplain, const char *bufcoded);
 static int hextoint(int c);
-int strescape(char *dst, char *src);
-int str_replace(char **text, const char *s, const char *d);
-size_t strlen_utf8(const char *s);
-char * ec_strtok(char *s, const char *delim, char **ptrptr);
-char getchar_buffer(char **buf);
 
 /*******************************************/
 
@@ -347,10 +341,6 @@ char getchar_buffer(char **buf)
 {
    char ret;
 
-#if !defined(OS_WINDOWS)
-   struct timespec ts;
-#endif
-
    DEBUG_MSG("getchar_buffer: %s", *buf);
    
    /* the buffer is empty, do nothing */
@@ -370,20 +360,12 @@ char getchar_buffer(char **buf)
          /* get the number of seconds to wait */
          time = atoi(*buf + 2);
 
-#if !defined(OS_WINDOWS)
-         ts.tv_sec = time;
-         ts.tv_nsec = 0;
-#endif
-         
          DEBUG_MSG("getchar_buffer: sleeping %d secs", time);
 
          /* move the buffer after the s(x) */
          *buf = p + 1;
-#if !defined(OS_WINDOWS) 
-         nanosleep(&ts, NULL);
-#else
-         usleep(time*1000);
-#endif
+
+         ec_usleep(SEC2MICRO(time));
       }
    }
    
@@ -404,8 +386,10 @@ int str_hex_to_bytes(char *string, u_char *bytes)
    char value[3]; /* two for the hex and the NULL terminator */
    unsigned int value_bin;
    u_int i;
+   size_t slen;
 
-   for (i = 0; i < strlen(string); i++) {
+   slen = strlen(string);
+   for (i = 0; i < slen; i++) {
       strncpy(value, string + i*2, 2);
       if (sscanf(value, "%02X", &value_bin) != 1)
          return -EINVALID;

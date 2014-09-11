@@ -66,6 +66,9 @@ int plugin_load(void *handle)
 
 static int remote_browser_init(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* 
     * add the hook in the dissector.
     */
@@ -77,6 +80,9 @@ static int remote_browser_init(void *dummy)
 
 static int remote_browser_fini(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* remove the hook */
    hook_del(HOOK_PROTO_HTTP, &remote_browser);
 
@@ -151,7 +157,6 @@ static void remote_browser(struct packet_object *po)
          /* the following line has been commented since some Penetration Testing distros can run only as root */
          /*setuid(1000);*/
          u_int uid, gid;
-         /* XXX should we drop privileges under windows? */
          DEBUG_MSG("drop_privs: getuid(%d) \n", getuid());
 
          /* are we root ? */
@@ -173,7 +178,7 @@ static void remote_browser(struct packet_object *po)
 
          execvp(param[0], param);
          WARN_MSG("Cannot launch the default browser (command: %s), please edit your etter.conf file and put a valid value in remote_browser field\n", GBL_CONF->remote_browser);
-         _exit(EINVALID);
+         _exit(-EINVALID);
       }
          
       //to free the char **param

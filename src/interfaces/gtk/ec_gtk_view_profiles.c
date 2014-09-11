@@ -28,7 +28,6 @@
 
 /* proto */
 
-void gtkui_show_profiles(void);
 static void gtkui_profiles_detach(GtkWidget *child);
 static void gtkui_profiles_attach(void);
 static void gtkui_kill_profiles(void);
@@ -40,7 +39,6 @@ static void gtkui_profiles_convert(void);
 static void gtkui_profiles_dump(void *dummy);
 static void dump_profiles(void);
 
-extern void gtkui_refresh_host_list(void);
 static struct host_profile *gtkui_profile_selected(void);
 
 /* globals */
@@ -76,7 +74,11 @@ void gtkui_show_profiles(void)
    
    profiles_window = gtkui_page_new("Profiles", &gtkui_kill_profiles, &gtkui_profiles_detach);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
    vbox = gtk_vbox_new(FALSE, 0);
+#endif
    gtk_container_add(GTK_CONTAINER (profiles_window), vbox);
    gtk_widget_show(vbox);
 
@@ -113,7 +115,11 @@ void gtkui_show_profiles(void)
    refresh_profiles(NULL);
    gtk_tree_view_set_model(GTK_TREE_VIEW (treeview), GTK_TREE_MODEL (ls_profiles));
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+#else
    hbox = gtk_hbox_new(TRUE, 5);
+#endif
    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
    button = gtk_button_new_with_mnemonic("Purge _Local");
@@ -138,7 +144,7 @@ void gtkui_show_profiles(void)
 
    /* refresh the stats window every 1000 ms */
    /* GTK has a gtk_idle_add also but it calls too much and uses 100% cpu */
-   profiles_idle = gtk_timeout_add(1000, refresh_profiles, NULL);
+   profiles_idle = g_timeout_add(1000, refresh_profiles, NULL);
 }
 
 static void gtkui_profiles_detach(GtkWidget *child)
@@ -166,7 +172,7 @@ static void gtkui_kill_profiles(void)
 {
    DEBUG_MSG("gtk_kill_profiles");
 
-   gtk_timeout_remove(profiles_idle);
+   g_source_remove(profiles_idle);
 
    gtk_widget_destroy(profiles_window);
    profiles_window = NULL;
@@ -182,6 +188,9 @@ static gboolean refresh_profiles(gpointer data)
    struct active_user *u;
    char tmp[MAX_ASCII_ADDR_LEN];
    int found = 0;
+
+   /* variable not used */
+   (void) data;
 
    if(!ls_profiles) {
       ls_profiles = gtk_list_store_new (4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_POINTER);
@@ -344,12 +353,15 @@ static void gtkui_profiles_remote(void)
 static void gtkui_profiles_convert(void)
 {
    profile_convert_to_hostlist();
-   gtkui_refresh_host_list();
+   gtkui_refresh_host_list(NULL);
    gtkui_message("The hosts list was populated with local profiles");
 }
 
 static void gtkui_profiles_dump(void *dummy)
 {
+   /* variable not used */
+   (void) dummy;
+
    DEBUG_MSG("gtkui_profiles_dump");
 
    /* make sure to free if already set */

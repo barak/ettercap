@@ -25,17 +25,16 @@
 #include <ec_scan.h>
 #include <ec_mitm.h>
 #include <ec_plugins.h>
+#include <ec_daemon.h>
+#include <ec_sleep.h>
 
-#include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <time.h>
 
+/* globals */
 static int fd;
 
 /* proto */
-
-void set_daemon_interface(void);
 void daemon_interface(void);
 static void daemon_init(void);
 static void daemon_cleanup(void);
@@ -102,6 +101,9 @@ static void daemon_cleanup(void)
 
 static int daemon_progress(char *title, int value, int max)
 {
+   /* variable not used */
+   (void) title;
+
    if (value == max)
       return UI_PROGRESS_FINISHED;
    else
@@ -137,15 +139,15 @@ void daemon_interface(void)
 {
    DEBUG_MSG("daemon_interface");
 
-#if !defined(OS_WINDOWS)
-   struct timespec ts; 
-   ts.tv_sec = 1;
-   ts.tv_nsec = 0;
-#endif
-   
-   /* check if the plugin exists */
-   if (GBL_OPTIONS->plugin && search_plugin(GBL_OPTIONS->plugin) != ESUCCESS)
-      FATAL_ERROR("%s plugin can not be found !", GBL_OPTIONS->plugin);
+   struct plugin_list *plugin, *tmp;
+
+   LIST_FOREACH_SAFE(plugin, &GBL_OPTIONS->plugins, next, tmp) {
+      /* check if the plugin exists */
+      if (search_plugin(plugin->name) != ESUCCESS)
+         plugin->exists = false;
+         USER_MSG("Sorry, plugin '%s' can not be found - skipping!\n\n", 
+               plugin->name);
+   }
    
    /* build the list of active hosts */
    build_hosts_list();
@@ -157,18 +159,16 @@ void daemon_interface(void)
    EXECUTE(GBL_SNIFF->start);
    
    /* if we have to activate a plugin */
-   if (GBL_OPTIONS->plugin && plugin_init(GBL_OPTIONS->plugin) != PLUGIN_RUNNING)
-      /* end the interface */
-      return;
+   LIST_FOREACH_SAFE(plugin, &GBL_OPTIONS->plugins, next, tmp) {
+      if (plugin->exists && plugin_init(plugin->name) != PLUGIN_RUNNING)
+         /* skip plugin */
+         USER_MSG("Plugin '%s' can not be started - skipping!\n\n", plugin->name);
+   }
 
    /* discard the messages */
    LOOP {
       CANCELLATION_POINT();
-#if !defined(OS_WINDOWS)
-      nanosleep(&ts, NULL);
-#else
-      usleep(1000);
-#endif
+      ec_usleep(SEC2MICRO(1));
       ui_msg_flush(MSG_ALL);
    }
    /* NOT REACHED */   

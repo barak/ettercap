@@ -117,8 +117,6 @@ extern void wdg_bug(char *file, const char *function, int line, char *message);
 #define KEY_RETURN   '\r'
 #define KEY_TAB      '\t'
 #define KEY_CTRL_L   12
-// CTRL() is defined in /usr/include/.../ttydefaults.h which is pulled
-// in by some long chain via /usr/include/libnet.h
 #ifndef CTRL
 #define CTRL(x)      ((x) & 0x1f)
 #endif
@@ -252,7 +250,7 @@ extern int wdg_percentage_set(wdg_t *wo, size_t p, size_t max);
    #define WDG_PERCENTAGE_FINISHED     0
    #define WDG_PERCENTAGE_UPDATED      1
 /* file dialog objects */
-extern void wdg_file_set_callback(wdg_t *wo, void (*callback)(char *path, char *file));
+extern void wdg_file_set_callback(wdg_t *wo, void (*callback)(const char *path, char *file));
 /* input dialog objects */
 extern void wdg_input_size(wdg_t *wo, size_t x, size_t y);
 extern void wdg_input_add(wdg_t *wo, size_t x, size_t y, const char *caption, char *buf, size_t len, size_t lines);

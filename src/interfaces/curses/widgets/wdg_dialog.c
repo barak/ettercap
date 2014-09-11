@@ -61,9 +61,6 @@ static void wdg_dialog_move(struct wdg_object *wo, int key);
 static int wdg_dialog_mouse_move(struct wdg_object *wo, struct wdg_mouse_event *mouse);
 static void wdg_dialog_callback(struct wdg_object *wo);
 
-void wdg_dialog_text(wdg_t *wo, size_t flags, const char *text);
-void wdg_dialog_add_callback(wdg_t *wo, size_t flag, void (*callback)(void));
-
 /*******************************************/
 
 /* 
@@ -388,7 +385,7 @@ static void wdg_dialog_get_size(struct wdg_object *wo, size_t *lines, size_t *co
 {
    WDG_WO_EXT(struct wdg_dialog, ww);
    char *p;
-   size_t t = 0;
+   size_t t = 0, wwtextlen;
 
    /* initialize them */
    *lines = 1;
@@ -398,7 +395,8 @@ static void wdg_dialog_get_size(struct wdg_object *wo, size_t *lines, size_t *co
     * parse the text message and find how many '\n' are present.
     * also calculate the longest string between two '\n'
     */
-   for (p = ww->text; p < ww->text + strlen(ww->text); p++) {
+   wwtextlen = strlen(ww->text);
+   for (p = ww->text; p < ww->text + wwtextlen; p++) {
       /* count the chars */
       t++;
       /* at the newline (or end of string) make the calculus */

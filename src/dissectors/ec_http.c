@@ -99,10 +99,10 @@ static void Parse_Post_Payload(char *ptr, struct http_status *conn_status, struc
 static void Print_Pass(struct packet_object *po);
 static void Get_Banner(char *ptr, struct packet_object *po);
 static u_char Parse_Form(char *to_parse, char **ret, int mode);
-static int Parse_Passport_Auth(char *ptr, char *from_here, struct packet_object *po);
+static int Parse_Passport_Auth(char *from_here, struct packet_object *po);
 static int Parse_NTLM_Auth(char *ptr, char *from_here, struct packet_object *po);
 static int Parse_Basic_Auth(char *ptr, char *from_here, struct packet_object *po);
-static int Parse_User_Agent(char *ptr, char *end, char *from_here, struct packet_object *po);
+static int Parse_User_Agent(char *end, char *from_here, struct packet_object *po);
 static char *unicodeToString(char *p, size_t len);
 static void dumpRaw(char *str, unsigned char *buf, size_t len);
 int http_fields_init(void);
@@ -139,6 +139,9 @@ FUNC_DECODER(dissector_http)
 
    /* unused variable */
    (void)end;
+   (void) DECODE_DATA; 
+   (void) DECODE_DATALEN;
+   (void) DECODED_LEN;
 
    /* skip empty packets (ACK packets) */
    if (PACKET->DATA.len == 0)
@@ -159,13 +162,13 @@ FUNC_DECODER(dissector_http)
        * then password in the GET or POST.
        */
       if ((from_here = strstr((const char*)ptr, "Authorization: Passport")) && 
-         Parse_Passport_Auth((char*)ptr, from_here + strlen("Authorization: Passport"), PACKET));       
+         Parse_Passport_Auth(from_here + strlen("Authorization: Passport"), PACKET));       
       else if ((from_here = strstr((const char*)ptr, ": NTLM ")) && 
          Parse_NTLM_Auth((char*)ptr, from_here + strlen(": NTLM "), PACKET));
       else if ((from_here = strstr((const char*)ptr, ": Basic ")) &&
          Parse_Basic_Auth((char*)ptr, from_here  + strlen(": Basic "), PACKET));
       else if ((from_here = strstr((const char*)ptr, "User-Agent: ")) &&
-          Parse_User_Agent((char*)ptr, end, from_here + strlen("User-Agent: "), PACKET));
+          Parse_User_Agent(end, from_here + strlen("User-Agent: "), PACKET));
       else if (!strncmp((const char*)ptr, "GET ", 4))
          Parse_Method_Get((char*)ptr + strlen("GET "), PACKET);
       else if (!strncmp((const char*)ptr, "POST ", 5))
@@ -275,7 +278,7 @@ static void Get_Banner(char *ptr, struct packet_object *po)
 
 
 /* Parse Passport Authentication */ 
-static int Parse_Passport_Auth(char *ptr, char *from_here, struct packet_object *po)
+static int Parse_Passport_Auth(char *from_here, struct packet_object *po)
 {
    char *token, *to_decode, *tok;
 
@@ -338,9 +341,10 @@ static int Parse_Basic_Auth(char *ptr, char *from_here, struct packet_object *po
        
    ec_strtok(to_decode, "\r", &tok);
 
-   base64_decode(to_decode, to_decode);
+   char *decoded;
+   base64decode(to_decode, &decoded);
   
-   DEBUG_MSG("Clear text AUTH: %s", to_decode); 
+   DEBUG_MSG("Clear text AUTH: %s", decoded); 
 
    /* clear text should be username:password 
     * this means that we must find the first instance of :
@@ -351,7 +355,7 @@ static int Parse_Basic_Auth(char *ptr, char *from_here, struct packet_object *po
 
    pass = NULL;
 
-   user = ec_strtok(to_decode, ":", &pass); 
+   user = ec_strtok(decoded, ":", &pass); 
 
    if (pass != NULL && user != NULL) {
       po->DISSECTOR.user = strdup(user);
@@ -366,11 +370,12 @@ static int Parse_Basic_Auth(char *ptr, char *from_here, struct packet_object *po
       Print_Pass(po);
    }
 
+   SAFE_FREE(decoded);
    SAFE_FREE(to_decode);
    return 1;
 }
 
-static int Parse_User_Agent(char* ptr, char* end, char *from_here, struct packet_object *po)
+static int Parse_User_Agent(char* end, char *from_here, struct packet_object *po)
 {
     // find the end of the line
     const char* line_end = (const char*)memchr(from_here, '\n', end - from_here);
@@ -459,8 +464,9 @@ static int Parse_NTLM_Auth(char *ptr, char *from_here, struct packet_object *po)
        
    ec_strtok(to_decode, "\r", &tok);
 
-   base64_decode(to_decode, to_decode);
-   hSmb = (tSmbStdHeader *) to_decode;
+   char *decoded;
+   base64decode(to_decode, &decoded);
+   hSmb = (tSmbStdHeader *) decoded;
    msgType = IVAL(&hSmb->msgType, 0);
 
    /* msgType 2 -> Server challenge
@@ -469,7 +475,7 @@ static int Parse_NTLM_Auth(char *ptr, char *from_here, struct packet_object *po)
    if (msgType==2) {
       tSmbNtlmAuthChallenge *challenge_struct;
 
-      challenge_struct = (tSmbNtlmAuthChallenge *) to_decode;
+      challenge_struct = (tSmbNtlmAuthChallenge *) decoded;
       
       /* Create a session to remember the server challenge */
       dissect_create_session(&s, po, DISSECT_CODE(dissector_http));
@@ -521,6 +527,7 @@ static int Parse_NTLM_Auth(char *ptr, char *from_here, struct packet_object *po)
       SAFE_FREE(ident);
    }
    SAFE_FREE(to_decode);
+   SAFE_FREE(decoded);
    return 1;
 }
 

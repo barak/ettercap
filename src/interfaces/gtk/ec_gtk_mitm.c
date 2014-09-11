@@ -25,12 +25,6 @@
 
 /* proto */
 
-void gtkui_arp_poisoning(void);
-void gtkui_icmp_redir(void);
-void gtkui_port_stealing(void);
-void gtkui_dhcp_spoofing(void);
-void gtkui_mitm_stop(void);
-
 static void gtkui_start_mitm(void);
 
 /* globals */
@@ -43,7 +37,7 @@ static char params[PARAMS_LEN+1];
 
 void gtkui_arp_poisoning(void)
 {
-   GtkWidget *dialog, *vbox, *hbox, *image, *button1, *button2, *frame;
+   GtkWidget *dialog, *vbox, *hbox, *image, *button1, *button2, *frame, *content_area;
    gint response = 0;
    gboolean remote = FALSE;
    gboolean oneway = FALSE;
@@ -56,10 +50,17 @@ void gtkui_arp_poisoning(void)
                                         GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_OK, 
                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
    gtk_container_set_border_width(GTK_CONTAINER (dialog), 5);
+#if !GTK_CHECK_VERSION(2, 22, 0)
    gtk_dialog_set_has_separator(GTK_DIALOG (dialog), FALSE);
+#endif
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+#else
    hbox = gtk_hbox_new (FALSE, 5);
-   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), hbox, FALSE, FALSE, 0);
+#endif
+   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+   gtk_container_add(GTK_CONTAINER(content_area), hbox);
    gtk_widget_show(hbox);
 
    image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_QUESTION, GTK_ICON_SIZE_DIALOG);
@@ -72,7 +73,11 @@ void gtkui_arp_poisoning(void)
    gtk_box_pack_start (GTK_BOX (hbox), frame, TRUE, TRUE, 0);
    gtk_widget_show(frame);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+#else
    vbox = gtk_vbox_new (FALSE, 2);
+#endif
    gtk_container_set_border_width(GTK_CONTAINER (vbox), 5);
    gtk_container_add(GTK_CONTAINER (frame), vbox);
    gtk_widget_show(vbox);
@@ -120,7 +125,7 @@ void gtkui_arp_poisoning(void)
 
 void gtkui_icmp_redir(void)
 {
-   GtkWidget *dialog, *table, *hbox, *image, *label, *entry1, *entry2, *frame;
+   GtkWidget *dialog, *table, *hbox, *image, *label, *entry1, *entry2, *frame, *content_area;
    gint response = 0;
 
    DEBUG_MSG("gtk_icmp_redir");
@@ -129,10 +134,17 @@ void gtkui_icmp_redir(void)
                                         GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_OK,
                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
    gtk_container_set_border_width(GTK_CONTAINER (dialog), 5);
+#if !GTK_CHECK_VERSION(2, 22, 0)
    gtk_dialog_set_has_separator(GTK_DIALOG (dialog), FALSE);
+#endif
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+#else
    hbox = gtk_hbox_new (FALSE, 5);
-   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), hbox, FALSE, FALSE, 0);
+#endif
+   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+   gtk_container_add(GTK_CONTAINER(content_area), hbox);
    gtk_widget_show(hbox);
 
    image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_QUESTION, GTK_ICON_SIZE_DIALOG);
@@ -193,7 +205,7 @@ void gtkui_icmp_redir(void)
 
 void gtkui_port_stealing(void)
 {
-   GtkWidget *dialog, *vbox, *hbox, *image, *button1, *button2, *frame;
+   GtkWidget *dialog, *vbox, *hbox, *image, *button1, *button2, *frame, *content_area;
    gint response = 0;
    gboolean remote = FALSE;
    
@@ -203,10 +215,17 @@ void gtkui_port_stealing(void)
                                         GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_OK,
                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
    gtk_container_set_border_width(GTK_CONTAINER (dialog), 5);
+#if !GTK_CHECK_VERSION(2, 22, 0)
    gtk_dialog_set_has_separator(GTK_DIALOG (dialog), FALSE);
+#endif
          
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+#else
    hbox = gtk_hbox_new (FALSE, 5);
-   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), hbox, FALSE, FALSE, 0);
+#endif
+   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+   gtk_container_add(GTK_CONTAINER(content_area), hbox);
    gtk_widget_show(hbox);
          
    image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_QUESTION, GTK_ICON_SIZE_DIALOG);
@@ -219,7 +238,11 @@ void gtkui_port_stealing(void)
    gtk_box_pack_start (GTK_BOX (hbox), frame, TRUE, TRUE, 0);
    gtk_widget_show(frame);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+#else
    vbox = gtk_vbox_new (FALSE, 2);
+#endif
    gtk_container_set_border_width(GTK_CONTAINER (vbox), 5);
    gtk_container_add(GTK_CONTAINER (frame), vbox);
    gtk_widget_show(vbox);
@@ -261,7 +284,7 @@ void gtkui_port_stealing(void)
 
 void gtkui_dhcp_spoofing(void)
 {
-   GtkWidget *dialog, *table, *hbox, *image, *label, *entry1, *entry2, *entry3, *frame;
+   GtkWidget *dialog, *table, *hbox, *image, *label, *entry1, *entry2, *entry3, *frame, *content_area;
    gint response = 0;
    
    DEBUG_MSG("gtk_dhcp_spoofing");
@@ -271,10 +294,17 @@ void gtkui_dhcp_spoofing(void)
                                         GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_OK,
                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
    gtk_container_set_border_width(GTK_CONTAINER (dialog), 5);
+#if !GTK_CHECK_VERSION(2, 22, 0)
    gtk_dialog_set_has_separator(GTK_DIALOG (dialog), FALSE);
+#endif
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+#else
    hbox = gtk_hbox_new (FALSE, 5);
-   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), hbox, FALSE, FALSE, 0);
+#endif
+   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+   gtk_container_add(GTK_CONTAINER(content_area), hbox);
    gtk_widget_show(hbox);
    
    image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_QUESTION, GTK_ICON_SIZE_DIALOG);
@@ -341,6 +371,97 @@ void gtkui_dhcp_spoofing(void)
       gtkui_input_call("Parameters :", params + strlen("dhcp:"), PARAMS_LEN - strlen("dhcp:"), gtkui_start_mitm);
    */
 }
+
+#ifdef WITH_IPV6
+void gtkui_ndp_poisoning(void)
+{
+   GtkWidget *dialog, *vbox, *hbox, *image, *button1, *button2, *frame, *content_area;
+   gint response = 0;
+   gboolean remote = FALSE;
+   gboolean oneway = FALSE;
+
+   DEBUG_MSG("gtk_ndp_poisoning");
+//   not needed, the \0 is already appended from snprintf
+//   memset(params, '\0', PARAMS_LEN+1);
+
+   dialog = gtk_dialog_new_with_buttons("MITM Attack: NDP Poisoning", GTK_WINDOW (window),
+                                        GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_OK, 
+                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
+   gtk_container_set_border_width(GTK_CONTAINER (dialog), 5);
+#if !GTK_CHECK_VERSION(2, 22, 0)
+   gtk_dialog_set_has_separator(GTK_DIALOG (dialog), FALSE);
+#endif
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+#else
+   hbox = gtk_hbox_new (FALSE, 5);
+#endif
+   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+   gtk_container_add(GTK_CONTAINER(content_area), hbox);
+   gtk_widget_show(hbox);
+
+   image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_QUESTION, GTK_ICON_SIZE_DIALOG);
+   gtk_misc_set_alignment (GTK_MISC (image), 0.5, 0.1);
+   gtk_box_pack_start (GTK_BOX (hbox), image, FALSE, FALSE, 5);
+   gtk_widget_show(image);
+
+   frame = gtk_frame_new("Optional parameters");
+   gtk_container_set_border_width(GTK_CONTAINER (frame), 5);
+   gtk_box_pack_start (GTK_BOX (hbox), frame, TRUE, TRUE, 0);
+   gtk_widget_show(frame);
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+#else
+   vbox = gtk_vbox_new (FALSE, 2);
+#endif
+   gtk_container_set_border_width(GTK_CONTAINER (vbox), 5);
+   gtk_container_add(GTK_CONTAINER (frame), vbox);
+   gtk_widget_show(vbox);
+
+   button1 = gtk_check_button_new_with_label("Sniff remote connections.");
+   gtk_box_pack_start(GTK_BOX (vbox), button1, FALSE, FALSE, 0);
+   gtk_widget_show(button1);
+
+   button2 = gtk_check_button_new_with_label("Only poison one-way.");
+   gtk_box_pack_start(GTK_BOX (vbox), button2, FALSE, FALSE, 0);
+   gtk_widget_show(button2);
+
+   response = gtk_dialog_run(GTK_DIALOG(dialog));
+   if(response == GTK_RESPONSE_OK) {
+      gtk_widget_hide(dialog);
+      const char *s_remote = "", *comma = "", *s_oneway = "";
+
+      if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (button1))) {
+         s_remote="remote";
+         remote = TRUE;
+      }
+
+      if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (button2))) {
+         if(remote)
+            comma = ",";
+
+         s_oneway = "oneway";
+         oneway = TRUE;
+      } 
+
+      if(!remote && !oneway) {
+         ui_error("You must select at least one NDP mode");
+         return;
+      }
+      snprintf(params, PARAMS_LEN+1, "ndp:%s%s%s", 
+            s_remote, comma, s_oneway);
+      gtkui_start_mitm();
+   }
+
+   gtk_widget_destroy(dialog);
+
+   /* a simpler method:
+      gtkui_input_call("Parameters :", params + strlen("ndp:"), PARAMS_LEN - strlen("ndp:"), gtkui_start_mitm);
+    */
+}
+#endif
 
 
 /* 

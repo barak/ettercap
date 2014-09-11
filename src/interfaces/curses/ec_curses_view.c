@@ -23,7 +23,7 @@
 #include <wdg.h>
 #include <ec_curses.h>
 #include <ec_format.h>
-#include <ec_parser.h>
+#include <ec_utils.h>
 #include <ec_encryption.h>
 
 /* proto */
@@ -69,14 +69,35 @@ struct wdg_menu menu_view[] = { {"View",                 'V', "",  NULL},
 /*******************************************/
 
 
+/* 
+ * If this option is being activated,
+ * it runs through the current hosts list and triggeres 
+ * name resolution in the background. 
+ * That way subsequent actions benefits from the filled cache
+ */
 static void toggle_resolve(void)
 {
+   char name[MAX_HOSTNAME_LEN];
+   struct hosts_list *hl;
+
+   /* resolution already set */
    if (GBL_OPTIONS->resolve) {
       tag_resolve[0] = ' ';
       GBL_OPTIONS->resolve = 0;
-   } else {
-      tag_resolve[0] = '*';
-      GBL_OPTIONS->resolve = 1;
+      return;
+   } 
+   
+   DEBUG_MSG("toggle_resolve: activate name resolution");
+
+   /* set the option */
+   tag_resolve[0] = '*';
+   GBL_OPTIONS->resolve = 1;
+   
+   /* run through the current hosts list and trigger resolution */
+   LIST_FOREACH(hl, &GBL_HOSTLIST, next) {
+      if (hl->hostname)
+         continue;
+      host_iptoa(&hl->ip, name);
    }
 }
 
@@ -151,9 +172,9 @@ static void refresh_stats(void)
    wdg_window_print(wdg_stats, 1, 13, "Top Half packet rate    : worst: %8d  adv: %8d p/s", 
          GBL_STATS->th.rate_worst, GBL_STATS->th.rate_adv);
    
-   wdg_window_print(wdg_stats, 1, 14, "Bottom Half thruoutput  : worst: %8d  adv: %8d b/s", 
+   wdg_window_print(wdg_stats, 1, 14, "Bottom Half throughput  : worst: %8d  adv: %8d b/s", 
          GBL_STATS->bh.thru_worst, GBL_STATS->bh.thru_adv);
-   wdg_window_print(wdg_stats, 1, 15, "Top Half thruoutput     : worst: %8d  adv: %8d b/s", 
+   wdg_window_print(wdg_stats, 1, 15, "Top Half throughput     : worst: %8d  adv: %8d b/s", 
          GBL_STATS->th.thru_worst, GBL_STATS->th.thru_adv);
 }
 

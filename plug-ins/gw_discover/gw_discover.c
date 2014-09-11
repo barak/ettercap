@@ -28,6 +28,7 @@
 #include <ec_packet.h>
 #include <ec_hook.h>
 #include <ec_send.h>
+#include <ec_sleep.h>
 
 
 /* globals */
@@ -73,6 +74,9 @@ int plugin_load(void *handle)
 
 static int gw_discover_init(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* don't show packets while operating */
    GBL_OPTIONS->quiet = 1;
    
@@ -90,6 +94,9 @@ static int gw_discover_init(void *dummy)
 
 static int gw_discover_fini(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    return PLUGIN_FINISHED;
 }
 
@@ -161,7 +168,7 @@ static void do_discover(void)
    }
   
    /* wait some time for slower replies */
-   sleep(3);
+   ec_usleep(SEC2MICRO(3));
    
    INSTANT_USER_MSG("\n");
 

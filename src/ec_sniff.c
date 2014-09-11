@@ -20,7 +20,7 @@
 */
 
 #include <ec.h>
-#include <ec_parser.h>
+#include <ec_utils.h>
 #include <ec_sniff.h>
 #include <ec_sniff_unified.h>
 #include <ec_sniff_bridge.h>
@@ -31,14 +31,7 @@
 
 /* proto */
 
-void set_sniffing_method(struct sniffing_method *sm);
-void set_unified_sniff(void);
-void set_bridge_sniff(void);
-
 static void set_interesting_flag(struct packet_object *po);
-int compile_display_filter(void);
-int compile_target(char *string, struct target_env *target);
-void reset_display_filter(struct target_env *t);
 
 void set_forwardable_flag(struct packet_object *po);
 
@@ -49,11 +42,6 @@ static int expand_range_ip(char *str, void *target);
 #ifdef WITH_IPV6
 static int expand_ipv6(char *str, struct target_env *target);
 #endif
-
-void del_ip_list(struct ip_addr *ip, struct target_env *t);
-int cmp_ip_list(struct ip_addr *ip, struct target_env *t);
-void add_ip_list(struct ip_addr *ip, struct target_env *t);
-void free_ip_list(struct target_env *t);
 
 static pthread_mutex_t ip_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define IP_LIST_LOCK     do{ pthread_mutex_lock(&ip_list_mutex); } while(0)
@@ -182,7 +170,7 @@ static void set_interesting_flag(struct packet_object *po)
    if ( value && (
         (GBL_TARGET2->all_mac || !memcmp(GBL_TARGET2->mac, po->L2.dst, MEDIA_ADDR_LEN) || !memcmp(GBL_IFACE->mac, po->L2.dst, MEDIA_ADDR_LEN)) &&
         (GBL_TARGET2->all_ip || cmp_ip_list(&po->L3.dst, GBL_TARGET2) || 
-            (GBL_OPTIONS->broadcast && ip_addr_is_broadcast(&po->L3.dst, &GBL_IFACE->ip) == ESUCCESS) ||
+            (GBL_OPTIONS->broadcast && ip_addr_is_broadcast(&po->L3.dst) == ESUCCESS) ||
             (GBL_OPTIONS->remote && ip_addr_is_local(&po->L3.dst, NULL) != ESUCCESS) ) &&
         (GBL_TARGET2->all_port || BIT_TEST(GBL_TARGET2->ports, ntohs(po->L4.dst))) ) )
       good = 1;   
@@ -205,7 +193,7 @@ static void set_interesting_flag(struct packet_object *po)
    /* if broadcast then T2 -> broadcast */
    if ( (GBL_TARGET1->all_mac  || !memcmp(GBL_TARGET1->mac, po->L2.dst, MEDIA_ADDR_LEN) || !memcmp(GBL_IFACE->mac, po->L2.dst, MEDIA_ADDR_LEN)) &&
         (GBL_TARGET1->all_ip   || cmp_ip_list(&po->L3.dst, GBL_TARGET1) || 
-            (GBL_OPTIONS->broadcast && ip_addr_is_broadcast(&po->L3.dst, &GBL_IFACE->ip) == ESUCCESS) ||
+            (GBL_OPTIONS->broadcast && ip_addr_is_broadcast(&po->L3.dst) == ESUCCESS) ||
             (GBL_OPTIONS->remote && ip_addr_is_local(&po->L3.dst, NULL) != ESUCCESS) ) &&
         (GBL_TARGET1->all_port || BIT_TEST(GBL_TARGET1->ports, ntohs(po->L4.dst))) )
       value = 1;
@@ -256,26 +244,36 @@ int compile_display_filter(void)
   
 #ifdef WITH_IPV6 
    /* if not specified default to /// */
-   if (!GBL_OPTIONS->target1)
+   if (!GBL_OPTIONS->target1) {
       GBL_OPTIONS->target1 = strdup("///");
-   /* if /// was specified, select all */
-   else if (!strncmp(GBL_OPTIONS->target1, "///", 3))
       GBL_TARGET1->scan_all = 1;
-   
-   if (!GBL_OPTIONS->target2)
+   }
+   /* if /// was specified, select all */
+   else if (!strncmp(GBL_OPTIONS->target1, "///", 3) && strlen(GBL_OPTIONS->target1) == 3)
+      GBL_TARGET1->scan_all = 1;
+   /* if not specified default to /// */
+   if (!GBL_OPTIONS->target2) {
       GBL_OPTIONS->target2 = strdup("///");
-   else if (!strncmp(GBL_OPTIONS->target2, "///", 3))
+      GBL_TARGET2->scan_all = 1;
+   }
+   /* if /// was specified, select all */
+   else if (!strncmp(GBL_OPTIONS->target2, "///", 3) && strlen(GBL_OPTIONS->target2) == 3)
       GBL_TARGET2->scan_all = 1;
 #else
    /* if not specified default to // */
-   if (!GBL_OPTIONS->target1)
+   if (!GBL_OPTIONS->target1) {
       GBL_OPTIONS->target1 = strdup("//");
+      GBL_TARGET1->scan_all = 1;
+   }
    /* if // was specified, select all */
    else if (!strncmp(GBL_OPTIONS->target1, "//", 2) && strlen(GBL_OPTIONS->target1) == 2)
       GBL_TARGET1->scan_all = 1;
-  
-   if (!GBL_OPTIONS->target2)
+   /* if not specified default to // */
+   if (!GBL_OPTIONS->target2) {
       GBL_OPTIONS->target2 = strdup("//");
+      GBL_TARGET2->scan_all = 1;
+   }
+   /* if // was specified, select all */
    else if (!strncmp(GBL_OPTIONS->target2, "//", 2) && strlen(GBL_OPTIONS->target2) == 2)
       GBL_TARGET2->scan_all = 1;
 #endif
@@ -399,7 +397,10 @@ int compile_target(char *string, struct target_env *target)
 static void add_port(void *ports, u_int n)
 {
    u_int8 *bitmap = ports;
-  
+
+     if (n > 1<<16)
+      FATAL_ERROR("Port outside the range (65535) !!");
+
    BIT_SET(bitmap, n);
 }
 

@@ -1,7 +1,5 @@
-
-
-#ifndef EC_INTERFACES_H
-#define EC_INTERFACES_H
+#ifndef ETTERCAP_INTERFACES_H
+#define ETTERCAP_INTERFACES_H
 
 /* colors for curses interface */
 struct curses_color {
@@ -37,7 +35,6 @@ struct curses_color {
 #define EC_COLOR_JOIN2        11
 
 /* exported functions */
-
 EC_API_EXTERN void select_daemon_interface(void);
 EC_API_EXTERN void select_text_interface(void);
 EC_API_EXTERN void select_curses_interface(void);

@@ -31,7 +31,6 @@
 
 /* protos */
 
-int write_output(void);
 static void print_progress_bar(struct filter_op *fop);
 static u_char * create_data_segment(struct filter_header *fh, struct filter_op *fop, size_t n);
 static size_t add_data_segment(u_char **data, size_t base, u_char **string, size_t slen);
@@ -53,11 +52,11 @@ int write_output(void)
       return -ENOTHANDLED;
 
    /* create the file */
-   fd = open(GBL_OPTIONS.output_file, O_CREAT | O_RDWR | O_TRUNC | O_BINARY, 0644);
-   ON_ERROR(fd, -1, "Can't create file %s", GBL_OPTIONS.output_file);
+   fd = open(GBL_OPTIONS->output_file, O_CREAT | O_RDWR | O_TRUNC | O_BINARY, 0644);
+   ON_ERROR(fd, -1, "Can't create file %s", GBL_OPTIONS->output_file);
 
    /* display the message */
-   fprintf(stdout, " Writing output to \'%s\' ", GBL_OPTIONS.output_file);
+   fprintf(stdout, " Writing output to \'%s\' ", GBL_OPTIONS->output_file);
    fflush(stdout);
    
    /* compute the header */

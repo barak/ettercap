@@ -28,6 +28,7 @@
 #include <ec_packet.h>
 #include <ec_hook.h>
 #include <ec_socket.h>
+#include <ec_sleep.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -77,6 +78,9 @@ int plugin_load(void *handle)
 
 static int finger_init(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    /* don't show packets while operating */
    GBL_OPTIONS->quiet = 1;
    
@@ -122,6 +126,9 @@ static int finger_init(void *dummy)
 
 static int finger_fini(void *dummy) 
 {
+   /* variable not used */
+   (void) dummy;
+
    return PLUGIN_FINISHED;
 }
 
@@ -241,7 +248,7 @@ static void do_fingerprint(void)
    close_socket(fd);
 
    /* wait for the response */
-   sleep(1);
+   ec_usleep(SEC2MICRO(1));
 
    /* remove the hook, we have collected the finger */
    hook_del(HOOK_PACKET_TCP, &get_finger);
