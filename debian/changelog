@@ -1,6 +1,7 @@
-ettercap (1:0.8.0-15) UNRELEASED; urgency=medium
+ettercap (1:0.8.1~git20140910-1) unstable; urgency=medium
 
   * Add appdata file
+  * New rc release. (Closes: #690158)
 
  -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Sat, 24 May 2014 11:07:22 +0200
 

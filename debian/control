@@ -111,5 +111,5 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
  ettercap-common (= ${binary:Version}),
  ettercap-graphical (= ${binary:Version}) | ettercap-text-only (= ${binary:Version})
-Description: Debug symbols for Ettercap.
+Description: Debug symbols for Ettercap
  Ettercap runtime debug symbols.

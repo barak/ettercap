@@ -63,6 +63,10 @@ override_dh_install:
 	chrpath --delete debian/ettercap-text-only/usr/bin/ettercap
 	chrpath --list   debian/ettercap-graphical/usr/bin/ettercap
 	chrpath --delete debian/ettercap-graphical/usr/bin/ettercap
+	chrpath --list   debian/ettercap-common/usr/bin/etterfilter
+	chrpath --delete debian/ettercap-common/usr/bin/etterfilter
+	chrpath --list   debian/ettercap-common/usr/bin/etterlog
+	chrpath --delete debian/ettercap-common/usr/bin/etterlog
 
 override_dh_installdocs:
 	dh_installdocs -pettercap-common
