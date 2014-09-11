@@ -17,10 +17,6 @@ ENABLE_LUA := $(shell \
  else echo OFF; \
  fi)
 
-#For some reasons ettercap FTBFS with -PIC enabled
-#/usr/bin/ld.bfd.real: CMakeFiles/lib_ettercap.dir/dissectors/ec_ssh.c.o: relocation R_X86_64_PC32 against symbol `ssh_conn_key' can not be used when making a shared object; recompile with -fPIC
-#export DEB_BUILD_MAINT_OPTIONS = hardening=+all
-
 override_dh_auto_clean:
 	-rm -rf obj-graphical obj-text-only
 
@@ -58,15 +54,10 @@ override_dh_install:
 	dh_install --list-missing
 	@echo The ettercap-pkexec man page belongs in ettercap-graphical
 	-rm --verbose debian/ettercap-common/usr/share/man/man*/ettercap-pkexec*
-	@echo Upstream sets RPATH, which is against Debian policy:
+	@echo Upstream does not set RPATH, but the file is not handled by cmake install.
 	chrpath --list   debian/ettercap-text-only/usr/bin/ettercap
 	chrpath --delete debian/ettercap-text-only/usr/bin/ettercap
-	chrpath --list   debian/ettercap-graphical/usr/bin/ettercap
-	chrpath --delete debian/ettercap-graphical/usr/bin/ettercap
-	chrpath --list   debian/ettercap-common/usr/bin/etterfilter
-	chrpath --delete debian/ettercap-common/usr/bin/etterfilter
-	chrpath --list   debian/ettercap-common/usr/bin/etterlog
-	chrpath --delete debian/ettercap-common/usr/bin/etterlog
+
 
 override_dh_installdocs:
 	dh_installdocs -pettercap-common
