@@ -1,12 +1,17 @@
 ettercap (1:0.8.0+git20141002-1) unstable; urgency=medium
 
+  [ Gianfranco Costamagna ]
   * New upstream snapshot
     - fixed hurd build failure.
     - fix ldflags preventing relro from being passed correctly
     - fix some gtk stuff
   * Update overrides and rules file.
 
- -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Thu, 02 Oct 2014 12:37:33 +0200
+  [ Barak A. Pearlmutter ]
+  * bump policy version
+  * silence lintian tag conflicts-with-version
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Thu, 02 Oct 2014 13:09:52 +0100
 
 ettercap (1:0.8.0+git20140910-1) unstable; urgency=medium
 
