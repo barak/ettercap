@@ -21,7 +21,7 @@ Build-Depends: debhelper (>= 9),
  libpcap-dev,
  libpcre3-dev,
  libssl-dev
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Homepage: http://ettercap.sourceforge.net
 Vcs-Git: git://github.com/barak/ettercap.git
 Vcs-Browser: http://github.com/barak/ettercap
