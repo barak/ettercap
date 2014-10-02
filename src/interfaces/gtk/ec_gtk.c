@@ -267,7 +267,6 @@ void set_gtk_interface(void)
    ops.progress = &gtkui_progress_wrap;
    ops.update = &gtkui_update;
 
-   
    ui_register(&ops);
 
    DEBUG_MSG("GTK -> gtk+ %d.%d.%d\n", gtk_major_version, gtk_minor_version, gtk_micro_version);
@@ -948,7 +947,7 @@ static void read_pcapfile(gchar *file)
    snprintf(GBL_OPTIONS->pcapfile_in, strlen(file)+1, "%s", file);
 
    /* check if the file is good */
-   if (is_pcap_file(GBL_OPTIONS->pcapfile_in, pcap_errbuf) != ESUCCESS) {
+   if (is_pcap_file(GBL_OPTIONS->pcapfile_in, pcap_errbuf) != E_SUCCESS) {
       ui_error("%s", pcap_errbuf);
       SAFE_FREE(GBL_OPTIONS->pcapfile_in);
       return;

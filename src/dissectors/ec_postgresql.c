@@ -108,7 +108,7 @@ FUNC_DECODER(dissector_postgresql)
       dissect_create_ident(&ident, PACKET, DISSECT_CODE(dissector_postgresql));
 
       /* if the session does not exist... */
-      if (session_get(&s, ident, DISSECT_IDENT_LEN) == -ENOTFOUND) {
+      if (session_get(&s, ident, DISSECT_IDENT_LEN) == -E_NOTFOUND) {
          /* search for user and database strings, look for StartupMessage  */
          unsigned char *u = memmem(ptr, PACKET->DATA.len, "user", 4);
          unsigned char *d = memmem(ptr, PACKET->DATA.len, "database", 8);
@@ -154,11 +154,11 @@ FUNC_DECODER(dissector_postgresql)
                dissect_wipe_session(PACKET, DISSECT_CODE(dissector_postgresql));
             }
             else if (ptr[0] == 'p' && conn_status->type == CT) {
-               int length;
+               unsigned int length;
                DEBUG_MSG("\tDissector_postgresql RESPONSE type is clear-text!");
                GET_ULONG_BE(length, ptr, 1);
                length -= 4;
-               if (length < 0 || length > 65 || PACKET->DATA.len < length+5) {
+               if (length > 65 || PACKET->DATA.len < length+5) {
                    dissect_wipe_session(PACKET, DISSECT_CODE(dissector_postgresql));
                    return NULL;
                }
@@ -173,7 +173,7 @@ FUNC_DECODER(dissector_postgresql)
          return NULL;
       dissect_create_ident(&ident, PACKET, DISSECT_CODE(dissector_postgresql));
 
-      if (session_get(&s, ident, DISSECT_IDENT_LEN) == ESUCCESS) {
+      if (session_get(&s, ident, DISSECT_IDENT_LEN) == E_SUCCESS) {
          conn_status = (struct postgresql_status *) s->data;
          if (conn_status->status == WAIT_AUTH &&
                ptr[0] == 'R' && !memcmp(ptr + 1, "\x00\x00\x00\x0c", 4)  &&
