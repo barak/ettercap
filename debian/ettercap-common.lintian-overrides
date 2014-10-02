@@ -1,4 +1,3 @@
 # We install libettercap.so.0 which is for private use
-ettercap-common: postinst-must-call-ldconfig usr/lib/libettercap.so.0
-ettercap-common: no-symbols-control-file usr/lib/libettercap.so.0
 ettercap-common: package-name-doesnt-match-sonames libettercap0
+ettercap-common: non-dev-pkg-with-shlib-symlink usr/lib/libettercap.so.0.0.0 usr/lib/libettercap.so

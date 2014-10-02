@@ -25,7 +25,9 @@ ETTERCAP_OPTIONS= \
  -DBUNDLED_LIBS=OFF \
  -DENABLE_LUA=$(ENABLE_LUA) \
  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
- -DENABLE_TESTS=ON
+ -DENABLE_TESTS=ON \
+ -DDISABLE_RPATH=ON \
+ -DNO_INSTALL_LICENSE=ON
 
 override_dh_auto_configure:
 	@echo LIBNET_VER = $(LIBNET_VER)
@@ -47,17 +49,16 @@ override_dh_auto_test-text-only: ; dh_auto_test --parallel --builddirectory=obj-
 override_dh_auto_test-graphical: ; dh_auto_test --parallel --builddirectory=obj-graphical
 
 override_dh_auto_install:
-#	dh_auto_install --builddirectory=obj-text-only
 	dh_auto_install --parallel --builddirectory=obj-graphical
+#	dh_auto_install --parallel --builddirectory=obj-text-only
 
 override_dh_install:
 	dh_install --list-missing
 	@echo The ettercap-pkexec man page belongs in ettercap-graphical
 	-rm --verbose debian/ettercap-common/usr/share/man/man*/ettercap-pkexec*
-	@echo Upstream does not set RPATH, but the file is not handled by cmake install.
+	@echo "Upstream does not set RPATH, but the file is not handled by cmake install (dh_auto_install target)"
 	chrpath --list   debian/ettercap-text-only/usr/bin/ettercap
 	chrpath --delete debian/ettercap-text-only/usr/bin/ettercap
-
 
 override_dh_installdocs:
 	dh_installdocs -pettercap-common
