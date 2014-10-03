@@ -1,3 +1,12 @@
+ettercap (1:0.8.0+git20141002-2) unstable; urgency=medium
+
+  * Update copyright file.
+  * Revert silence lintian tag conflicts-with-version.
+    (Closes: #763803)
+  * wrap-and-sort the debian directory.
+
+ -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Thu, 02 Oct 2014 16:38:45 +0200
+
 ettercap (1:0.8.0+git20141002-1) unstable; urgency=medium
 
   [ Gianfranco Costamagna ]
