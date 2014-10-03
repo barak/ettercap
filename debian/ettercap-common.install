@@ -1,12 +1,7 @@
 /etc
-
-/usr/lib/libettercap.so
-/usr/lib/libettercap.so.*
-/usr/lib/ettercap/*.so /usr/lib/ettercap
-
 /usr/bin/etterfilter
 /usr/bin/etterlog
-
+/usr/lib/
 /usr/share/ettercap
 # The next line accidentally gets
 #  /usr/share/man/ettercap-pkexec*

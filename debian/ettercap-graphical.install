@@ -1,8 +1,8 @@
 /usr/bin/ettercap
 /usr/bin/ettercap-pkexec
-/usr/share/ettercap/ettercap.png
-/usr/share/polkit-1
-/usr/share/pixmaps
-/usr/share/applications
 /usr/share/appdata
+/usr/share/applications
+/usr/share/ettercap/ettercap.png
 /usr/share/man/man*/ettercap-pkexec*
+/usr/share/pixmaps
+/usr/share/polkit-1
