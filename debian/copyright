@@ -54,10 +54,6 @@ Copyright: 1998 Todd C. Miller <Todd.Miller@courtesan.com>
            2001 Alberto Ornaghi <alor@users.sourceforge.net>
 License: BSD-3-clause
 
-Files: src/lua/share/core/dumper.lua
-Copyright: 2007 Olivetti-Engineering SA
-License: MIT
-
 Files: src/dissectors/ec_postgresql.c
        src/dissectors/ec_o5logon.c
        src/dissectors/ec_iscsi.c
@@ -78,6 +74,10 @@ Files: src/lua/share/core/*
 Copyright: Ryan Linn
            Mike Ryan
 License: GPL-2+
+
+Files: src/lua/share/core/dumper.lua
+Copyright: 2007 Olivetti-Engineering SA
+License: MIT
 
 Files: plug-ins/arp_cop/arp_cop.c
 Copyright: ALoR & NaGA
