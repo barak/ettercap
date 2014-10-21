@@ -4,12 +4,12 @@ Priority: optional
 Maintainer: Barak A. Pearlmutter <bap@debian.org>
 Uploaders: Murat Demirten <murat@debian.org>,
            Gianfranco Costamagna <costamagnagianfranco@yahoo.it>
-Build-Depends: bison | bison++ | byacc | byacc-j | btyacc,
+Build-Depends: bison | bison++,
                check,
                chrpath,
                cmake,
                debhelper (>= 9),
-               flex,
+               flex | flex-old,
                ghostscript,
                libbsd-dev,
                libcurl4-openssl-dev,
