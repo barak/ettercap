@@ -2,9 +2,10 @@
 /usr/bin/etterfilter
 /usr/bin/etterlog
 /usr/lib/
-/usr/share/ettercap
-# The next line accidentally gets
+# The next lines accidentally gets
 #  /usr/share/man/ettercap-pkexec*
+# and /usr/share/ettercap/ettercap.png
 # which belongs in ettercap-graphical.
 # This is worked around in debian/rules.
+/usr/share/ettercap
 /usr/share/man
