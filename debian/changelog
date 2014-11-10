@@ -3,7 +3,9 @@ ettercap (1:0.8.1-2) unstable; urgency=medium
   * Remove byacc | byacc-j | btyacc, not compatible after
     the cmake switch.
   * Add flex-old as b-d, used with bison++.
-  * Fix conflict,
+  * Fix conflicting files in both common and graphical package
+    (Closes: #768831).
+  * Remove the gksu dependency, not needed anymore.
 
  -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Tue, 21 Oct 2014 13:19:19 +0200
 

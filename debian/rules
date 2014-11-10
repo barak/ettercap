@@ -56,7 +56,8 @@ override_dh_install:
 	dh_install --list-missing
 	@echo The ettercap-pkexec man page belongs in ettercap-graphical
 	-rm --verbose debian/ettercap-common/usr/share/man/man*/ettercap-pkexec*
-	-rm --verbose debian/ettercap-common/usr/share/ettercap/ettercap.png
+	-rm --verbose debian/ettercap-common/usr/share/ettercap/*.png
+	-rm --verbose debian/ettercap-common/usr/share/ettercap/*.svg
 	@echo "Upstream does not set RPATH, but the file is not handled by cmake install (dh_auto_install target)"
 	chrpath --list   debian/ettercap-text-only/usr/bin/ettercap
 	chrpath --delete debian/ettercap-text-only/usr/bin/ettercap

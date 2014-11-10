@@ -88,7 +88,6 @@ Depends: ettercap-common (= ${binary:Version}),
 Replaces: ettercap, ettercap-common, ettercap-gtk, ettercap-text-only
 Conflicts: ettercap (<= 1:0.7.3), ettercap-gtk, ettercap-text-only
 Provides: ettercap
-Recommends: gksu
 Description: Ettercap GUI-enabled executable
  Ettercap supports active and passive dissection of many protocols
  (even encrypted ones) and includes many feature for network and host
