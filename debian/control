@@ -30,8 +30,6 @@ Package: ettercap-common
 Architecture: any
 Depends: ethtool [linux-any], ${misc:Depends}, ${shlibs:Depends}
 Recommends: ettercap-graphical | ettercap-text-only
-Replaces: ettercap-plugins
-Conflicts: ettercap (<= 1:0.7.3), ettercap-plugins
 Description: Multipurpose sniffer/interceptor/logger for switched LAN
  Ettercap supports active and passive dissection of many protocols
  (even encrypted ones) and includes many feature for network and host
@@ -58,8 +56,8 @@ Architecture: any
 Depends: ettercap-common (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Replaces: ettercap, ettercap-graphical, ettercap-gtk
-Conflicts: ettercap (<= 1:0.7.3), ettercap-graphical, ettercap-gtk
+Replaces: ettercap, ettercap-gtk
+Conflicts: ettercap, ettercap-gtk
 Provides: ettercap
 Description: Ettercap console-mode executable
  Ettercap supports active and passive dissection of many protocols
@@ -85,8 +83,9 @@ Depends: ettercap-common (= ${binary:Version}),
          policykit-1,
          ${misc:Depends},
          ${shlibs:Depends}
-Replaces: ettercap, ettercap-common, ettercap-gtk, ettercap-text-only
-Conflicts: ettercap (<= 1:0.7.3), ettercap-gtk, ettercap-text-only
+Breaks: ettercap-common (<< 1:0.8.1-2~)
+Replaces: ettercap, ettercap-common (<< 1:0.8.1-2~), ettercap-gtk
+Conflicts: ettercap, ettercap-gtk
 Provides: ettercap
 Description: Ettercap GUI-enabled executable
  Ettercap supports active and passive dissection of many protocols

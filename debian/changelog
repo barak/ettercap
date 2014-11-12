@@ -5,6 +5,7 @@ ettercap (1:0.8.1-2) unstable; urgency=medium
   * Add flex-old as b-d, used with bison++.
   * Fix conflicting files in both common and graphical package
     (Closes: #768831).
+  * Fix some obsolete breaks+replaces, thanks Andreas!
   * Remove the gksu dependency, not needed anymore.
 
  -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Tue, 21 Oct 2014 13:19:19 +0200
