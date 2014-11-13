@@ -1,3 +1,9 @@
+ettercap (1:0.8.1-4) UNRELEASED; urgency=medium
+
+  * Prepare debian packaging for reinclusion of pdf docs
+
+ -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Thu, 18 Dec 2014 11:23:07 +0100
+
 ettercap (1:0.8.1-3) unstable; urgency=high
 
   * Patch a bunch of security vulnerabilities (closes: #773416)

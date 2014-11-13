@@ -27,8 +27,8 @@ ETTERCAP_OPTIONS= \
  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
  -DENABLE_TESTS=ON \
  -DDISABLE_RPATH=ON \
- -DNO_INSTALL_LICENSE=ON
-
+ -DNO_INSTALL_LICENSE=ON \
+ -DENABLE_PDF_DOCS=ON
 override_dh_auto_configure:
 	@echo LIBNET_VER = $(LIBNET_VER)
 	@echo ENABLE_IPV6 = $(ENABLE_IPV6)
@@ -55,6 +55,7 @@ override_dh_auto_install:
 override_dh_install:
 	dh_install --list-missing
 	@echo The ettercap-pkexec man page belongs in ettercap-graphical
+	-rm --verbose debian/ettercap-common/usr/share/ettercap/doc/ettercap-pkexec*
 	-rm --verbose debian/ettercap-common/usr/share/man/man*/ettercap-pkexec*
 	@echo The ettercap images belongs in ettercap-graphical
 	-rm --verbose debian/ettercap-common/usr/share/ettercap/*.png
