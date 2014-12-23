@@ -15,8 +15,10 @@ ettercap (1:0.8.1-3) unstable; urgency=high
     - CVE-2014-9379 (Incorrect cast)
     - CVE-2014-9380 (Buffer over-read)
     - CVE-2014-9381 (Signedness error)
-    See: https://www.obrela.com/home/security-labs/advisories/osi-advisory-osi-1402/
-    Patches taken from repo CVE-patch, URL git://github.com/NickSampanis/ettercap.git
+    See:
+    https://www.obrela.com/home/security-labs/advisories/osi-advisory-osi-1402/
+    Patches taken from repo CVE-patch,
+    URL git://github.com/NickSampanis/ettercap.git
     - 88804bd3a900d273215855f7c567ec891d31e547 CVE-patch/589
     - 103f16582ee88341a6a610378011781cdc866b0c CVE-patch/602
     - 3f0c582826095c722ab6fbf91518282a765a0b68 CVE-patch/603
