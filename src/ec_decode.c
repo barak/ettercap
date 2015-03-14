@@ -33,6 +33,9 @@
 #include <pcap.h>
 #include <libnet.h>
 #include <pthread.h>
+#ifdef OS_BSD_FREE
+#include <libgen.h>
+#endif
 
 /* globals */
 
@@ -76,7 +79,7 @@ void ec_decode(u_char *param, const struct pcap_pkthdr *pkthdr, const u_char *pk
    struct packet_object po;
    u_int len;
    u_char *data;
-   u_int datalen;
+   int datalen;
    struct iface_env *iface;
 
    iface = (struct iface_env *)param;

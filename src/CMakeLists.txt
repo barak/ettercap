@@ -168,43 +168,13 @@ endif(NOT HAVE_STRNDUP)
 if(NOT HAVE_INET_ATON)
     set(EC_SRC ${EC_SRC} missing/inet_aton.c)
 endif(NOT HAVE_INET_ATON)
-if(NOT HAVE_GETOPT_LONG)
+if(NOT HAVE_GETOPT_LONG AND NOT HAVE_GETOPT_H)
     set(EC_SRC ${EC_SRC} missing/getopt.c)
-endif(NOT HAVE_GETOPT_LONG)
+endif(NOT HAVE_GETOPT_LONG AND NOT HAVE_GETOPT_H)
 
 add_library(lib_ettercap SHARED ${EC_SRC})
 add_dependencies(lib_ettercap libnet)
 target_link_libraries(lib_ettercap ${EC_LIBETTERCAP_LIBS})
-
-# Only compile lua stuff if lua is enabled!
-IF(ENABLE_LUA)
-  add_subdirectory(lua)
-  target_link_libraries(lib_ettercap ec_lua ${LUAJIT_LIBRARY})
-  if(OS_DARWIN AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
-    # On 64-bit OSX platforms, luajit requires the following flags to be added.
-    # See: http://luajit.org/install.html
-    get_target_property(OLD_FLAGS ettercap LINK_FLAGS)
-    if(OLD_FLAGS STREQUAL "OLD_FLAGS-NOTFOUND")
-      set(OLD_FLAGS "")
-    endif()
-    set(NEW_FLAGS "${OLD_FLAGS} -pagezero_size 10000 -image_base 100000000")
-    SET_TARGET_PROPERTIES(ettercap PROPERTIES LINK_FLAGS "${NEW_FLAGS}")
-  endif()
-endif(ENABLE_LUA)
-
-#if(NOT LIBRARY_BUILD)
-	#target_link_libraries(lib_ettercap ec_interfaces ${EC_LIBS})
-#else(NOT LIBRARY_BUILD)
-	#target_link_libraries(lib_ettercap ${EC_LIBS})
-#endif(NOT LIBRARY_BUILD)
-
-set_target_properties(lib_ettercap PROPERTIES 
-  ENABLE_EXPORTS On
-  #  LINK_INTERFACE_LIBRARIES ""
-  OUTPUT_NAME ettercap
-  VERSION 0.0.0
-  SOVERSION 0
-  )
 
 if (NOT LIBRARY_BUILD)
   add_subdirectory(interfaces)
@@ -222,6 +192,31 @@ if (NOT LIBRARY_BUILD)
     INSTALL_RPATH ${INSTALL_LIBDIR})
   endif(NOT DISABLE_RPATH)
 endif(NOT LIBRARY_BUILD)
+
+# Only compile lua stuff if lua is enabled!
+IF(ENABLE_LUA)
+  add_subdirectory(lua)
+  target_link_libraries(lib_ettercap ec_lua ${LUAJIT_LIBRARY})
+  if(OS_DARWIN AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+    # On 64-bit OSX platforms, luajit requires the following flags to be added.
+    # See: http://luajit.org/install.html
+    target_link_libraries(ettercap "-pagezero_size 10000 -image_base 100000000")
+  endif(OS_DARWIN AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+endif(ENABLE_LUA)
+
+#if(NOT LIBRARY_BUILD)
+	#target_link_libraries(lib_ettercap ec_interfaces ${EC_LIBS})
+#else(NOT LIBRARY_BUILD)
+	#target_link_libraries(lib_ettercap ${EC_LIBS})
+#endif(NOT LIBRARY_BUILD)
+
+set_target_properties(lib_ettercap PROPERTIES 
+  ENABLE_EXPORTS On
+  #  LINK_INTERFACE_LIBRARIES ""
+  OUTPUT_NAME ettercap
+  VERSION 0.0.0
+  SOVERSION 0
+  )
 
 install(TARGETS lib_ettercap DESTINATION ${INSTALL_LIBDIR})
 if(NOT LIBRARY_BUILD)

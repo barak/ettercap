@@ -158,7 +158,7 @@ FUNC_DECODER(dissector_postgresql)
                DEBUG_MSG("\tDissector_postgresql RESPONSE type is clear-text!");
                GET_ULONG_BE(length, ptr, 1);
                length -= 4;
-               if (length < 0 || length > 65 || PACKET->DATA.len < length+5) {
+               if (length > 65 || PACKET->DATA.len < length+5) {
                    dissect_wipe_session(PACKET, DISSECT_CODE(dissector_postgresql));
                    return NULL;
                }

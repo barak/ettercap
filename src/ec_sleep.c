@@ -35,7 +35,12 @@ void ec_usleep(unsigned int usecs)
 
    nanosleep(&ts, NULL);
 #else
-   usleep(usecs);
+  /*
+   * Use SleepEx() instead:
+   * http://msdn.microsoft.com/library/windows/desktop/ms686307.aspx
+   */
+  DWORD msecs = usecs / 1000;
+  SleepEx (msecs, FALSE);
 #endif
 }
 

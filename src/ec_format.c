@@ -195,10 +195,10 @@ int hex_format(const u_char *buf, size_t len, u_char *dst)
            }
 
            strcat((char*)dst, "\n");
- 	   dim++;
+ 	        dim++;
    }
 
-   return dim + 1;
+   return dim;
 }
 
 /*
@@ -363,7 +363,7 @@ int utf8_format(const u_char *buf, size_t len, u_char *dst)
 #else
    
    iconv_t cd;
-#if defined (OS_BSD) || defined (OS_LINUX) || defined (OS_GNU)
+#if (defined (OS_BSD) && !defined(OS_BSD_FREE)) || defined (OS_LINUX) || defined (OS_GNU)
    char *inbuf;
 #else
    const char *inbuf;

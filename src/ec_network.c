@@ -155,7 +155,7 @@ static int source_init(char *name, struct iface_env *source, bool primary, bool 
    struct bpf_program bpf;
    char pcap_errbuf[PCAP_ERRBUF_SIZE];
    char lnet_errbuf[LIBNET_ERRBUF_SIZE];
-   u_int16 snaplen;
+   int snaplen;
 
    struct libnet_ether_addr *mac;
    struct sockaddr_in *sa4;
