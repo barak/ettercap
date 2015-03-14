@@ -123,7 +123,8 @@ static void display_packet(void)
          set_color(color);
       }
       
-      /* print it */
+      /* sync stream/descriptor output and print the packet */
+      fflush(stdout);
       write(fileno(stdout), tmp, ret);
       
       if (GBL_OPTIONS->color) 
@@ -134,7 +135,7 @@ static void display_packet(void)
    }
 
    if (!GBL_OPTIONS->no_headers)
-      write(fileno(stdout), "\n\n", 2);
+      fprintf(stdout, "\n\n");
    
    return;
 }
@@ -183,9 +184,9 @@ static void display_headers(struct log_header_packet *pck)
    /* display the ip addresses */
    ip_addr_ntoa(&pck->L3_src, tmp1);
    ip_addr_ntoa(&pck->L3_dst, tmp2);
-   fprintf(stdout, "%s  %s:%d --> %s:%d | %s\n\n", proto, tmp1, ntohs(pck->L4_src),
+   fprintf(stdout, "%s  %s:%d --> %s:%d | %s (%u)\n", proto, tmp1, ntohs(pck->L4_src),
                                                         tmp2, ntohs(pck->L4_dst),
-                                                        flags);
+                                                        flags, pck->len);
 }
 
 /*

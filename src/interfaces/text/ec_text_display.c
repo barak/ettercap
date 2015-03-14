@@ -72,10 +72,9 @@ void text_print_packet(struct packet_object *po)
    /* print the headers */
    display_headers(po);
    
-   /* print it */
+   /* sync stream/descriptor output and print the packet */
+   fflush(stdout);
    write(fileno(stdout), tmp, ret);
-
-   printf("\n");
 }     
 
 
@@ -121,11 +120,9 @@ static void display_headers(struct packet_object *po)
    /* display the ip addresses */
    ip_addr_ntoa(&po->L3.src, tmp1);
    ip_addr_ntoa(&po->L3.dst, tmp2);
-   fprintf(stdout, "%s  %s:%d --> %s:%d | %s\n", proto, tmp1, ntohs(po->L4.src), 
+   fprintf(stdout, "%s  %s:%d --> %s:%d | %s (%zu)\n", proto, tmp1, ntohs(po->L4.src),
                                                         tmp2, ntohs(po->L4.dst),
-                                                        flags);
-
-   fprintf(stdout, "\n");
+                                                        flags, po->DATA.disp_len);
 }
 
 

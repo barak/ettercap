@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(ettercap C)
 
-set(VERSION "0.8.1")
+set(VERSION "0.8.2")
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 set(CMAKE_SCRIPT_PATH "${CMAKE_SOURCE_DIR}/cmake/Scripts")
@@ -125,15 +125,13 @@ if(NOT DISABLE_RPATH)
   # library dir path in our RPATH.
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif(NOT DISABLE_RPATH)
-set(CMAKE_C_FLAGS_DEBUG "-O0 -ggdb3 -DDEBUG -Wall -Wno-pointer-sign -pg -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -Werror=format-security -Wextra -Wredundant-decls" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_DEBUG "-O0 -ggdb3 -DDEBUG -Wall -Wno-pointer-sign -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -Werror=format-security -Wextra -Wredundant-decls" CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_RELEASE "-O2 -w -D_FORTIFY_SOURCE=2" CACHE STRING "" FORCE)
 
 if(OS_DARWIN)
 set(CMAKE_EXE_LINKER_FLAGS "-Wl" CACHE STRING "" FORCE)
-set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-Wl -pg" CACHE STRING "" FORCE)
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-Wl" CACHE STRING "" FORCE)
 set(CMAKE_MODULE_LINKER_FLAGS "-Wl" CACHE STRING "" FORCE)
-else(OS_DARWIN)
-set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-pg" CACHE STRING "" FORCE)
 endif(OS_DARWIN)
 
 if(ENABLE_LUA)
