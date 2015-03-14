@@ -1,5 +1,6 @@
-ettercap (1:0.8.1-4) UNRELEASED; urgency=medium
+ettercap (1:0.8.2-1) experimental; urgency=medium
 
+  * New upstream release.
   * Prepare debian packaging for reinclusion of pdf docs
 
  -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Thu, 18 Dec 2014 11:23:07 +0100
