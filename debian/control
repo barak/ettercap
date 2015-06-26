@@ -13,6 +13,7 @@ Build-Depends: bison | bison++,
                ghostscript,
                libbsd-dev,
                libcurl4-openssl-dev,
+               libgeoip-dev,
                libgtk2.0-dev,
                libltdl-dev,
                libluajit-5.1-dev [!hurd-i386 !kfreebsd-amd64 !s390x !arm64 !ppc64el !sparc !alpha !arm64 !hppa !m68k !ppc64 !sh4 !sparc64 !x32],
@@ -28,7 +29,10 @@ Vcs-Browser: http://github.com/barak/ettercap
 
 Package: ettercap-common
 Architecture: any
-Depends: ethtool [linux-any], ${misc:Depends}, ${shlibs:Depends}
+Depends: ethtool [linux-any],
+         geoip-database,
+         ${misc:Depends},
+         ${shlibs:Depends}
 Recommends: ettercap-graphical | ettercap-text-only
 Description: Multipurpose sniffer/interceptor/logger for switched LAN
  Ettercap supports active and passive dissection of many protocols

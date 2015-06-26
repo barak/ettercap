@@ -1,3 +1,9 @@
+ettercap (1:0.8.2-3) UNRELEASED; urgency=medium
+
+  * Add geoip to the build dependencies
+
+ -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Fri, 26 Jun 2015 22:06:09 +0200
+
 ettercap (1:0.8.2-2) unstable; urgency=medium
 
   * Upload to unstable.
