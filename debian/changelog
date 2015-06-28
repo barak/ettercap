@@ -1,6 +1,8 @@
 ettercap (1:0.8.2-3) UNRELEASED; urgency=medium
 
   * Add geoip to the build dependencies
+  * Enable hardening without pie, since we can't link
+    tests with libcheck.a due to the pie injected flag.
 
  -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Fri, 26 Jun 2015 22:06:09 +0200
 
