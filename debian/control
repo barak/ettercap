@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Barak A. Pearlmutter <bap@debian.org>
 Uploaders: Murat Demirten <murat@debian.org>,
-           Gianfranco Costamagna <costamagnagianfranco@yahoo.it>
+           Gianfranco Costamagna <locutusofborg@debian.org>
 Build-Depends: bison | bison++,
                check,
                chrpath,
