@@ -1,8 +1,9 @@
 Source: ettercap
 Section: net
 Priority: optional
-Maintainer: Barak A. Pearlmutter <bap@debian.org>
-Uploaders: Murat Demirten <murat@debian.org>,
+Maintainer: Debian Security Tools Packaging Team <pkg-security-team@lists.alioth.debian.org>
+Uploaders: Barak A. Pearlmutter <bap@debian.org>,
+           Murat Demirten <murat@debian.org>,
            Gianfranco Costamagna <locutusofborg@debian.org>
 Build-Depends: bison | bison++,
                check,
@@ -21,10 +22,10 @@ Build-Depends: bison | bison++,
                libpcap-dev,
                libpcre3-dev,
                libssl-dev
-Standards-Version: 3.9.6
+Standards-Version: 3.9.8
 Homepage: http://ettercap.sourceforge.net
-Vcs-Git: git://github.com/barak/ettercap.git
-Vcs-Browser: http://github.com/barak/ettercap
+Vcs-Git: https://github.com/barak/ettercap.git
+Vcs-Browser: https://github.com/barak/ettercap
 
 Package: ettercap-common
 Architecture: any

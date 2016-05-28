@@ -3,6 +3,9 @@ ettercap (1:0.8.2-3) UNRELEASED; urgency=medium
   * Enable hardening without pie, since we can't link
     tests with libcheck.a due to the pie injected flag.
   * Update my uid.
+  * Bump std-version to 3.9.8,
+  * Update VCS fields to https.
+  * Maintain the package under pkg-security team.
 
  -- Gianfranco Costamagna <costamagnagianfranco@yahoo.it>  Fri, 26 Jun 2015 22:06:09 +0200
 
