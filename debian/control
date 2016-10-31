@@ -1,20 +1,18 @@
 Source: ettercap
 Section: net
 Priority: optional
-Maintainer: Debian Security Tools Packaging Team <pkg-security-team@lists.alioth.debian.org>
-Uploaders: Barak A. Pearlmutter <bap@debian.org>,
-           Murat Demirten <murat@debian.org>,
+Maintainer: Barak A. Pearlmutter <bap@debian.org>
+Uploaders: Murat Demirten <murat@debian.org>,
            Gianfranco Costamagna <locutusofborg@debian.org>
 Build-Depends: bison | bison++,
                check,
                chrpath,
                cmake,
-               debhelper (>= 9),
+               debhelper (>= 10),
                flex | flex-old,
                ghostscript,
                libbsd-dev,
                libcurl4-openssl-dev,
-               libgeoip-dev,
                libgtk2.0-dev,
                libltdl-dev,
                libluajit-5.1-dev [!hurd-i386 !kfreebsd-amd64 !s390x !arm64 !ppc64el !sparc !alpha !arm64 !hppa !m68k !ppc64 !sh4 !sparc64 !x32],
@@ -25,15 +23,12 @@ Build-Depends: bison | bison++,
                libssl-dev
 Standards-Version: 3.9.8
 Homepage: http://ettercap.sourceforge.net
-Vcs-Git: https://github.com/barak/ettercap.git
-Vcs-Browser: https://github.com/barak/ettercap
+Vcs-Git: git://github.com/barak/ettercap.git
+Vcs-Browser: http://github.com/barak/ettercap
 
 Package: ettercap-common
 Architecture: any
-Depends: ethtool [linux-any],
-         geoip-database,
-         ${misc:Depends},
-         ${shlibs:Depends}
+Depends: ethtool [linux-any], ${misc:Depends}, ${shlibs:Depends}
 Recommends: ettercap-graphical | ettercap-text-only
 Description: Multipurpose sniffer/interceptor/logger for switched LAN
  Ettercap supports active and passive dissection of many protocols

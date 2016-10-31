@@ -8,7 +8,7 @@ Upstream-Contact:
    Eric Milam <jbrav.hax@gmail.com>
    Mike Ryan (justfalter) <falter@gmail.com>
    Ryan Linn <sussuro@happypacket.net>
-   Gianfranco Costamagna (LocutusOfBorg) <costamagnagianfranco@yahoo.it>
+   Gianfranco Costamagna (LocutusOfBorg) <locutusofborg@debian.org>
    Jacob Baines <baines.jacob@gmail.com>
    Antonio Collarino (sniper) <anto.collarino@gmail.com>
    Alexander Koeppe (koeppea) <format_c@online.de>
@@ -130,7 +130,7 @@ Files: debian/*
 Copyright:
   2001-2009 Murat Demirten <murat@debian.org>
   2011-2014 Barak A. Pearlmutter <bap@debian.org>
-  2013-2015 Gianfranco Costamagna <locutusofborg@debian.org>
+  2013-2016 Gianfranco Costamagna <locutusofborg@debian.org>
 License: GPL-2+
 
 License: GPL-2+
