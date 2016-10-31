@@ -1,3 +1,14 @@
+ettercap (1:0.8.3-1) UNRELEASED; urgency=medium
+
+  * Add geoip to the build dependencies
+  * Enable hardening without pie, since we can't link
+    tests with libcheck.a due to the pie injected flag.
+  * Bump std-version to 3.9.8,
+  * Update VCS fields to https.
+  * Maintain the package under pkg-security team.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Mon, 31 Oct 2016 17:14:27 +0100
+
 ettercap (1:0.8.2-3) unstable; urgency=low
 
   * debian/patches/740.patch: fix openssl 1.1 build failure
