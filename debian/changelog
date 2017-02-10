@@ -6,7 +6,7 @@ ettercap (1:0.8.3-1) UNRELEASED; urgency=medium
   * Bump std-version to 3.9.8,
   * Update VCS fields to https.
   * Maintain the package under pkg-security team.
-  * Remove mips64el from lua architectures.
+  * Remove mips64el from lua architectures (Closes: #854777).
 
  -- Gianfranco Costamagna <locutusofborg@debian.org>  Mon, 31 Oct 2016 17:14:27 +0100
 
