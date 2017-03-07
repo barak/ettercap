@@ -1,14 +1,12 @@
-ettercap (1:0.8.3-1) UNRELEASED; urgency=medium
+ettercap (1:0.8.2-4) unstable; urgency=high
 
-  * Add geoip to the build dependencies
-  * Enable hardening without pie, since we can't link
-    tests with libcheck.a due to the pie injected flag.
-  * Bump std-version to 3.9.8,
-  * Update VCS fields to https.
-  * Maintain the package under pkg-security team.
-  * Remove mips64el from lua architectures (Closes: #854777).
+  * debian/patches/626dc56686f15f2dda13c48f78c2a666cb6d8506.patch:
+    - upstream fix fox CVE-2017-6430 (Closes: #857035)
+  * Remove mips64el luajit-5.1-dev to allow build here (Closes: #790405)
+    (and reorder, as well as removing sparc)
+  * Add luajit-5.1-dev to hurd
 
- -- Gianfranco Costamagna <locutusofborg@debian.org>  Mon, 31 Oct 2016 17:14:27 +0100
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Tue, 07 Mar 2017 20:27:49 +0100
 
 ettercap (1:0.8.2-3) unstable; urgency=low
 

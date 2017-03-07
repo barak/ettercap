@@ -3,7 +3,6 @@
 %:
 	dh $@
 
-export DEB_BUILD_MAINT_OPTIONS = hardening=+all,-pie
 LIBNET_VER := $(shell dpkg --status libnet1-dev | awk '/^Version:/ {print $$2}')
 
 ENABLE_IPV6 := $(shell \
