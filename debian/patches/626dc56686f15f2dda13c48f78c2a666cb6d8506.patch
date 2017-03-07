@@ -1,0 +1,69 @@
+From 626dc56686f15f2dda13c48f78c2a666cb6d8506 Mon Sep 17 00:00:00 2001
+From: Gianfranco Costamagna <costamagnagianfranco@yahoo.it>
+Date: Thu, 9 Feb 2017 16:01:30 +0100
+Subject: [PATCH] Exit gracefully in case of corrupted filters (Closes issue
+ #782)
+
+---
+ utils/etterfilter/ef_compiler.c | 4 +++-
+ utils/etterfilter/ef_main.c     | 9 +++++++--
+ utils/etterfilter/ef_output.c   | 3 +++
+ 3 files changed, 13 insertions(+), 3 deletions(-)
+
+Index: ettercap-0.8.2/utils/etterfilter/ef_compiler.c
+===================================================================
+--- ettercap-0.8.2.orig/utils/etterfilter/ef_compiler.c
++++ ettercap-0.8.2/utils/etterfilter/ef_compiler.c
+@@ -239,7 +239,9 @@
+    struct filter_op *array = NULL;
+    struct unfold_elm *ue;
+ 
+-   BUG_IF(tree_root == NULL);
++   // invalid file
++   if (tree_root == NULL)
++      return 0;
+   
+    fprintf(stdout, " Unfolding the meta-tree ");
+    fflush(stdout);
+Index: ettercap-0.8.2/utils/etterfilter/ef_main.c
+===================================================================
+--- ettercap-0.8.2.orig/utils/etterfilter/ef_main.c
++++ ettercap-0.8.2/utils/etterfilter/ef_main.c
+@@ -39,7 +39,7 @@
+ 
+ int main(int argc, char *argv[])
+ {
+-
++   int ret_value = 0;
+    globals_alloc();
+    /* etterfilter copyright */
+    fprintf(stdout, "\n" EC_COLOR_BOLD "%s %s" EC_COLOR_END " copyright %s %s\n\n", 
+@@ -84,8 +84,12 @@
+       fprintf(stdout, "\n\nThe script contains errors...\n\n");
+   
+    /* write to file */
+-   if (write_output() != E_SUCCESS)
+-      FATAL_ERROR("Cannot write output file (%s)", GBL_OPTIONS->output_file);
++   ret_value = write_output();
++   if (ret_value == -E_NOTHANDLED)
++      FATAL_ERROR("Cannot write output file (%s): the filter is not correctly handled.", GBL_OPTIONS->output_file);
++   else if (ret_value == -E_INVALID)
++      FATAL_ERROR("Cannot write output file (%s): the filter format is not correct. ", GBL_OPTIONS->output_file);
++
+    globals_free();
+    return 0;
+ }
+Index: ettercap-0.8.2/utils/etterfilter/ef_output.c
+===================================================================
+--- ettercap-0.8.2.orig/utils/etterfilter/ef_output.c
++++ ettercap-0.8.2/utils/etterfilter/ef_output.c
+@@ -51,6 +51,9 @@
+    if (fop == NULL)
+       return -E_NOTHANDLED;
+ 
++   if (ninst == 0)
++      return -E_INVALID;
++
+    /* create the file */
+    fd = open(GBL_OPTIONS->output_file, O_CREAT | O_RDWR | O_TRUNC | O_BINARY, 0644);
+    ON_ERROR(fd, -1, "Can't create file %s", GBL_OPTIONS->output_file);
