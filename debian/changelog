@@ -10,6 +10,22 @@ ettercap (1:0.8.3-1) UNRELEASED; urgency=medium
 
  -- Gianfranco Costamagna <locutusofborg@debian.org>  Tue, 07 Mar 2017 20:27:49 +0100
 
+ettercap (1:0.8.2-6) unstable; urgency=medium
+
+  * Tweak 803.patch, disable asan.
+    (it is not intended for production) 
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Thu, 08 Jun 2017 14:20:29 +0200
+
+ettercap (1:0.8.2-5) unstable; urgency=high
+
+  [ Alexander Koeppe ]
+  * debian/patches/803.patch: Fix buffer overflow/underflow
+    with bad filters (Closes: #861604).
+    CVE-2017-8366
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Sun, 04 Jun 2017 09:24:59 +0200
+
 ettercap (1:0.8.2-4) unstable; urgency=high
 
   * debian/patches/626dc56686f15f2dda13c48f78c2a666cb6d8506.patch:
