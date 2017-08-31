@@ -5,9 +5,15 @@ ettercap (1:0.8.3-1) UNRELEASED; urgency=medium
     tests with libcheck.a due to the pie injected flag.
   * Maintain the package under pkg-security team.
   * Drop patches, addressed upstream
-  * Re-enable lua binding
 
  -- Gianfranco Costamagna <locutusofborg@debian.org>  Tue, 07 Mar 2017 20:27:49 +0100
+
+ettercap (1:0.8.2-8) unstable; urgency=medium
+
+  * Re-enable lua binding, with my patch merged upstream
+  * Trim the list of lua supported bindings
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Thu, 31 Aug 2017 06:45:24 +0200
 
 ettercap (1:0.8.2-7) unstable; urgency=medium
 
