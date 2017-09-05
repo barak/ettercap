@@ -109,14 +109,3 @@ Description: Ettercap GUI-enabled executable
  fingerprints (active or passive) to find the geometry of the LAN.
  .
  This package contains the ettercap GUI-enabled executable.
-
-Package: ettercap-dbg
-Section: debug
-Priority: extra
-Architecture: any
-Depends: ettercap-common (= ${binary:Version}),
-         ettercap-graphical (= ${binary:Version}) | ettercap-text-only (= ${binary:Version}),
-         ${misc:Depends},
-         ${shlibs:Depends}
-Description: Debug symbols for Ettercap
- Ettercap runtime debug symbols.
