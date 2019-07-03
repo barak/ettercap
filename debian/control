@@ -24,7 +24,7 @@ Build-Depends: bison | bison++,
                libpcap-dev,
                libpcre3-dev,
                libssl-dev
-Standards-Version: 4.1.0
+Standards-Version: 4.3.0
 Homepage: https://ettercap.github.io/ettercap/
 Vcs-Git: https://github.com/barak/ettercap.git
 Vcs-Browser: https://github.com/barak/ettercap
