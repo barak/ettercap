@@ -32,10 +32,6 @@ Files: src/missing/memcmp.c
 Copyright: 1990-1993 The Regents of the University of California.
 License: BSD-4-clause
 
-Files: src/missing/inet_aton.c
-Copyright: 1995-1997 Kungliga Tekniska Högskolan (Royal Institute of Technology, Stockholm, Sweden).
-License: BSD-4-clause
-
 Files: src/lua/share/third-party/stdlib/m4/ax_lua.m4
 Copyright: 2013 Reuben Thomas <rrt@sc3d.org>
            2013 Tim Perkins <tprk@gmail.com>
@@ -114,7 +110,7 @@ License: custom
  and this notice are preserved. This file is offered as-is, without any
  warranty.
 
-Files: cmake/Modules/FindLibIDN.cmake
+Files: cmake/Modules/FindLIBIDN.cmake
 Copyright: 2009 Nigmatullin Ruslan <euroelessar@gmail.com>
 License: BSD-3-clause
 
