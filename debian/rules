@@ -54,7 +54,7 @@ override_dh_auto_install:
 #	dh_auto_install --parallel --builddirectory=obj-text-only
 
 override_dh_install:
-	dh_install --list-missing
+	dh_install
 	@echo The ettercap-pkexec man page belongs in ettercap-graphical
 	-rm --verbose debian/ettercap-common/usr/share/ettercap/doc/ettercap-pkexec*
 	-rm --verbose debian/ettercap-common/usr/share/man/man*/ettercap-pkexec*
