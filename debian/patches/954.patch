@@ -1,0 +1,211 @@
+From f829d64a278e5a3135c1b05d4798a84088a43579 Mon Sep 17 00:00:00 2001
+From: Gianfranco Costamagna <costamagnagianfranco@yahoo.it>
+Date: Sat, 13 Jul 2019 10:58:36 +0200
+Subject: [PATCH] Fix some typos, from Debian lintian
+
+---
+ man/etter.conf.5.in                    | 4 ++--
+ man/ettercap.8.in                      | 6 +++---
+ man/ettercap_curses.8.in               | 2 +-
+ man/ettercap_plugins.8.in              | 2 +-
+ man/etterlog.8.in                      | 2 +-
+ plug-ins/chk_poison/chk_poison.c       | 2 +-
+ plug-ins/nbns_spoof/nbns_spoof.c       | 2 +-
+ plug-ins/smurf_attack/smurf_attack.c   | 2 +-
+ src/ec_filter.c                        | 2 +-
+ src/interfaces/curses/ec_curses_mitm.c | 2 +-
+ src/mitm/ec_arp_poisoning.c            | 2 +-
+ src/os/ec_mingw.c                      | 2 +-
+ src/protocols/ec_tcp.c                 | 2 +-
+ 13 files changed, 16 insertions(+), 16 deletions(-)
+
+diff --git a/man/etter.conf.5.in b/man/etter.conf.5.in
+index 0df5a7c7a..824c063b5 100644
+--- a/man/etter.conf.5.in
++++ b/man/etter.conf.5.in
+@@ -75,7 +75,7 @@ randomized scan plus a high delay can fool some types of ARP scan detectors.
+ 
+ .TP
+ .B arp_poison_smart
+-With this variable set, only 3 inital poisoned ARP messages are sent to the 
++With this variable set, only 3 initial poisoned ARP messages are sent to the 
+ victims. This poisoned status is kept up by ettercap with responding to ARP 
+ requests from victims that want to refresh their ARP cache. This makes the 
+ ARP poisoning very stealthy but may be unreliable on shared media such as
+@@ -322,7 +322,7 @@ whether or not ettercap has been built with GeoIP support.
+ This option tries to enforce the dark variant of the applied theme. However
+ this does only have an effect if the applied theme provides a dark variant.
+ Normally the desktop environment controls the theme of applications. But some
+-lightweight desktop environments doesn't support a configuraton option for 
++lightweight desktop environments doesn't support a configuration option for 
+ dark themes even when the theme provides a dark variant.
+ To leave the theme variant setting to the desktop environment this option is
+ set to 0 by default.
+diff --git a/man/ettercap.8.in b/man/ettercap.8.in
+index 56ff31350..821c8980b 100644
+--- a/man/ettercap.8.in
++++ b/man/ettercap.8.in
+@@ -461,9 +461,9 @@ table in the kernel specifying the GW. If your routing table is incorrect, the
+ poisoned clients will not be able to navigate the Internet.
+ .Sp
+ NOTE: in IPv6 usually the link-local address of the router is being used as
+-the gateway address. Therefor you need to set the link-local address of the
++the gateway address. Therefore you need to set the link-local address of the
+ router as one target and the global-unicast address of the victim as the other
+-in order to set up a successfull IPv6 MITM attack using NDP poisoning.
++in order to set up a successful IPv6 MITM attack using NDP poisoning.
+ .RE
+ 
+ .TP
+@@ -698,7 +698,7 @@ the list to a file, then to load the information from it use the \-j <filename>
+ .TP
+ \fB\-P\fR, \fB\-\-plugin <PLUGIN>\fR
+ Run the selected PLUGIN. Many plugins need target specification, use TARGET as
+-always. Use multiple occurances of this parameter to select multiple plugins.
++always. Use multiple occurrences of this parameter to select multiple plugins.
+ .br
+ In console mode (\-C option), standalone plugins are executed and then the
+ application exits. Hook plugins are activated and the normal sniffing is
+diff --git a/man/ettercap_curses.8.in b/man/ettercap_curses.8.in
+index 7ce225192..d3bc55981 100644
+--- a/man/ettercap_curses.8.in
++++ b/man/ettercap_curses.8.in
+@@ -242,7 +242,7 @@ has the focus as the injected data will be sent to that address.
+ HINT: connections marked with an asterisk contain account(s) information.
+ .TP
+ .B Profiles
+-Diplays the passive profile hosts list. Selecting a host will display the
++Displays the passive profile hosts list. Selecting a host will display the
+ relative details (including account with user and pass for that host).
+ .br
+ You can convert the passive profile list into the hosts list by pressing 'c'.
+diff --git a/man/ettercap_plugins.8.in b/man/ettercap_plugins.8.in
+index ab6bb46d6..ec6d018e4 100644
+--- a/man/ettercap_plugins.8.in
++++ b/man/ettercap_plugins.8.in
+@@ -119,7 +119,7 @@ used.
+ .Sp
+ A special reply can be spoofed for A or AAAA requests, if the 'undefined
+ address' is specified as the IP address in the file. Then the client gets a
+-response which stops resolution processing imediately. This way one can control
++response which stops resolution processing immediately. This way one can control
+ which address family is being used to access a dual-stacked host.
+ .Sp
+ In the case of an ANY request, all matching results of type A, AAAA, MX and TXT
+diff --git a/man/etterlog.8.in b/man/etterlog.8.in
+index db1b0d425..2eb3a1491 100644
+--- a/man/etterlog.8.in
++++ b/man/etterlog.8.in
+@@ -155,7 +155,7 @@ Used displaying an INFO file, it displays information only about remote hosts.
+ \fB\-e\fR, \fB\-\-regex <REGEX>\fR
+ Display only packets matching the regex <REGEX>.
+ .br
+-If this option is used agains a LOG_PACKET logfile, the regex is executed on the
++If this option is used against a LOG_PACKET logfile, the regex is executed on the
+ payload of the packet. If the type is LOG_INFO, the regex is executed on all
+ the fields of the host profile (OS, banners, service and ethernet adapter).
+ .br
+diff --git a/plug-ins/chk_poison/chk_poison.c b/plug-ins/chk_poison/chk_poison.c
+index c72fbe33c..2af205fdd 100644
+--- a/plug-ins/chk_poison/chk_poison.c
++++ b/plug-ins/chk_poison/chk_poison.c
+@@ -197,7 +197,7 @@ static void parse_icmp(struct packet_object *po)
+       return; 
+ 
+    /* Check if it's in the poisoning list. If so this poisoning 
+-    * is successfull.
++    * is successful.
+     */
+     POISON_LOCK;
+     SLIST_FOREACH(p, &poison_table, next) {
+diff --git a/plug-ins/nbns_spoof/nbns_spoof.c b/plug-ins/nbns_spoof/nbns_spoof.c
+index f70b585ad..ecc7fc456 100644
+--- a/plug-ins/nbns_spoof/nbns_spoof.c
++++ b/plug-ins/nbns_spoof/nbns_spoof.c
+@@ -260,7 +260,7 @@ static int load_db(void)
+ 		
+       /* convert IP string into ip_addr struct */
+       if (ip_addr_pton(ipstr, &d->ip) != E_SUCCESS) {
+-			USER_MSG("%s:%d Invalid IP addres\n", ETTER_NBNS, lines);
++			USER_MSG("%s:%d Invalid IP address\n", ETTER_NBNS, lines);
+          SAFE_FREE(d);
+ 			continue;
+ 		}
+diff --git a/plug-ins/smurf_attack/smurf_attack.c b/plug-ins/smurf_attack/smurf_attack.c
+index afe407d11..84a54d078 100644
+--- a/plug-ins/smurf_attack/smurf_attack.c
++++ b/plug-ins/smurf_attack/smurf_attack.c
+@@ -46,7 +46,7 @@ static int smurf_attack_init(void *dummy)
+    DEBUG_MSG("smurf_attack_init");
+ 
+    if(EC_GBL_OPTIONS->unoffensive) {
+-      INSTANT_USER_MSG("smurf_attack: plugin doesnt work in unoffensive mode\n");
++      INSTANT_USER_MSG("smurf_attack: plugin doesn't work in unoffensive mode\n");
+       return PLUGIN_FINISHED;
+    }
+ 
+diff --git a/src/ec_filter.c b/src/ec_filter.c
+index aa1af96b1..2372f5fe6 100644
+--- a/src/ec_filter.c
++++ b/src/ec_filter.c
+@@ -980,7 +980,7 @@ static int func_exec(struct filter_op *fop)
+     */
+    pid = fork();
+    
+-   /* check if the fork was successfull */
++   /* check if the fork was successful */
+    if (pid == -1)
+       SEMIFATAL_ERROR("filter engine: fork() failed, cannot execute %s", fop->op.func.string);
+    
+diff --git a/src/interfaces/curses/ec_curses_mitm.c b/src/interfaces/curses/ec_curses_mitm.c
+index 0cef0b83d..705ebdda2 100644
+--- a/src/interfaces/curses/ec_curses_mitm.c
++++ b/src/interfaces/curses/ec_curses_mitm.c
+@@ -431,7 +431,7 @@ static void curses_sslredir_create_lists(void)
+    if (res == -E_NOTFOUND) {
+       SAFE_CALLOC(wdg_redirect_elements, 1, sizeof(struct wdg_list));
+       wdg_redirect_elements->desc = "No rules found. "
+-         "Redirects may be not enalbed in etter.conf?";
++         "Redirects may be not enabled in etter.conf?";
+    }
+ 
+ }
+diff --git a/src/mitm/ec_arp_poisoning.c b/src/mitm/ec_arp_poisoning.c
+index a5efee569..5a9c251eb 100644
+--- a/src/mitm/ec_arp_poisoning.c
++++ b/src/mitm/ec_arp_poisoning.c
+@@ -289,7 +289,7 @@ EC_THREAD_FUNC(arp_poisoner)
+          }
+       }
+       
+-      /* if smart poisoning is enabled only poison inital and then only on request */
++      /* if smart poisoning is enabled only poison initial and then only on request */
+       if (EC_GBL_CONF->arp_poison_smart && i >= 3)
+           return NULL;
+ 
+diff --git a/src/os/ec_mingw.c b/src/os/ec_mingw.c
+index 69de7d1da..1ab73a0c7 100644
+--- a/src/os/ec_mingw.c
++++ b/src/os/ec_mingw.c
+@@ -975,7 +975,7 @@ static char *get_winsock_error (int err, char *buf, size_t len)
+         p = _("Winsock library is not ready");
+         break;
+     case WSANOTINITIALISED:
+-        p = _("Winsock library not initalised");
++        p = _("Winsock library not initialised");
+         break;
+     case WSAVERNOTSUPPORTED:
+         p = _("Winsock version not supported.");
+diff --git a/src/protocols/ec_tcp.c b/src/protocols/ec_tcp.c
+index bfcf0a781..db5822cee 100644
+--- a/src/protocols/ec_tcp.c
++++ b/src/protocols/ec_tcp.c
+@@ -177,7 +177,7 @@ FUNC_DECODER(decode_tcp)
+           * For Windows at least, TCP checksum off-loading can be disabled with a
+           * registry setting.
+           *
+-          * Same for Linux, but sometimes even ethtool doesnt turn this feature off.
++          * Same for Linux, but sometimes even ethtool doesn't turn this feature off.
+           *
+           * if the source is the ettercap host, don't display the message 
+           */

@@ -1,0 +1,23 @@
+From 13e648e32e529f6750d450ef10f6aa254808005c Mon Sep 17 00:00:00 2001
+From: Gianfranco Costamagna <costamagnagianfranco@yahoo.it>
+Date: Thu, 4 Jul 2019 16:23:41 +0200
+Subject: [PATCH] Update version to 0.8.3 in CMakeLists.txt
+
+This should be needed to avoid libettercap being versioned as 0.8.2
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d26c71ac4..469a9dbdc 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ cmake_minimum_required(VERSION 2.8)
+ project(ettercap C)
+ 
+-set(VERSION "0.8.2")
++set(VERSION "0.8.3")
+ 
+ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
+ set(CMAKE_SCRIPT_PATH "${CMAKE_SOURCE_DIR}/cmake/Scripts")

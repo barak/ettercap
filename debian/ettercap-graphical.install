@@ -1,6 +1,7 @@
 /usr/bin/ettercap
 /usr/bin/ettercap-pkexec
-/usr/share/appdata
+/usr/lib/libettercap-ui.so*
+/usr/share/metainfo
 /usr/share/applications
 /usr/share/ettercap/*.png
 /usr/share/ettercap/*.svg

@@ -1,0 +1,83 @@
+From 23f5e9ebb165ccaf037bdf021161d66b0a0cc7ed Mon Sep 17 00:00:00 2001
+From: Gianfranco Costamagna <costamagnagianfranco@yahoo.it>
+Date: Sat, 13 Jul 2019 10:59:51 +0200
+Subject: [PATCH 1/2] Move appdata into new metainfo file location: see:
+ https://wiki.debian.org/AppStream/Guidelines
+
+---
+ CMakeLists.txt                |  2 +-
+ desktop/CMakeLists.txt        |  2 +-
+ desktop/ettercap.metainfo.xml | 32 ++++++++++++++++++++++++++++++++
+ 3 files changed, 34 insertions(+), 2 deletions(-)
+ create mode 100644 desktop/ettercap.metainfo.xml
+
+Index: ettercap-0.8.3/CMakeLists.txt
+===================================================================
+--- ettercap-0.8.3.orig/CMakeLists.txt
++++ ettercap-0.8.3/CMakeLists.txt
+@@ -120,7 +120,7 @@
+ endif()
+ set(PKEXEC_INSTALL_WRAPPER org.pkexec.ettercap CACHE PATH "Name of the pkexec action file")
+ set(DESKTOP_DIR ${INSTALL_PREFIX}/share/applications/ CACHE PATH "Desktop file installation directory")
+-set(APPDATA_DIR ${INSTALL_PREFIX}/share/appdata/ CACHE PATH "Appdata file installation directory")
++set(METAINFO_DIR ${INSTALL_PREFIX}/share/metainfo/ CACHE PATH "Metainfo file installation directory")
+ set(ICON_DIR ${INSTALL_PREFIX}/share/pixmaps CACHE PATH "Icon file installation directory")
+ set(MAN_INSTALLDIR ${INSTALL_PREFIX}/share/man CACHE PATH "Path for manual pages")
+ 
+Index: ettercap-0.8.3/desktop/CMakeLists.txt
+===================================================================
+--- ettercap-0.8.3.orig/desktop/CMakeLists.txt
++++ ettercap-0.8.3/desktop/CMakeLists.txt
+@@ -3,6 +3,6 @@
+     ${PKEXEC_INSTALL_WRAPPER}.policy @ONLY)
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PKEXEC_INSTALL_WRAPPER}.policy DESTINATION ${POLKIT_DIR})
+   install(FILES ettercap.desktop DESTINATION ${DESKTOP_DIR})
+-  install(FILES ettercap.appdata.xml DESTINATION ${APPDATA_DIR})
++  install(FILES ettercap.metainfo.xml DESTINATION ${METAINFO_DIR})
+   install(PROGRAMS ettercap-pkexec DESTINATION ${INSTALL_BINDIR})
+ endif()
+Index: ettercap-0.8.3/desktop/ettercap.metainfo.xml
+===================================================================
+--- /dev/null
++++ ettercap-0.8.3/desktop/ettercap.metainfo.xml
+@@ -0,0 +1,40 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!-- Copyright 2014 Gianfranco Costamagna <costamagnagianfranco@yahoo.it> -->
++<component type="desktop">
++  <id>io.github.ettercap</id>
++  <launchable type="desktop-id">ettercap.desktop</launchable>
++  <metadata_license>MIT</metadata_license>
++  <project_license>GPL-2.0</project_license>
++  <name>Ettercap</name>
++  <summary>Multipurpose Network sniffer/analyser/interceptor/logger</summary>
++  <description>
++    <p>
++            Ettercap supports active and passive dissection of many protocols
++            (even encrypted ones) and includes many feature for network and host
++            analysis.
++            Data injection in an established connection and filtering (substitute
++            or drop a packet) on the fly is also possible, keeping the connection
++            synchronized.
++    </p>
++    <p>
++            Many sniffing modes are implemented, for a powerful and complete
++            sniffing suite. It is possible to sniff in four modes: IP Based, MAC Based,
++            ARP Based (full-duplex) and PublicARP Based (half-duplex).
++            Ettercap also has the ability to detect a switched LAN, and to use OS
++            fingerprints (active or passive) to find the geometry of the LAN.
++    </p>
++  </description>
++  <releases>
++    <release version="0.8.3"/>
++  </releases>
++
++  <screenshots>
++    <screenshot height="600" width="800" type="default">
++      <image>http://ettercap.github.io/ettercap/screenshots/Screenshot-1.png</image>
++      <image>http://ettercap.github.io/ettercap/screenshots/Screenshot-2.png</image>
++    </screenshot>
++  </screenshots>
++  <url type="homepage">https://ettercap.github.io/ettercap</url>
++  <url type="bugtracker">https://github.com/Ettercap/ettercap/issues</url>
++  <update_contact>ettercap.project@gmail.com</update_contact>
++</component>

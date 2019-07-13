@@ -11,9 +11,16 @@ ettercap (1:0.8.3-1) unstable; urgency=medium
   * Update watch file location.
   * Bump compat level to 12
     - Drop old dh --list-missing
-  * Bump std-version to 4.3.0, no changes required.
+  * Bump std-version to 4.4.0, no changes required.
   * Update copyright file
   * Drop newlines from changelog file
+  * Bump watch file to version 4
+  * Bump download url to https
+  * Cherry-pick three upstream PR: 951 954 955
+    - Move appdata file into new metainfo location
+    - typo fixes in manpages
+    - Bump library version number
+  * Drop dir_to_symlink bug fix
 
  -- Gianfranco Costamagna <locutusofborg@debian.org>  Wed, 03 Jul 2019 12:29:38 +0200
 
