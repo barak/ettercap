@@ -2,6 +2,7 @@ ettercap (1:0.8.3-1) unstable; urgency=medium
 
   * New upstream release (Closes: #931361)
     - Default to gtk-3
+  * Don't build against flex-old (Closes: #932513)
   * Add geoip to the build dependencies
   * Enable full hardening
   * Maintain the package under pkg-security team.
