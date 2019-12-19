@@ -52,21 +52,17 @@ override_dh_auto_test-graphical: ; dh_auto_test --parallel --builddirectory=obj-
 override_dh_auto_install:
 	dh_auto_install --parallel --builddirectory=obj-text-only
 	mv debian/tmp/usr/lib/libettercap-ui.so* obj-text-only
+	mv debian/tmp/usr/bin/* obj-text-only
 	dh_auto_install --parallel --builddirectory=obj-graphical
 
 override_dh_install:
 	dh_install
 	@echo The ettercap-pkexec man page belongs in ettercap-graphical
-	mkdir -p debian/ettercap-text-only/usr/lib
-	mv obj-text-only/libettercap-ui* debian/ettercap-text-only/usr/lib
 	-rm --verbose debian/ettercap-common/usr/share/ettercap/doc/ettercap-pkexec*
 	-rm --verbose debian/ettercap-common/usr/share/man/man*/ettercap-pkexec*
 	@echo The ettercap images belongs in ettercap-graphical
 	-rm --verbose debian/ettercap-common/usr/share/ettercap/*.png
 	-rm --verbose debian/ettercap-common/usr/share/ettercap/*.svg
-	@echo "Upstream does not set RPATH, but the file is not handled by cmake install (dh_auto_install target)"
-	chrpath --list   debian/ettercap-text-only/usr/bin/ettercap
-	chrpath --delete debian/ettercap-text-only/usr/bin/ettercap
 
 override_dh_installdocs:
 	dh_installdocs -pettercap-common

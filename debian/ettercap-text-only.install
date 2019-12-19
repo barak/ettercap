@@ -1,1 +1,4 @@
-obj-text-only/src/ettercap /usr/bin/
+obj-text-only/ettercap /usr/bin/
+obj-text-only/etterfilter /usr/bin/
+obj-text-only/etterlog /usr/bin/
+obj-text-only/libettercap-ui* /usr/lib/

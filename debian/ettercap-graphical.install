@@ -1,4 +1,6 @@
 /usr/bin/ettercap
+/usr/bin/etterfilter
+/usr/bin/etterlog
 /usr/bin/ettercap-pkexec
 /usr/lib/libettercap-ui.so*
 /usr/share/metainfo

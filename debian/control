@@ -62,7 +62,8 @@ Architecture: any
 Depends: ettercap-common (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Replaces: ettercap, ettercap-gtk
+Breaks: ettercap-common (<< 1:0.8.3-1~)
+Replaces: ettercap-common (<< 1:0.8.3-1~), ettercap, ettercap-gtk
 Conflicts: ettercap, ettercap-gtk
 Provides: ettercap
 Description: Ettercap console-mode executable
@@ -89,8 +90,8 @@ Depends: ettercap-common (= ${binary:Version}),
          policykit-1,
          ${misc:Depends},
          ${shlibs:Depends}
-Breaks: ettercap-common (<< 1:0.8.1-2~)
-Replaces: ettercap, ettercap-common (<< 1:0.8.1-2~), ettercap-gtk
+Breaks: ettercap-common (<< 1:0.8.3-1~)
+Replaces: ettercap, ettercap-common (<< 1:0.8.3-1~), ettercap-gtk
 Conflicts: ettercap, ettercap-gtk
 Provides: ettercap
 Description: Ettercap GUI-enabled executable

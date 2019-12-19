@@ -1,6 +1,4 @@
 /etc
-/usr/bin/etterfilter
-/usr/bin/etterlog
 /usr/lib/ettercap
 /usr/lib/libettercap.so*
 # The next lines accidentally gets
