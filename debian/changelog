@@ -24,6 +24,7 @@ ettercap (1:0.8.3-1) unstable; urgency=medium
   * Move etterfilter and etterlog to subpackages, due to different
     libettercap-ui libraries.
   * Remove debian/NEWS file
+  * Add R^3=no
 
  -- Gianfranco Costamagna <locutusofborg@debian.org>  Fri, 20 Dec 2019 13:22:02 +0100
 
