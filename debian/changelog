@@ -21,7 +21,6 @@ ettercap (1:0.8.3-1) unstable; urgency=medium
     - Move appdata file into new metainfo location
     - typo fixes in manpages
     - Bump library version number
-  * Drop dir_to_symlink bug fix
   * Move etterfilter and etterlog to subpackages, due to different
     libettercap-ui libraries.
 
